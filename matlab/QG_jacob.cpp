@@ -18,8 +18,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
     QG::QG *qg = reinterpret_cast<QG::QG *>(*((uint64_t *)mxGetData(prhs[0])));
 
     double *x = mxGetPr(prhs[1]);
-    int m = mxGetM(prhs[1]);
-    int n = mxGetN(prhs[1]);
 
     qg->jacob(x, 0.0);
 }
