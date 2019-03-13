@@ -6,9 +6,6 @@
 #include <cmath>
 #include <iostream>
 
-#define TIMER_ON
-#include "Timer.hpp"
-
 namespace QG
 {
 
@@ -99,7 +96,6 @@ void QG::compute_linear()
 
 void QG::assembleA()
 {
-    FUNCTION_TIMER("assembleA");
     /*
      * assemble the global matrix A from the local matrices
      *     2 5     QG version: 2 and 6 are not used
@@ -179,7 +175,6 @@ void QG::assembleA()
 
 void QG::assembleB()
 {
-    FUNCTION_TIMER("assembleB");
     for (int i = 0; i < adim_; i++)
         A_.co[i] = 0.0;
 
@@ -201,7 +196,6 @@ void QG::assembleB()
 
 void QG::jacob(double const *un, double sig)
 {
-    FUNCTION_TIMER("jacob");
     Vector2D om(n_, m_);
     Vector2D ps(n_, m_);
 
@@ -257,7 +251,6 @@ void QG::writeM(char const *name)
 
 void QG::rhs(double const *un, double *b)
 {
-    FUNCTION_TIMER("rhs");
     Vector2D om(n_, m_);
     Vector2D ps(n_, m_);
     Vector1D Frc(ndim_);
@@ -314,7 +307,6 @@ void QG::apply(double const *x, double *y)
 
 void QG::mass(double *M)
 {
-    FUNCTION_TIMER("mass");
     timedep();
 
     assembleB();
@@ -340,7 +332,6 @@ void QG::mass(double *M)
 
 double QG::curl(double x, double y)
 {
-    FUNCTION_TIMER("curl");
     double asym = par_(19);
     double y2 = (y-ymin_) / (ymax_-ymin_);
     return - (1. - asym) * sin(2 * M_PI * y2)
@@ -349,7 +340,6 @@ double QG::curl(double x, double y)
 
 void QG::lin()
 {
-    FUNCTION_TIMER("lin");
 /*     Quasi-geostrophic equations, barotropic
  *     Produce local element matrices for linear operators
  */
@@ -380,7 +370,6 @@ void QG::lin()
 
 void QG::nlin_rhs(Vector2D const &om, Vector2D const &ps)
 {
-    FUNCTION_TIMER("nlin_rhs");
     // Produce local matrices for nonlinear operators for calc of Rhs
     Vector3D Udx(n_,m_,10), Vdy(n_,m_,10);
 
@@ -401,7 +390,6 @@ void QG::nlin_rhs(Vector2D const &om, Vector2D const &ps)
 
 void QG::nlin_jac(Vector2D const &om, Vector2D const &ps)
 {
-    FUNCTION_TIMER("nlin_jac");
     // Produce local matrices for nonlinear operators for calc of Jacobian
 
     Vector3D Udx(n_,m_,10), Vdy(n_,m_,10);
@@ -426,7 +414,6 @@ void QG::nlin_jac(Vector2D const &om, Vector2D const &ps)
 
 void QG::timedep()
 {
-    FUNCTION_TIMER("timedep");
     // Produce local matrices for time-dependent operators
     for (int i = 0; i < Tlzz_.size(); i++)
     {
@@ -447,7 +434,6 @@ void QG::timedep()
 
 void QG::u_to_psi(double const *un, Vector2D &om, Vector2D &ps)
 {
-    FUNCTION_TIMER("u_to_psi");
     for (int j = 0; j < m_; j++)
     {
         for (int i = 0; i < n_; i++)
@@ -461,7 +447,6 @@ void QG::u_to_psi(double const *un, Vector2D &om, Vector2D &ps)
 
 void QG::boundaries()
 {
-    FUNCTION_TIMER("boundaries");
 // insert conditions at the 'real' boundaries of the domain
 /*
  *     2 5
@@ -506,7 +491,6 @@ void QG::boundaries()
 
 void QG::fillcolA()
 {
-    FUNCTION_TIMER("fillcolA");
     /*
      * fill the collumns of A and N
      *     2 5
@@ -600,7 +584,6 @@ void QG::fillcolA()
 
 void QG::fillcolB()
 {
-    FUNCTION_TIMER("fillcolB");
     /*
      *     fill the collumns of B
      *     2 5
@@ -649,7 +632,6 @@ void QG::fillcolB()
 
 void QG::compute_forcing()
 {
-    FUNCTION_TIMER("compute_forcing");
     for (int i = 0; i < tx_.size(); i++)
     {
         tx_[i] = 0.0;
@@ -677,7 +659,6 @@ void QG::compute_forcing()
  */
 void QG::nonlin(int type, Vector3D &atom, Vector2D const &om, Vector2D const &ps)
 {
-    FUNCTION_TIMER("nonlin");
     /*
      *     nonlinear terms for the zeta and psi equation
      *     1:  Udx     (udx)
@@ -748,7 +729,6 @@ void QG::nonlin(int type, Vector3D &atom, Vector2D const &om, Vector2D const &ps
 
 void QG::deriv(int type, Vector3D &atom)
 {
-    FUNCTION_TIMER("deriv");
     /*
      *     1:  z, p
      *     2:  zxx, pxx
@@ -818,7 +798,6 @@ void QG::deriv(int type, Vector3D &atom)
 
 void QG::readfort(int irs, double *u)
 {
-    FUNCTION_TIMER("readfort");
     std::ifstream f("fort.4");
     while (f.good())
     {
@@ -888,7 +867,6 @@ void QG::set_par(int par, double val)
 
 int QG::solve(double *x)
 {
-    FUNCTION_TIMER("solve");
 
     apply_scaling(x);
 
@@ -901,7 +879,6 @@ int QG::solve(double *x)
 
 int QG::compute_precon()
 {
-    FUNCTION_TIMER("compute_precon");
 
     double eps = 1e-4;
 
@@ -1002,7 +979,6 @@ int QG::compute_precon()
 
 int QG::lusolve(double *x)
 {
-    FUNCTION_TIMER("lusolve");
     for (int i = 1; i < ndim_; i++)
     {
         double tmp = 0.0;
@@ -1023,7 +999,6 @@ int QG::lusolve(double *x)
 
 double QG::dot(double *x, double *y)
 {
-    FUNCTION_TIMER("dot");
     double out = 0.0;
     for (int i = 0; i < ndim_; i++)
         out += x[i] * y[i];
@@ -1032,7 +1007,6 @@ double QG::dot(double *x, double *y)
 
 int QG::cgstab(double *b, double tol)
 {
-    FUNCTION_TIMER("cgstab");
     if (dot(b, b) < 1e-20)
         return 1;
  
@@ -1134,7 +1108,6 @@ int QG::cgstab(double *b, double tol)
 
 void QG::compute_scaling()
 {
-    FUNCTION_TIMER("compute_scaling");
     // Row-wise scaling of A
     for (int i = 0; i < ndim_; i++)
     {
@@ -1154,7 +1127,6 @@ void QG::compute_scaling()
 
 void QG::apply_scaling()
 {
-    FUNCTION_TIMER("apply_scaling");
     for (int i = 0; i < ndim_; i++)
     {
         for (int v = A_.beg[i]; v < A_.beg[i+1]; v++)
@@ -1164,7 +1136,6 @@ void QG::apply_scaling()
 
 void QG::apply_scaling(double *x)
 {
-    FUNCTION_TIMER("apply_scaling");
     for (int i = 0; i < ndim_; i++)
     {
         for (int v = A_.beg[i]; v < A_.beg[i+1]; v++)
@@ -1175,7 +1146,6 @@ void QG::apply_scaling(double *x)
 
 void QG::remove_scaling()
 {
-    FUNCTION_TIMER("remove_scaling");
     for (int i = 0; i < ndim_; i++)
     {
         for (int v = A_.beg[i]; v < A_.beg[i+1]; v++)
@@ -1185,7 +1155,6 @@ void QG::remove_scaling()
 
 void QG::Asort()
 {
-    FUNCTION_TIMER("Asort");
     for (int i = 0; i < ndim_; i++)
     {
         for (int v = A_.beg[i]; v < A_.beg[i+1]-1; v++)
