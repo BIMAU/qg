@@ -6,7 +6,8 @@ set(QG_MEX_FILES
   QG_init
   QG_free
   QG_rhs
-  QG_jacob)
+  QG_jacob
+  QG_solve)
 
 foreach(i ${QG_MEX_FILES})
   matlab_add_mex(NAME "${i}" SRC "${i}.cpp")
