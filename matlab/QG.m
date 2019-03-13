@@ -18,6 +18,13 @@ classdef QG < handle
             y = QG_rhs(h.instance, x);
         end
 
+        function jacob(h, x)
+            if nargin ~= 2
+                error('One input argument required');
+            end
+            QG_jacob(h.instance, x);
+        end
+
         function delete(h)
             if ~isempty(h.instance)
                 QG_free(h.instance);
