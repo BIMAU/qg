@@ -4,7 +4,8 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 
 set(QG_MEX_FILES
   QG_init
-  QG_free)
+  QG_free
+  QG_rhs)
 
 foreach(i ${QG_MEX_FILES})
   matlab_add_mex(NAME "${i}" SRC "${i}.cpp")

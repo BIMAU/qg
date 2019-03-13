@@ -8,6 +8,14 @@ classdef QG < handle
                 error('Two input arguments required');
             end
             h.instance = QG_init(A, params);
+            fprintf('QG successfully initialized\n');
+        end
+
+        function y = rhs(h, x)
+            if nargin ~= 2
+                error('One input argument required');
+            end
+            y = QG_rhs(h.instance, x);
         end
 
         function delete(h)
