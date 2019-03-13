@@ -39,6 +39,13 @@ classdef QG < handle
             QG_set_par(h.instance, par, val);
         end
 
+        function val = get_par(h, par)
+            if nargin ~= 2
+                error('One input argument required');
+            end
+            val = QG_get_par(h.instance, par);
+        end
+
         function delete(h)
             if ~isempty(h.instance)
                 QG_free(h.instance);

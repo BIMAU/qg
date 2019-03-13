@@ -8,7 +8,8 @@ set(QG_MEX_FILES
   QG_rhs
   QG_jacob
   QG_solve
-  QG_set_par)
+  QG_set_par
+  QG_get_par)
 
 foreach(i ${QG_MEX_FILES})
   matlab_add_mex(NAME "${i}" SRC "${i}.cpp")
