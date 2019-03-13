@@ -11,13 +11,13 @@ foreach(i ${QG_MEX_FILES})
 
   target_link_libraries(${i} qg)
 
-  # install(TARGETS ${i} DESTINATION matlab)
+  install(TARGETS ${i} DESTINATION matlab)
 endforeach()
 
 set(QG_MATLAB_FILES
   QG.m)
 
-# install(FILES ${QG_MATLAB_FILES} DESTINATION matlab)
+install(FILES ${QG_MATLAB_FILES} DESTINATION matlab)
 
 # enable_testing()
 # matlab_add_unit_test(
