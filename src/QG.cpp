@@ -382,10 +382,10 @@ void QG::nlin_rhs(Vector2D const &om, Vector2D const &ps)
         Nlzz_[i] = Udx[i] + Vdy[i];
     for (int i = 0; i < Nlzp_.size(); i++)
         Nlzp_[i] = - F*(Udx[i] + Vdy[i]);
-    for (int i = 0; i < Nlpp_.size(); i++)
-        Nlpp_[i] = 0.0;
-    for (int i = 0; i < Nlpz_.size(); i++)
-        Nlpz_[i] = 0.0;
+    // for (int i = 0; i < Nlpp_.size(); i++)
+    //     Nlpp_[i] = 0.0;
+    // for (int i = 0; i < Nlpz_.size(); i++)
+    //     Nlpz_[i] = 0.0;
 }
 
 void QG::nlin_jac(Vector2D const &om, Vector2D const &ps)
@@ -720,6 +720,30 @@ void QG::nonlin(int type, Vector3D &atom, Vector2D const &om, Vector2D const &ps
             {
                 atom(i,j,1) = - r4dxdy*(om(i,j+1)-om(i,j-1));
                 atom(i,j,7) = + r4dxdy*(om(i,j+1)-om(i,j-1));
+            }
+        }
+    }
+    break;
+    case 5: // udPx
+    {
+        for (int j = 1; j < m_-1; j++)
+        {
+            for (int i = 1; i < n_-1; i++)
+            {
+                atom(i,j,3) = + r4dxdy*(ps(i+1,j)-ps(i-1,j));
+                atom(i,j,5) = - r4dxdy*(ps(i+1,j)-ps(i-1,j));
+            }
+        }
+    }
+    break;
+    case 6: // vdPy
+    {
+        for (int j = 1; j < m_-1; j++)
+        {
+            for (int i = 1; i < n_-1; i++)
+            {
+                atom(i,j,1) = - r4dxdy*(ps(i,j+1)-ps(i,j-1));
+                atom(i,j,7) = + r4dxdy*(ps(i,j+1)-ps(i,j-1));
             }
         }
     }
