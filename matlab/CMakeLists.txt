@@ -7,6 +7,7 @@ set(QG_MEX_FILES
   QG_free
   QG_rhs
   QG_jacob
+  QG_apply
   QG_solve
   QG_set_par
   QG_get_par)
