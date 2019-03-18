@@ -867,7 +867,6 @@ void QG::set_par(int par, double val)
 
 int QG::solve(double *x)
 {
-
     apply_scaling(x);
 
     int ierr = cgstab(x, 1e-6);
@@ -879,7 +878,6 @@ int QG::solve(double *x)
 
 int QG::compute_precon()
 {
-
     double eps = 1e-4;
 
     compute_scaling();
@@ -1043,13 +1041,7 @@ int QG::cgstab(double *b, double tol)
         for (int i = 0; i < ndim_; i++)
             q[i] = r[i] + w*(q[i]-alf*v[i]);
 
-        for (int i = 0; i < ndim_; i++)
-        {
-            v[i] = 0.0;
-            for (int vv = A_.beg[i]; vv < A_.beg[i+1]; vv++)
-                v[i] += A_.co[vv] * q[A_.jco[vv]];
-        }
-
+        apply(q, v);
         lusolve(v);
 
         wdak = dot(p, v);
@@ -1057,13 +1049,7 @@ int QG::cgstab(double *b, double tol)
         for (int i = 0; i < ndim_; i++)
             s[i] = r[i] - wdak * v[i];
 
-        for (int i = 0; i < ndim_; i++)
-        {
-            t[i] = 0.0;
-            for (int vv = A_.beg[i]; vv < A_.beg[i+1]; vv++)
-                t[i] += A_.co[vv] * s[A_.jco[vv]];
-        }
-
+        apply(s, t);
         lusolve(t);
 
         double ts = dot(t, s);
