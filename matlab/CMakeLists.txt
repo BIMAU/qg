@@ -15,6 +15,9 @@ set(QG_MEX_FILES
 foreach(i ${QG_MEX_FILES})
   matlab_add_mex(NAME "${i}" SRC "${i}.cpp")
 
+  # Matlab 2018b hack
+  target_compile_options(${i} PRIVATE "-fvisibility=default")
+
   target_link_libraries(${i} qg)
 
   install(TARGETS ${i} DESTINATION matlab)
