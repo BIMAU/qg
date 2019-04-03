@@ -216,6 +216,37 @@ void QG::jacob(double const *un, double sig)
     Asort();
 }
 
+void QG::jacobian(double const *un, double sig, int *beg, int *jco, double *co )
+{
+    Vector2D om(n_, m_);
+    Vector2D ps(n_, m_);
+
+    u_to_psi(un, om, ps);
+    nlin_jac(om, ps);
+    timedep();
+
+    for (int i = 0; i < Alzz_.size(); i++)
+    {
+        Alzz_[i] = Llzz_[i] + Nlzz_[i] + sig * Tlzz_[i];
+        Alzp_[i] = Llzp_[i] + Nlzp_[i] + sig * Tlzp_[i];
+        Alpz_[i] = Llpz_[i];
+        Alpp_[i] = Llpp_[i];
+    }
+
+    boundaries();
+    assembleA();
+    Asort();
+
+    for (int i = 0; i < ndim_+1; i++ )
+      beg[i]=A_.beg[i];
+    for (int i = 0; i < beg[ndim_]-1; i++ )
+      {
+	co[i]=A_.co[i] ;
+	jco[i]=A_.jco[i] ;
+      }
+}
+
+  
 void QG::writeA(char const *name, double const *un, double sig)
 {
     jacob(un, sig);
@@ -295,6 +326,36 @@ void QG::rhs(double const *un, double *b)
     }
 }
 
+  void QG::bilin(double const *un,double const *vn, double *b)
+{
+    Vector2D om(n_, m_);
+    Vector2D ps(n_, m_);
+    
+    u_to_psi(un, om, ps);
+    nlin_rhs(om, ps);
+
+    for (int i = 0; i < Alzz_.size(); i++)
+    {
+        Alzz_[i] = Llzz_[i] + Nlzz_[i];
+        Alzp_[i] = Llzp_[i] + Nlzp_[i];
+        Alpz_[i] = Llpz_[i];
+        Alpp_[i] = Llpp_[i];
+    }
+
+    boundaries();
+    assembleA();
+    Asort();
+
+    // This is the reverse of the fortran version!!!
+    // B = Au 
+    for (int i = 0; i < ndim_; i++)
+    {
+        b[i] = 0;
+        for (int v = A_.beg[i]; v < A_.beg[i+1]; v++)
+            b[i] -= A_.co[v] * vn[A_.jco[v]];
+    }
+}
+
 void QG::apply(double const *x, double *y)
 {
     for (int i = 0; i < ndim_; i++)
@@ -304,7 +365,6 @@ void QG::apply(double const *x, double *y)
             y[i] += A_.co[v] * x[A_.jco[v]];
     }
 }
-
 void QG::mass(double *M)
 {
     timedep();
