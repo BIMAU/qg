@@ -18,12 +18,17 @@ classdef QG < handle
             y = QG_rhs(h.instance, x);
         end
         
-	function z = bilin(h, x,y)
+	function Z = bilin(h, V,W)
             if nargin ~= 3
                 error('Two input arguments required');
             end
-            z = QG_bilin(h.instance, x,y);
-        end
+	    mV=size(V,2);mW=size(W,2);
+            for i=1:mV
+	      for j=1:mW
+		Z(:,(i-1)*mW+j) = QG_bilin(h.instance, V(:,i),W(:,j));
+              end
+            end
+        end        
 
         function jacob(h, x)
             if nargin ~= 2
@@ -48,7 +53,7 @@ classdef QG < handle
                 error('One input argument required');
             end
             M=QG_mass(h.instance,n);
-            M=-spdiags(M,0,n,n)
+            M=-spdiags(M,0,n,n);
         end
 
         function y = apply(h, x)

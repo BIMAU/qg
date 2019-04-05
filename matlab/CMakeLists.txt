@@ -27,7 +27,8 @@ foreach(i ${QG_MEX_FILES})
 endforeach()
 
 set(QG_MATLAB_FILES
-  QG.m)
+  QG.m
+  stochforcing.m)
 
 install(FILES ${QG_MATLAB_FILES} DESTINATION matlab)
 

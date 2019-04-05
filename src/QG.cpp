@@ -239,7 +239,7 @@ void QG::jacobian(double const *un, double sig, int *beg, int *jco, double *co )
 
     for (int i = 0; i < ndim_+1; i++ )
       beg[i]=A_.beg[i];
-    for (int i = 0; i < beg[ndim_]-1; i++ )
+    for (int i = 0; i < beg[ndim_]; i++ )
       {
 	co[i]=A_.co[i] ;
 	jco[i]=A_.jco[i] ;
