@@ -336,13 +336,13 @@ void QG::rhs(double const *un, double *b)
 
     for (int i = 0; i < Alzz_.size(); i++)
     {
-        Alzz_[i] = Llzz_[i] + Nlzz_[i];
-        Alzp_[i] = Llzp_[i] + Nlzp_[i];
-        Alpz_[i] = Llpz_[i];
-        Alpp_[i] = Llpp_[i];
+        Alzz_[i] = Nlzz_[i];
+        Alzp_[i] = Nlzp_[i];
+        Alpz_[i] = 0.0;
+        Alpp_[i] = 0.0;
     }
 
-    boundaries();
+    // boundariesNl();
     assembleA();
     Asort();
 
@@ -548,6 +548,7 @@ void QG::boundaries()
         Alpp_(i,m_-1,4) = 1.0;
     }
 }
+
 
 void QG::fillcolA()
 {
