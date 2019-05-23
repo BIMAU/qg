@@ -1,0 +1,9 @@
+basis_size=4;
+fid=fopen('vars.txt');
+Vars=fscanf(fid,'%f',[basis_size,inf]); 
+fclose(fid);
+[n]=size(Vars,2);
+%m=round(n/100);
+m=1;
+Vars=Vars';
+plot(log10(Vars(1:m:end,:)))
