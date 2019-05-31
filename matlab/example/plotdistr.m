@@ -18,7 +18,7 @@ for j=1:m
   mm=m;
   if (rem(m,2)==1) mm=m+1; end;
   subplot(mm/restruct,restruct,j,'Parent',p);
-  histfit(Y(j,:))
+  histfit(Y(j,:),30)
   title(sprintf('Variance %1.5g', Var(j)))
 end
 end

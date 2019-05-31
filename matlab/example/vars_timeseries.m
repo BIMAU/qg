@@ -1,4 +1,4 @@
-basis_size=4;
+basis_size=2;
 fid=fopen('vars.txt');
 Vars=fscanf(fid,'%f',[basis_size,inf]); 
 fclose(fid);

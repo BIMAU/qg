@@ -4,6 +4,7 @@ nx=64
 stochsize=1000
 %stochsize=2
   fprintf('IS YOUR STOCHSIZE CORRECT: %4d\n', stochsize)  
+%fid=fopen('timeslicesOddEvenDwsymStochForc01.txt')
 fid=fopen('timeslices.txt')
 
 while ~feof(fid)
@@ -37,7 +38,7 @@ while ~feof(fid)
   Var'
    %(R*DS*R')P=P*Vd -> V*R*DS*R'*V'= V*P*Vd*P'V' 
    V=V*P(:,iVar);
-  m=4
+  m=2
   showV([x,V],[1;Var],'DO-mode',1,nx,nx,2,1,m)
   %pause
   %showV(x,1,'Average sol',1,nx,nx,2,1,1)

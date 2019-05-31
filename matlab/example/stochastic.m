@@ -16,13 +16,13 @@ x = zeros(n, 1);
 tol=1e-10;
 
 
-m=3;
+m=2;
 stochiter=1000;
-V=zeros(n,m);
-Y=zeros(m,stochiter);
+%V=zeros(n,m);
+%Y=zeros(m,stochiter);
 
 integr_pars.ndtsub=10;
-integr_pars.dt=1e-2;
+integr_pars.dt=1e-3;
 integr_pars.T=10;
 integr_pars.outint=0.5;
 
@@ -31,7 +31,7 @@ integr_pars.outint=0.5;
 %We want a positive mass matrix since mass ought to be positive
 Mass=qg.mass(n);
 %Stochastic forcing
-c=1e7*stochforcing(n,full(diag(Mass)));
+c=1e5*stochforcing(n,full(diag(Mass)));
 %If the mass is positive the rhs should have a negative Jacobian
 f1=@(X,b)b-qg.rhs(X); %f1(X,0) has the desired sign, we want to be able to add something to it, i.e. b.
 f2=@(X)qg.jacobian(X,0.0);
@@ -75,12 +75,14 @@ mc=size(c,2);
 if (mc > m) 
   fprintf("Space stochastic forcing bigger than the stochastic space V\n");
 end  
+c=c(:,1);m=1;mc=1; % test with an even forcing
 V=[c,randn(n,m-mc)];
-
+showV([V],[1:m],'DO-mode',1,nx,nx,2,1,m)
+Y=zeros(m,stochiter);
 if 0
 %test to keep x+v*[1,-1] on track
   V=mmread("v.mm");
-  Y=[1,-1];
+  Y=0.1*[1,-1];
   x=mmread("x.mm");
   [norm(f1(x+V,0)), norm(f1(x-V,0)),norm(f2(x)*V)]
   %norm(f1(0*x,0))
