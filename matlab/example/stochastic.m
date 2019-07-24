@@ -16,13 +16,13 @@ x = zeros(n, 1);
 tol=1e-10;
 
 
-m=2;
+m=4;
 stochiter=1000;
 %V=zeros(n,m);
 %Y=zeros(m,stochiter);
 
 integr_pars.ndtsub=10;
-integr_pars.dt=1e-3;
+integr_pars.dt=1e-2;
 integr_pars.T=10;
 integr_pars.outint=0.5;
 
@@ -31,7 +31,7 @@ integr_pars.outint=0.5;
 %We want a positive mass matrix since mass ought to be positive
 Mass=qg.mass(n);
 %Stochastic forcing
-c=1e5*stochforcing(n,full(diag(Mass)));
+c=1e7*stochforcing(n,full(diag(Mass)));
 %If the mass is positive the rhs should have a negative Jacobian
 f1=@(X,b)b-qg.rhs(X); %f1(X,0) has the desired sign, we want to be able to add something to it, i.e. b.
 f2=@(X)qg.jacobian(X,0.0);
@@ -75,9 +75,20 @@ mc=size(c,2);
 if (mc > m) 
   fprintf("Space stochastic forcing bigger than the stochastic space V\n");
 end  
-c=c(:,1);m=1;mc=1; % test with an even forcing
+c=c(:,1);m=4;mc=1; % test with an even forcing
+rng(2);
 V=[c,randn(n,m-mc)];
-showV([V],[1:m],'DO-mode',1,nx,nx,2,1,m)
+if 1
+  % make initial fields even
+  V(2:2:end,:)=0;
+  for i=2:m
+     V(1:2:end,i)=V(1:2:end,i)+reshape(fliplr(reshape(V(1:2:end,i),nx,nx)),nx^2,1);
+  end
+end
+symtest(V,-1);
+mout=2*floor(m/2);
+%showV(V,[1:mout],'DO-mode',1,nx,nx,2,1,mout)
+%pause(1)
 Y=zeros(m,stochiter);
 if 0
 %test to keep x+v*[1,-1] on track
@@ -88,7 +99,7 @@ if 0
   %norm(f1(0*x,0))
   c=0*V;
 end
-[x,V,Y,timings,timeseries]=DONonlin(x,V,Y,f1,f2,f3,c,Mass,integr_pars);
+[x,V,Y,timings,timeseries]=DO2Nonlin(x,V,Y,f1,f2,f3,c,Mass,integr_pars);
 timings
 figure(1)
 hold off
