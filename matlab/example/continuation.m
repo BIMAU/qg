@@ -127,7 +127,7 @@ for i=1:length(cont)
     end
 end
 
-plot(cont{5}.history.par, cont{5}.history.psi_max);
+plot(cont{5}.history.par, cont{5}.history.psi_max,'.-');
 hold on
-plot(cont{6}.history.par, cont{6}.history.psi_max);
+plot(cont{6}.history.par, cont{6}.history.psi_max,'.-');
 hold off

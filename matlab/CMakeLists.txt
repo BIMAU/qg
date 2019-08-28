@@ -28,6 +28,8 @@ endforeach()
 
 set(QG_MATLAB_FILES
   QG.m
+  plotQG.m
+  crs2sp.m
   stochforcing.m)
 
 install(FILES ${QG_MATLAB_FILES} DESTINATION matlab)
