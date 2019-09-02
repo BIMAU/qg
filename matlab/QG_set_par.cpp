@@ -1,7 +1,5 @@
 #include "mex.h"
-
 #include <cstdint>
-
 #include "QG.hpp"
 
 void mexFunction(int nlhs, mxArray *plhs[],

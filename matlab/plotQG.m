@@ -23,7 +23,7 @@ for j=1:m
 end
 
 % scaling
-maxp = max(max(plotfield)) 
+maxp = max(max(plotfield)); 
 % plot
 contourf(x,y,fact*plotfield'/maxp); 
 xlabel('x/L')

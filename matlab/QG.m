@@ -30,11 +30,14 @@ classdef QG < handle
             end
         end        
 
-        function jacob(h, x)
-            if nargin ~= 2
-                error('One input argument required');
+        function jacob(h, x, sig)
+            if ((nargin < 2) || (nargin > 3))
+                error('Wrong number of input arguments');
             end
-            QG_jacob(h.instance, x);
+            if nargin < 3
+                sig = 0.0;
+            end
+            QG_jacob(h.instance, x, sig);
         end
 
         function  A=jacobian(h, x, sig)
