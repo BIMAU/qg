@@ -408,11 +408,11 @@ void QG::lin()
     Vector3D dyy(n_,m_,10);
     Vector3D cor(n_,m_,10);
 
-    double Re = par_(5);
+    double Re   = par_(5);
     double Beta = par_(2);
-    double rbf = par_(3);
+    double rbf  = par_(3);
 
-    deriv(1, z); // ALLEEN BIJ GEBRUIK BODEMFRICTIE NIET NUL
+    deriv(1, z);   // ALLEEN BIJ GEBRUIK BODEMFRICTIE NIET NUL
     deriv(2, dxx); // ALLEEN GETALLEN: VOOR BEIDE VGL TE GEBRUIKEN
     deriv(3, dyy);
     deriv(4, cor);

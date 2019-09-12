@@ -1,4 +1,4 @@
-function [x, l] = newtoncorrector(qg, par, ds, x, x0, l, l0, tol, varargin)
+function [x, l, k] = newtoncorrector(qg, par, ds, x, x0, l, l0, tol, varargin)
 
 % Set some parameters
 maxit = 20;

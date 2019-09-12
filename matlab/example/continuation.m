@@ -11,7 +11,7 @@ qg.set_par(20, zeta);
 if ~exist('cont')
     cont = {};
     % Wind stress
-    cont{1} = struct('par', 11, 'ds', 0.1, 'target', 1, 'maxit', 1000, 'from', [],...
+    cont{1} = struct('par', 11, 'ds', 1, 'target', 1, 'maxit', 1000, 'from', [],...
                      'state', [], 'pars', [], 'history', []);
     % Asymmetry
     cont{2} = struct('par', 19, 'ds', 1, 'target', 1, 'maxit', 1, 'from', [],...
@@ -33,6 +33,9 @@ end
 x = zeros(n, 1);
 
 x = newton(qg, x, 1e-10);
+
+% optimal number of Newton iterations
+Nopt = 3.1;
 
 for i=1:length(cont)
     state = cont{i}.state;
@@ -86,17 +89,17 @@ for i=1:length(cont)
         l = l0 + ds * dl0;
         x = x0 + ds * dx0;
 
-        [x2, l2] = newtoncorrector(qg, par, ds, x, x0, l, l0, 1e-10);
+        [x2, l2, k] = newtoncorrector(qg, par, ds, x, x0, l, l0, 1e-4);
 
         dl = l2 - l0;
-        l = l2;
+        l  = l2;
         dx = x2 - x0;
-        x = x2;
+        x  = x2;
 
         psi_max = max(x(2:2:n));
         psi_min = min(x(2:2:n));
-        fprintf('par = %2d, l = %f, max psi = %f, min psi = %f\n', ...
-                par, l, psi_max, psi_min);
+        fprintf('par = %2d, l = %f, ds=%f, max psi = %f, min psi = %f\n', ...
+                par, l, ds, psi_max, psi_min);
         cont{i}.history.psi_max = [cont{i}.history.psi_max, psi_max];
         cont{i}.history.psi_min = [cont{i}.history.psi_min, psi_min];
         cont{i}.history.par = [cont{i}.history.par, l];
@@ -119,6 +122,13 @@ for i=1:length(cont)
 
         dx0 = dx / ds;
         dl0 = dl / ds;
+        
+        % step size control
+        factor = Nopt / k;
+        factor = max(0.5, factor);
+        factor = min(2.0, factor);    
+        ds = ds * factor;
+
     end
     cont{i}.state = x;
     cont{i}.pars = [];
