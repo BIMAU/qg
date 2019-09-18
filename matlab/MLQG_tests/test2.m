@@ -1,5 +1,6 @@
 clear all;
 global nx ny nun n
+rng(42)
 nx= 64;
 ny= 64;
 nun=2;
@@ -35,7 +36,7 @@ H = kron(M,H);
 global Q nDetails nAverage
 
 % permutation matrix
-[P2, nDetails, nAverage] = separator(n, bs, 1);
+[P2, nDetails, nAverage] = separator(n, bs, 2);
 
 % combined orthogonal transform
 Q = P2*H*P1;
@@ -57,13 +58,15 @@ th = 1.0;
 xold = zeros(n,1);
 
 % number of time steps
-Tend = 0.1;
+Tend = 0.2;
 
 global useReservoir plotComponents
 useReservoir = false;
 x = runTimeStepper(dt, th, Tend, xold);
 
 global W W_in W_ofb W_out noise Nr scaleU scaleY Rstate
+%ZA = ZA(10:end,:);
+%ZD = ZD(10:end,:);
 trainReservoir(ZA, ZD);
 
 useReservoir = true;
@@ -73,9 +76,10 @@ runTimeStepper(dt, th, Tend, x);
 function [ ] = trainReservoir(trainU, trainY)
     global W W_in W_ofb W_out noise Nr scaleU scaleY Rstate
 
-    Nr       = 100;
+    Nr       = 500;
     noise    = 0.0;
-    sparsity = .95;
+    0;
+    sparsity = .99;
     rhoMax   = 0.9;  % spectral radius
 
     W = rand(Nr)-0.5;
@@ -110,7 +114,7 @@ function [ ] = trainReservoir(trainU, trainY)
     end
 
     % Extend X with raw input columns
-    % extX = [X, trainU];
+    %extX = [X, trainU];
     extX = X;
 
     % Create pseudo inverse
@@ -124,11 +128,12 @@ function [ ] = trainReservoir(trainU, trainY)
     
     % save last reservoir state to use in rhs
     Rstate = X(end,:);
+
 end
 
 % overload rhs function with ML component
 function [out] = F(x)
-    global W W_in W_out W_ofb Rstate scaleU Q nDetails 
+    global W W_in W_out W_ofb noise Rstate scaleU Q nDetails 
     global nAverage Rstate useReservoir qg 
     global plotComponents
     global nx ny nun n
@@ -143,8 +148,9 @@ function [out] = F(x)
 
         z  = scaleU * z';
         Rstate = update(Rstate, z, 0*y0');
-
-        y = tanh(W_out*Rstate);
+     
+        %y = tanh(W_out*[Rstate(:);0*z(:)]);
+        y = tanh(W_out*Rstate(:));
         y = y * scaleU;
 
         xd  = Q'*[0*z(:)      ; y(:)];
@@ -166,7 +172,9 @@ function [out] = F(x)
         title('solution')
         figure(6); plotQG(nx,ny,2,abs(x-x0)); drawnow;
         title('difference')
-        input('')
+        fprintf('max relative difference p: %e\n', max(abs(x(2:2:end)-x0(2:2:end)))/max(abs(x0(2:2:end))));
+        fprintf('max relative difference z: %e\n', max(abs(x(1:2:end)-x0(1:2:end)))/max(abs(x0(1:2:end))));
+        error('ending')
     end    
 
     out = qg.rhs(real(x));
@@ -180,7 +188,7 @@ end
 
 function [x] = runTimeStepper(dt, th, Tend, x0)
     global B qg history ZA ZD t Q 
-    global W W_in W_out W_ofb Rstate scaleU Q nDetails 
+    global W W_in W_out W_ofb noise Rstate scaleU Q nDetails 
     global noise Nr
     global nAverage nDetails  
     global useReservoir plotComponents
@@ -255,16 +263,7 @@ function [x] = runTimeStepper(dt, th, Tend, x0)
             ZD = [ZD; z(nAverage+1:end)'];
         end
     end
-
 end
-
-
-
-
-
-
-
-
 
 % $$$ % test analytical jacobian with numerical jacobian
 % $$$ J = -qg.jacobian(xold, 0.0);
