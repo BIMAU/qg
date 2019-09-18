@@ -7,14 +7,8 @@ ndim  = nun*m*n;
 
 mxIm  = max(IM(:));
 
-
 x = zeros(ndim,1);
 ord = [];
-
-%IM(1,1) = -1
-%IM(3,1) = -1;
-%IM(11,1) = -1;
-
 
 figure(1);
 imagesc(IM');
@@ -34,13 +28,6 @@ for j = 1:n
 end
         
 bs = 4; % blocksize
-
-% $$$ for j = 1:bs:n
-% $$$     for i = 1:bs:m
-% $$$         x(nun*(m*(j-1)+(i-1))+1) = 0;
-% $$$         x(nun*(m*(j-1)+(i-1))+2) = mxIm;
-% $$$     end
-% $$$ end
 
 IM = reshape(x, nun, m, n);
 colormap(gray);
@@ -69,7 +56,6 @@ H = haarmat(bs^2);
 M = speye(ndim/(bs^2));
 H = kron(M,H);
 w = H*z;
-
 
 [P2, nDetails, nAverage] = separator(ndim, bs, 1);
 
