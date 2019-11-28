@@ -34,10 +34,13 @@ set(QG_MATLAB_FILES
 
 install(FILES ${QG_MATLAB_FILES} DESTINATION matlab)
 
-# enable_testing()
-# matlab_add_unit_test(
-#     NAME stokes0
-#     TIMEOUT 30
-#     UNITTEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stokes0.m
-#     ADDITIONAL_PATH "${CMAKE_CURRENT_BINARY_DIR}:${CMAKE_CURRENT_SOURCE_DIR}"
-# )
+enable_testing()
+matlab_add_unit_test(
+  NAME basic0
+  TIMEOUT 30
+  UNITTEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/MLQG_tests/test_basic_things.m
+  ADDITIONAL_PATH "${CMAKE_CURRENT_BINARY_DIR}:${CMAKE_CURRENT_SOURCE_DIR}"
+  )
+
+set(CTEST_OPTIONS --force-new-ctest-process)
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_OPTIONS})

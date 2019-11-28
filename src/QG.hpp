@@ -67,7 +67,7 @@ public:
     QG &operator=(QG const &other) = delete;
 
     void jacob(double const *un, double sig);
-  void jacobian(double const *un, double sig, int *beg, int *jco, double *co );
+    void jacobian(double const *un, double sig, int *beg, int *jco, double *co );
     void rhs(double const *un, double *b);
     void bilin(double const *un,double const *vn, double *b);
     void mass(double *M);

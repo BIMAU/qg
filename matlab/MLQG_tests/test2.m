@@ -65,8 +65,8 @@ useReservoir = false;
 x = runTimeStepper(dt, th, Tend, xold);
 
 global W W_in W_ofb W_out noise Nr scaleU scaleY Rstate
-%ZA = ZA(10:end,:);
-%ZD = ZD(10:end,:);
+ZA = ZA(10:end-2,:);
+ZD = ZD(10:end-2,:);
 trainReservoir(ZA, ZD);
 
 useReservoir = true;
@@ -76,11 +76,10 @@ runTimeStepper(dt, th, Tend, x);
 function [ ] = trainReservoir(trainU, trainY)
     global W W_in W_ofb W_out noise Nr scaleU scaleY Rstate
 
-    Nr       = 500;
-    noise    = 0.0;
-    0;
-    sparsity = .99;
-    rhoMax   = 0.9;  % spectral radius
+    Nr       = 300;
+    noise    = 0.0;    
+    sparsity = .9;
+    rhoMax   = 1.2;  % spectral radius
 
     W = rand(Nr)-0.5;
     W(rand(Nr) < sparsity) = 0;
@@ -128,7 +127,6 @@ function [ ] = trainReservoir(trainU, trainY)
     
     % save last reservoir state to use in rhs
     Rstate = X(end,:);
-
 end
 
 % overload rhs function with ML component
@@ -172,8 +170,10 @@ function [out] = F(x)
         title('solution')
         figure(6); plotQG(nx,ny,2,abs(x-x0)); drawnow;
         title('difference')
-        fprintf('max relative difference p: %e\n', max(abs(x(2:2:end)-x0(2:2:end)))/max(abs(x0(2:2:end))));
-        fprintf('max relative difference z: %e\n', max(abs(x(1:2:end)-x0(1:2:end)))/max(abs(x0(1:2:end))));
+        fprintf('max relative difference p: %e\n', ... 
+                max(abs(x(2:2:end)-x0(2:2:end)))/max(abs(x0(2:2:end))));
+        fprintf('max relative difference z: %e\n', ... 
+                max(abs(x(1:2:end)-x0(1:2:end)))/max(abs(x0(1:2:end))));
         error('ending')
     end    
 

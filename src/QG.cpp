@@ -110,7 +110,7 @@ void QG::assembleA()
     int v = 0;
     for (int i = 0; i < n_; i++) // SOUTH j=1
     {
-        A_.co[v] = Alzz_(i,0,4);
+        A_.co[v]   = Alzz_(i,0,4);
         A_.co[v+1] = Alzz_(i,0,5);
         A_.co[v+2] = Alzp_(i,0,5);
         A_.co[v+3] = Alpp_(i,0,4);
@@ -119,7 +119,7 @@ void QG::assembleA()
 
     for (int j = 1; j < m_-1; j++) // WEST: i=1
     {
-        A_.co[v] = Alzz_(0,j,4);
+        A_.co[v]   = Alzz_(0,j,4);
         A_.co[v+1] = Alzz_(0,j,7);
         A_.co[v+2] = Alzp_(0,j,7);
         A_.co[v+3] = Alpp_(0,j,4);
@@ -365,6 +365,7 @@ void QG::apply(double const *x, double *y)
             y[i] += A_.co[v] * x[A_.jco[v]];
     }
 }
+
 void QG::mass(double *M)
 {
     timedep();
@@ -414,7 +415,7 @@ void QG::lin()
 
     deriv(1, z);   // ALLEEN BIJ GEBRUIK BODEMFRICTIE NIET NUL
     deriv(2, dxx); // ALLEEN GETALLEN: VOOR BEIDE VGL TE GEBRUIKEN
-    deriv(3, dyy);
+    deriv(3, dyy); 
     deriv(4, cor);
 
     for (int i = 0; i < Llzz_.size(); i++)
@@ -522,19 +523,6 @@ void QG::boundaries()
     double omt2 =    par_(7) / 2.0;
     double omt3 = -3*par_(7) / (dy_*dy_);
 
-    for (int j = 1; j < m_-1; j++)
-    {
-        Alzz_(0,j,4) = 1.0; // WEST: i=1      , j=(2,M-1)
-        Alzz_(0,j,7) = oml2;
-        Alzp_(0,j,7) = oml3;
-        Alpp_(0,j,4) = 1.0;
-
-        Alzz_(n_-1,j,4) = 1.0; //EAST: i=N      , j=(2,M-1)
-        Alzz_(n_-1,j,1) = omr2;
-        Alzp_(n_-1,j,1) = omr3;
-        Alpp_(n_-1,j,4) = 1.0;
-    }
-
     for (int i = 0; i < n_; i++)
     {
         Alzz_(i,0,4) = 1.0; // SOUTH:i=(1,N), j=1
@@ -546,6 +534,19 @@ void QG::boundaries()
         Alzz_(i,m_-1,3) = omt2;
         Alzp_(i,m_-1,3) = omt3;
         Alpp_(i,m_-1,4) = 1.0;
+    }
+
+    for (int j = 1; j < m_-1; j++)
+    {
+        Alzz_(0,j,4) = 1.0; // WEST: i=1      , j=(2,M-1)
+        Alzz_(0,j,7) = oml2;
+        Alzp_(0,j,7) = oml3;
+        Alpp_(0,j,4) = 1.0;
+
+        Alzz_(n_-1,j,4) = 1.0; //EAST: i=N      , j=(2,M-1)
+        Alzz_(n_-1,j,1) = omr2;
+        Alzp_(n_-1,j,1) = omr3;
+        Alpp_(n_-1,j,4) = 1.0;
     }
 }
 
