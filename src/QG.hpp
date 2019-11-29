@@ -91,7 +91,6 @@ protected:
 
     void assembleA();
     void assembleB();
-    void fillcolA();
     void fillcolB();
 
     void nlin_jac(Vector2D const &om, Vector2D const &ps);

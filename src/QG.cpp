@@ -97,6 +97,14 @@ namespace QG
 
     void QG::assembleA()
     {
+        
+        /*
+         * assemble the global matrix A from the local matrices
+         *     2 5     QG version: 2 and 6 are not used
+         *     1 4 7
+         *       3 6
+         */
+
         // Let's make a 5D array out of 4 3D arrays
         std::vector<std::vector<Vector3D> > Al = {
             {Alzz_, Alzp_},
@@ -105,7 +113,7 @@ namespace QG
         // fully 0-based (including XX) find row function
         auto findRow = [&] (int i, int j, int XX)
             {
-                return 2*(n_*j+i)+XX+1;
+                return 2*(n_*j+i)+XX;
             };
 
         auto shift = [&] (int i, int j, int &i2, int &j2, int loc)
@@ -115,137 +123,47 @@ namespace QG
                 return 0;
             };        
             
-        std::vector<double> co;
-        std::vector<int>   jco;
-        std::vector<int>   beg;
 
-        int row;
         int ZZ = 0;
         int PP = 1;
-        int elm_ctr = 0;
         int i2,j2;
 
         double val;
         int col;
 
+        int elm_ctr = 0;
+        int beg_ctr = 0;
+        
         for (int j = 0; j < m_; ++j)
             for (int i = 0; i < n_; ++i)
-                for (int A = ZZ; A <= PP; ++A)
+                for (int a = ZZ; a <= PP; ++a)
                 {
-                    row = findRow(i, j, A);
-                    beg.push_back(elm_ctr);
-                    
+                    A_.beg[beg_ctr] = elm_ctr;
+                    ++beg_ctr;
+
                     for (int loc = 1; loc <= 7; ++loc)
                     {
                         shift(i, j, i2, j2, loc);
                         
                         // now I know the neighbour location i2,j2
                         // and I can get the dependency for Z and P
-                        for (int B = ZZ; B <= PP; ++B)
+                        for (int b = ZZ; b <= PP; ++b)
                         {
-                            val = Al[A][B](i, j, loc);
+                            val = Al[a][b](i, j, loc);
                             if (std::abs(val) > 1e-12)
                             {
-                                co.push_back(val);
-                                col = findRow(i2, j2, B);
-                                jco.push_back(col);
+                                A_.co[elm_ctr] = val;
+                                col = findRow(i2, j2, b);
+                                A_.jco[elm_ctr] = col;
                                 ++elm_ctr;
                             }
                         }
                     }
-                }        
-        beg.push_back(elm_ctr);                    
-
-
-        //--------------------------------------------
-        //--------------------------------------------
-        
-        /*
-         * assemble the global matrix A from the local matrices
-         *     2 5     QG version: 2 and 6 are not used
-         *     1 4 7
-         *       3 6
-         */
-        for (int i = 0; i < adim_; i++)
-            A_.co[i] = 0.0;
-
-        fillcolA();
-
-        int v = 0;
-        for (int i = 0; i < n_; i++) // SOUTH j=1
-        {
-            A_.co[v]   = Alzz_(i,0,4);
-            A_.co[v+1] = Alzz_(i,0,5);
-            A_.co[v+2] = Alzp_(i,0,5);
-            A_.co[v+3] = Alpp_(i,0,4);
-            v += 4;
-        }
-
-        for (int j = 1; j < m_-1; j++) // WEST: i=1
-        {
-            A_.co[v]   = Alzz_(0,j,4);
-            A_.co[v+1] = Alzz_(0,j,7);
-            A_.co[v+2] = Alzp_(0,j,7);
-            A_.co[v+3] = Alpp_(0,j,4);
-            v += 4;
-
-            for (int i = 1; i < n_-1; i++)
-            {
-                // central:  vorticity equation
-                A_.co[v] = Alzz_(i,j,1);
-                A_.co[v+1] = Alzp_(i,j,1);
-                A_.co[v+2] = Alzz_(i,j,3);
-                A_.co[v+3] = Alzp_(i,j,3);
-                A_.co[v+4] = Alzz_(i,j,4);
-                A_.co[v+5] = Alzp_(i,j,4);
-                A_.co[v+6] = Alzz_(i,j,5);
-                A_.co[v+7] = Alzp_(i,j,5);
-                A_.co[v+8] = Alzz_(i,j,7);
-                A_.co[v+9] = Alzp_(i,j,7);
-
-                // psi-equation
-                A_.co[v+10] = Alpz_(i,j,1);
-                A_.co[v+11] = Alpp_(i,j,1);
-                A_.co[v+12] = Alpz_(i,j,3);
-                A_.co[v+13] = Alpp_(i,j,3);
-                A_.co[v+14] = Alpz_(i,j,4);
-                A_.co[v+15] = Alpp_(i,j,4);
-                A_.co[v+16] = Alpz_(i,j,5);
-                A_.co[v+17] = Alpp_(i,j,5);
-                A_.co[v+18] = Alpz_(i,j,7);
-                A_.co[v+19] = Alpp_(i,j,7);
-                v += 20;
-            }
-
-            // EAST: i=N
-            A_.co[v] = Alzz_(n_-1,j,1);
-            A_.co[v+1] = Alzp_(n_-1,j,1);
-            A_.co[v+2] = Alzz_(n_-1,j,4);
-            A_.co[v+3] = Alpp_(n_-1,j,4);
-            v += 4;
-        }
-
-        for (int i = 0; i < n_; i++) // NORTH j=M
-        {
-            A_.co[v] = Alzz_(i,m_-1,3);
-            A_.co[v+1] = Alzp_(i,m_-1,3);
-            A_.co[v+2] = Alzz_(i,m_-1,4);
-            A_.co[v+3] = Alpp_(i,m_-1,4);
-            v += 4;
-        }
-
+                }
+        A_.beg[beg_ctr] = elm_ctr;
         
         A_.pack();
-        
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int v = A_.beg[i]; v < A_.beg[i+1]; v++)
-                std::cout << "orig " << i << " " <<  A_.jco[i] << " " << A_.co[i] << std::endl;
-            for (int v = beg[i]; v < beg[i+1]; v++)
-                std::cout << "new  " << i << " " <<  jco[i] << " " << co[i] << std::endl;
-        }
 
-        std::cout << "______ end of assemble ______" << std::endl;
     }
 
     void QG::assembleB()
@@ -625,99 +543,6 @@ namespace QG
         }
     }
 
-
-    void QG::fillcolA()
-    {
-        /*
-         * fill the collumns of A and N
-         *     2 5
-         *     1 4 7 // positions 2 and 6 not used
-         *       3 6
-         */
-        int v = 0;
-        int is = 2;
-        int js = 2 * n_;
-        for (int i = 0; i < n_; i++) // SOUTH j=1
-        {
-            int row = 2 * i;
-            A_.beg[row] = v;
-            A_.beg[row+1] = v+3;
-
-            A_.jco[v] = row;
-            A_.jco[v+1] = row + js;
-            A_.jco[v+2] = row + 1 + js;
-            A_.jco[v+3] = row + 1;
-            v += 4;
-        }
-
-        for (int j = 1; j < m_-1; j++) // WEST: i=1
-        {
-            int row = 2 * n_ * j;
-            A_.beg[row] = v;
-            A_.beg[row+1] = v+3;
-
-            A_.jco[v] = row;
-            A_.jco[v+1] = row + is;
-            A_.jco[v+2] = row + 1 + is;
-            A_.jco[v+3] = row + 1;
-            v += 4;
-
-            for (int i = 1; i < n_-1; i++) // CENTRAL
-            {
-                row = 2 * (n_ * j + i);
-                A_.beg[row]= v;
-                A_.beg[row+1]= v+10;
-
-                A_.jco[v] = row - is;
-                A_.jco[v+1] = row - is + 1;
-                A_.jco[v+2] = row - js;
-                A_.jco[v+3] = row - js + 1;
-                A_.jco[v+4] = row;
-                A_.jco[v+5] = row + 1;
-                A_.jco[v+6] = row + js;
-                A_.jco[v+7] = row + js + 1;
-                A_.jco[v+8] = row + is;
-                A_.jco[v+9] = row + is + 1;
-
-                A_.jco[v+10] = row - is; // position 1
-                A_.jco[v+11] = row - is + 1;
-                A_.jco[v+12] = row - js;  // position 3
-                A_.jco[v+13] = row - js + 1;
-                A_.jco[v+14] = row; // position 4
-                A_.jco[v+15] = row + 1;
-                A_.jco[v+16] = row + js; // position 5
-                A_.jco[v+17] = row + js + 1;
-                A_.jco[v+18] = row + is; // position 7
-                A_.jco[v+19] = row + is + 1;
-                v += 20;
-            }
-
-            row = 2 * (n_ * j + n_-1); // EAST: i=N
-            A_.beg[row] = v;
-            A_.beg[row+1] = v+3;
-
-            A_.jco[v] = row - is;
-            A_.jco[v+1] = row + 1 - is;
-            A_.jco[v+2] = row;
-            A_.jco[v+3] = row + 1;
-            v += 4;
-        }
-
-        for (int i = 0; i < n_; i++) // NORTH j=M
-        {
-            int row = 2 * (n_ * (m_-1) + i);
-            A_.beg[row] = v;
-            A_.beg[row+1] = v+3;
-
-            A_.jco[v] = row - js;
-            A_.jco[v+1] = row + 1 - js;
-            A_.jco[v+2] = row;
-            A_.jco[v+3] = row + 1;
-            v += 4;
-        }
-
-        A_.beg[ndim_] = v;
-    }
 
     void QG::fillcolB()
     {

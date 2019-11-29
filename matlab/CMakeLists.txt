@@ -36,7 +36,7 @@ install(FILES ${QG_MATLAB_FILES} DESTINATION matlab)
 
 enable_testing()
 matlab_add_unit_test(
-  NAME basic0
+  NAME test_basic_things
   TIMEOUT 30
   UNITTEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/MLQG_tests/test_basic_things.m
   ADDITIONAL_PATH "${CMAKE_CURRENT_BINARY_DIR}:${CMAKE_CURRENT_SOURCE_DIR}"
