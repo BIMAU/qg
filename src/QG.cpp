@@ -57,6 +57,12 @@ namespace QG
         for (int i = 0; i < m_; i++)
             y_[i] = i * dy_ + ymin_;
 
+        // if not periodic we only use interior points for many computations
+        jmin_ = (periodic_) ? 0 : 1;
+        jmax_ = (periodic_) ? m_ : m_-1;
+        imin_ = (periodic_) ? 0 : 1;
+        imax_ = (periodic_) ? n_ : n_-1;
+
         /******************************************************************************
          *     1:   alpha_tau
          *     2:   beta parameter
@@ -641,22 +647,15 @@ namespace QG
         for (int i = 0; i < atom.size(); i++)
             atom[i] = 0.0;
 
-        // if not periodic we only compute interior points
-        int jmin = (periodic_) ? 0 : 1;
-        int jmax = (periodic_) ? m_ : m_-1;
-        int imin = (periodic_) ? 0 : 1;
-        int imax = (periodic_) ? n_ : n_-1;
-
-
         double r4dxdy = 1.0/(4*dy_*dx_);
 
         switch (type)
         {
         case 1: // Udx
         {
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,1) = +r4dxdy*(ps(i,j+1)-ps(i,j-1));
                     atom(i,j,7) = -r4dxdy*(ps(i,j+1)-ps(i,j-1));
@@ -666,9 +665,9 @@ namespace QG
         break;
         case 2: // Vdy
         {
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,3) = -r4dxdy*(ps(i+1,j)-ps(i-1,j));
                     atom(i,j,5) =  r4dxdy*(ps(i+1,j)-ps(i-1,j));
@@ -678,9 +677,9 @@ namespace QG
         break;
         case 3: // udZx
         {
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,3) = + r4dxdy*(om(i+1,j)-om(i-1,j));
                     atom(i,j,5) = - r4dxdy*(om(i+1,j)-om(i-1,j));
@@ -690,9 +689,9 @@ namespace QG
         break;
         case 4: // vdZy
         {
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,1) = - r4dxdy*(om(i,j+1)-om(i,j-1));
                     atom(i,j,7) = + r4dxdy*(om(i,j+1)-om(i,j-1));
@@ -702,9 +701,9 @@ namespace QG
         break;
         case 5: // udPx
         {
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,3) = + r4dxdy*(ps(i+1,j)-ps(i-1,j));
                     atom(i,j,5) = - r4dxdy*(ps(i+1,j)-ps(i-1,j));
@@ -714,9 +713,9 @@ namespace QG
         break;
         case 6: // vdPy
         {
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,1) = - r4dxdy*(ps(i,j+1)-ps(i,j-1));
                     atom(i,j,7) = + r4dxdy*(ps(i,j+1)-ps(i,j-1));
@@ -740,18 +739,18 @@ namespace QG
             atom[i] = 0.0;
 
         // if not periodic we only compute interior points
-        int jmin = (periodic_) ? 0 : 1;
-        int jmax = (periodic_) ? m_ : m_-1;
-        int imin = (periodic_) ? 0 : 1;
-        int imax = (periodic_) ? n_ : n_-1;
+        int jmin_ = (periodic_) ? 0 : 1;
+        int jmax_ = (periodic_) ? m_ : m_-1;
+        int imin_ = (periodic_) ? 0 : 1;
+        int imax_ = (periodic_) ? n_ : n_-1;
 
         switch (type)
         {
         case 1:
         {
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,4) = 1.0;
                 }
@@ -761,9 +760,9 @@ namespace QG
         case 2:
         {
             double rdx2i = (1.0/dx_) * (1.0/dx_);
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,1) =    rdx2i;
                     atom(i,j,4) = -2*rdx2i;
@@ -775,9 +774,9 @@ namespace QG
         case 3:
         {
             double rdy2i = (1.0/dy_) * (1.0/dy_);
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,3) =    rdy2i;
                     atom(i,j,4) = -2*rdy2i;
@@ -789,9 +788,9 @@ namespace QG
         case 4:
         {
             double r2dx = 1.0 / (2*dx_);
-            for (int j = jmin; j < jmax; j++)
+            for (int j = jmin_; j < jmax_; j++)
             {
-                for (int i = imin; i < imax; i++)
+                for (int i = imin_; i < imax_; i++)
                 {
                     atom(i,j,1) = -r2dx;
                     atom(i,j,7) =  r2dx;

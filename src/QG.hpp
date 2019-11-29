@@ -36,6 +36,11 @@ class QG
     double dx_;
     double dy_;
 
+    int imin_;
+    int imax_;
+    int jmin_;
+    int jmax_;
+
     Vector1D x_;
     Vector1D y_;
 
