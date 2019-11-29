@@ -10,11 +10,12 @@
 namespace QG
 {
 
-    QG::QG(int m, int n)
+    QG::QG(int m, int n, int perio)
         :
         m_(m),
         n_(n),
-        ndim_(2*m*n),
+        nun_(2),
+        ndim_(nun_*m*n),
         adim_(25*ndim_),
         hdim_(6.0e+02),
         f0dim_(1.0e-04),
@@ -31,6 +32,7 @@ namespace QG
         xmax_(1.0),
         ymin_(0.0),
         ymax_(Lydim_/Lxdim_),
+        periodic_(perio),
         x_(n),
         y_(m),
         tx_(n,m),
@@ -82,6 +84,9 @@ namespace QG
         par_(19) = 0.0;
 
         compute_linear();
+
+        std::cout << "periodic: " << periodic_ << std::endl;
+        std::cout << " ___ constructor done ___ " << std::endl;
     }
 
     QG::~QG()
@@ -95,34 +100,37 @@ namespace QG
         lin(); // linear part which is independent of the state
     }
 
-    void QG::assembleA()
+    // fully 0-based (including XX) find row function
+    int QG::findRow(int i, int j, int XX)
     {
-        
-        /*
-         * assemble the global matrix A from the local matrices
-         *     2 5     QG version: 2 and 6 are not used
-         *     1 4 7
-         *       3 6
-         */
+        return nun_*(n_*j+i)+XX;
+    }
 
+    // shift: give coordinates of neighbour at location loc. Indexing:
+    //        2 5     
+    //        1 4 7
+    //          3 6
+    void QG::shift(int i, int j, int &i2, int &j2, int loc)
+    {
+        j2 = j + (loc%3)-1;
+        i2 = i + (loc/3)-1;
+
+        // periodic boundaries
+        if (periodic_)
+        {
+            if (i2 == n_) i2 = 0;
+            if (i2 == -1) i2 = n_-1;
+            if (j2 == m_) j2 = 0;
+            if (j2 == -1) j2 = m_-1;
+        }        
+    }
+    
+    void QG::assembleA()
+    {        
         // Let's make a 5D array out of 4 3D arrays
         std::vector<std::vector<Vector3D> > Al = {
             {Alzz_, Alzp_},
             {Alpz_, Alpp_} };
-
-        // fully 0-based (including XX) find row function
-        auto findRow = [&] (int i, int j, int XX)
-            {
-                return 2*(n_*j+i)+XX;
-            };
-
-        auto shift = [&] (int i, int j, int &i2, int &j2, int loc)
-            {
-                j2 = j + (loc%3)-1;
-                i2 = i + (loc/3)-1;
-                return 0;
-            };        
-            
 
         int ZZ = 0;
         int PP = 1;
@@ -145,8 +153,8 @@ namespace QG
                     {
                         shift(i, j, i2, j2, loc);
                         
-                        // now I know the neighbour location i2,j2
-                        // and I can get the dependency for Z and P
+                        // now I know the neighbour location i2,j2 and
+                        // I can get the dependency for Z and P
                         for (int b = ZZ; b <= PP; ++b)
                         {
                             val = Al[a][b](i, j, loc);
@@ -160,10 +168,7 @@ namespace QG
                         }
                     }
                 }
-        A_.beg[beg_ctr] = elm_ctr;
-        
-        A_.pack();
-
+        A_.beg[beg_ctr] = elm_ctr;        
     }
 
     void QG::assembleB()
@@ -507,6 +512,8 @@ namespace QG
  *     1 4 7
  *       3 6
  */
+        if (periodic_) return;
+        
         double oml2 =    par_(6) / 2.0;
         double oml3 = -3*par_(6) / (dx_*dx_); // for equidistant grids no differences
         double omr2 =    par_(6) / 2.0;
@@ -542,7 +549,7 @@ namespace QG
             Alpp_(n_-1,j,4) = 1.0;
         }
     }
-
+    
 
     void QG::fillcolB()
     {
@@ -634,15 +641,22 @@ namespace QG
         for (int i = 0; i < atom.size(); i++)
             atom[i] = 0.0;
 
+        // if not periodic we only compute interior points
+        int jmin = (periodic_) ? 0 : 1;
+        int jmax = (periodic_) ? m_ : m_-1;
+        int imin = (periodic_) ? 0 : 1;
+        int imax = (periodic_) ? n_ : n_-1;
+
+
         double r4dxdy = 1.0/(4*dy_*dx_);
 
         switch (type)
         {
         case 1: // Udx
         {
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,1) = +r4dxdy*(ps(i,j+1)-ps(i,j-1));
                     atom(i,j,7) = -r4dxdy*(ps(i,j+1)-ps(i,j-1));
@@ -652,9 +666,9 @@ namespace QG
         break;
         case 2: // Vdy
         {
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,3) = -r4dxdy*(ps(i+1,j)-ps(i-1,j));
                     atom(i,j,5) =  r4dxdy*(ps(i+1,j)-ps(i-1,j));
@@ -664,9 +678,9 @@ namespace QG
         break;
         case 3: // udZx
         {
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,3) = + r4dxdy*(om(i+1,j)-om(i-1,j));
                     atom(i,j,5) = - r4dxdy*(om(i+1,j)-om(i-1,j));
@@ -676,9 +690,9 @@ namespace QG
         break;
         case 4: // vdZy
         {
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,1) = - r4dxdy*(om(i,j+1)-om(i,j-1));
                     atom(i,j,7) = + r4dxdy*(om(i,j+1)-om(i,j-1));
@@ -688,9 +702,9 @@ namespace QG
         break;
         case 5: // udPx
         {
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,3) = + r4dxdy*(ps(i+1,j)-ps(i-1,j));
                     atom(i,j,5) = - r4dxdy*(ps(i+1,j)-ps(i-1,j));
@@ -700,9 +714,9 @@ namespace QG
         break;
         case 6: // vdPy
         {
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,1) = - r4dxdy*(ps(i,j+1)-ps(i,j-1));
                     atom(i,j,7) = + r4dxdy*(ps(i,j+1)-ps(i,j-1));
@@ -725,13 +739,19 @@ namespace QG
         for (int i = 0; i < atom.size(); i++)
             atom[i] = 0.0;
 
+        // if not periodic we only compute interior points
+        int jmin = (periodic_) ? 0 : 1;
+        int jmax = (periodic_) ? m_ : m_-1;
+        int imin = (periodic_) ? 0 : 1;
+        int imax = (periodic_) ? n_ : n_-1;
+
         switch (type)
         {
         case 1:
         {
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,4) = 1.0;
                 }
@@ -741,9 +761,9 @@ namespace QG
         case 2:
         {
             double rdx2i = (1.0/dx_) * (1.0/dx_);
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,1) =    rdx2i;
                     atom(i,j,4) = -2*rdx2i;
@@ -755,9 +775,9 @@ namespace QG
         case 3:
         {
             double rdy2i = (1.0/dy_) * (1.0/dy_);
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,3) =    rdy2i;
                     atom(i,j,4) = -2*rdy2i;
@@ -769,9 +789,9 @@ namespace QG
         case 4:
         {
             double r2dx = 1.0 / (2*dx_);
-            for (int j = 1; j < m_-1; j++)
+            for (int j = jmin; j < jmax; j++)
             {
-                for (int i = 1; i < n_-1; i++)
+                for (int i = imin; i < imax; i++)
                 {
                     atom(i,j,1) = -r2dx;
                     atom(i,j,7) =  r2dx;

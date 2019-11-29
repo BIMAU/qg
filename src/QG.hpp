@@ -10,6 +10,7 @@ class QG
 {
     int m_;
     int n_;
+    int nun_;
     int ndim_;
     int adim_;
 
@@ -29,6 +30,8 @@ class QG
     double xmax_;
     double ymin_;
     double ymax_;
+
+    int periodic_; // periodic boundary conditions everywhere
 
     double dx_;
     double dy_;
@@ -59,7 +62,7 @@ class QG
 
 public:
     QG() = delete;
-    QG(int m, int n);
+    QG(int m, int n, int perio = 0);
     QG(QG const &other) = default;
 
     virtual ~QG();
@@ -89,6 +92,9 @@ protected:
     void compute_forcing();
     void compute_linear();
 
+    int findRow(int i, int j, int XX);
+    void shift(int i, int j, int &i2, int &j2, int loc);
+    
     void assembleA();
     void assembleB();
     void fillcolB();

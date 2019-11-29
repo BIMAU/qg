@@ -3,11 +3,14 @@ classdef QG < handle
         instance
     end
     methods
-        function h = QG(A, params)
-            if nargin ~= 2
-                error('Two input arguments required');
+        function h = QG(nx, ny, perio)
+            if ((nargin < 2) || (nargin > 3))
+                error('Wrong number of input arguments');
             end
-            h.instance = QG_init(A, params);
+            if (nargin ~= 3)
+                perio = 0;
+            end
+            h.instance = QG_init(nx, ny, perio);
             fprintf('QG successfully initialized\n');
         end
 

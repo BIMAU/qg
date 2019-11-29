@@ -30,3 +30,18 @@ yr = qg.apply(xr);
 assert(norm(yr(:)-testdata.yr(:),2) == 0);
 
 J = qg.jacobian(xr,0.0);
+
+
+%% Test 3: periodic boundary conditions
+
+nx = 8; ny = 8;
+n = nx * ny * 2;
+x = rand(n,1);
+qg = QG(nx, ny, 0);
+J1 = qg.jacobian(x, 0.0);
+figure(1); spy(J1);
+
+qg = QG(nx, ny, 1);
+J2 = qg.jacobian(x, 0.0);
+figure(2); spy(J2);
+figure(3); spy(J2-J1);
