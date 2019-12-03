@@ -130,6 +130,9 @@ namespace QG
 
     void QG::assemble(std::vector<std::vector<Vector3D> > const &stencil, Matrix &A)
     {
+        for (int i = 0; i < adim_; i++)
+            A.co[i] = 0.0;
+        
         int ZZ = 0; // state component zeta index
         int PP = 1; // state component psi index
 
@@ -192,6 +195,8 @@ namespace QG
 
         // Assemble the 5D stencil into the matrix B_;
         assemble(Bl, B_);
+
+        
     }
 
     void QG::jacob(double const *un, double sig)
@@ -382,7 +387,8 @@ namespace QG
                     if (B_.co[j] != 0.0)
                     {
                         std::cerr << "Mass matrix has wrong format" << std::endl;
-                        exit(1);
+                        std::cerr << "i = " << i << ", j = " << B_.jco[j] << ", val = " << B_.co[j] << std::endl;
+                        // exit(1);
                     }
                 }
                 else

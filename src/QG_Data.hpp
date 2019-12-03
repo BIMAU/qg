@@ -1,6 +1,8 @@
 #ifndef QG_DATA_H
 #define QG_DATA_H
 
+#include <vector>
+
 namespace QG
 {
 
@@ -26,7 +28,7 @@ public:
 class Vector1D
 {
     int n_;
-    double *data_;
+    std::vector<double> data_;
 public:
     Vector1D() = delete;
     Vector1D(int n);
@@ -38,7 +40,6 @@ public:
     double &operator()(int i);
     double const &operator()(int i) const;
 
-    double *get();
     int size();
 };
 
@@ -46,7 +47,7 @@ class Vector2D
 {
     int m_;
     int n_;
-    double *data_;
+    std::vector<double> data_;
 public:
     Vector2D() = delete;
     Vector2D(int m, int n);
@@ -58,7 +59,6 @@ public:
     double &operator()(int i, int j);
     double const &operator()(int i, int j) const;
 
-    double *get();
     int size();
 };
 
@@ -67,7 +67,7 @@ class Vector3D
     int l_;
     int m_;
     int n_;
-    double *data_;
+    std::vector<double> data_;
 public:
     Vector3D() = delete;
     Vector3D(int l, int m, int n);
@@ -79,7 +79,6 @@ public:
     double &operator()(int i, int j, int k);
     double const &operator()(int i, int j, int k) const;
 
-    double *get();
     int size();
 };
 
