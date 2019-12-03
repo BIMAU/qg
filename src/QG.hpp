@@ -2,6 +2,7 @@
 #define QG_CPP_H
 
 #include "QG_Data.hpp"
+#include <vector>
 
 namespace QG
 {
@@ -53,6 +54,7 @@ class QG
     Vector3D Nlzz_; Vector3D Nlzp_;
     Vector3D Nlpp_; Vector3D Nlpz_;
     Vector3D Tlzz_; Vector3D Tlzp_;
+    Vector3D Tlpz_; Vector3D Tlpp_;
     Vector3D Llpz_; Vector3D Llpp_;
     Vector3D Alzz_; Vector3D Alzp_;
     Vector3D Alpz_; Vector3D Alpp_;
@@ -99,7 +101,8 @@ protected:
 
     int findRow(int i, int j, int XX);
     void shift(int i, int j, int &i2, int &j2, int loc);
-    
+
+    void assemble(std::vector<std::vector<Vector3D> > const &stencil, Matrix &A);
     void assembleA();
     void assembleB();
     void fillcolB();

@@ -29,8 +29,9 @@ xr = testdata.xr;
 yr = qg.apply(xr);
 assert(norm(yr(:)-testdata.yr(:),2) == 0);
 
-J = qg.jacobian(xr,0.0);
+%J = qg.jacobian(xr,0.0);
 B = qg.mass(n);
+assert(norm(B(:)-testdata.B(:),2) == 0);
 
 
 %%% Test ...: periodic boundary conditions... todo

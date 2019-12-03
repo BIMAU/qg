@@ -5,7 +5,6 @@
 #include <cstring>
 #include <cmath>
 #include <iostream>
-#include <vector>
 
 namespace QG
 {
@@ -42,6 +41,7 @@ namespace QG
         Nlzz_(n,m,10),Nlzp_(n,m,10),
         Nlpp_(n,m,10),Nlpz_(n,m,10),
         Tlzz_(n,m,10),Tlzp_(n,m,10),
+        Tlpz_(n,m,10),Tlpp_(n,m,10),
         Llpz_(n,m,10),Llpp_(n,m,10),
         Alzz_(n,m,10),Alzp_(n,m,10),
         Alpz_(n,m,10),Alpp_(n,m,10),
@@ -90,9 +90,6 @@ namespace QG
         par_(19) = 0.0;
 
         compute_linear();
-
-        std::cout << "periodic: " << periodic_ << std::endl;
-        std::cout << " ___ constructor done ___ " << std::endl;
     }
 
     QG::~QG()
@@ -130,18 +127,15 @@ namespace QG
             if (j2 == -1) j2 = m_-1;
         }        
     }
-    
-    void QG::assembleA()
-    {        
-        // Let's make a 5D array out of 4 3D arrays
-        std::vector<std::vector<Vector3D> > Al = {
-            {Alzz_, Alzp_},
-            {Alpz_, Alpp_} };
 
-        int ZZ = 0;
-        int PP = 1;
+    void QG::assemble(std::vector<std::vector<Vector3D> > const &stencil, Matrix &A)
+    {
+        int ZZ = 0; // state component zeta index
+        int PP = 1; // state component psi index
+
+        int np = 7; // number of possible neighbouring positions
+
         int i2,j2;
-
         double val;
         int col;
 
@@ -152,10 +146,10 @@ namespace QG
             for (int i = 0; i < n_; ++i)
                 for (int a = ZZ; a <= PP; ++a)
                 {
-                    A_.beg[beg_ctr] = elm_ctr;
+                    A.beg[beg_ctr] = elm_ctr;
                     ++beg_ctr;
 
-                    for (int loc = 1; loc <= 7; ++loc)
+                    for (int loc = 1; loc <= np; ++loc)
                     {
                         shift(i, j, i2, j2, loc);
                         
@@ -163,39 +157,40 @@ namespace QG
                         // I can get the dependency for Z and P
                         for (int b = ZZ; b <= PP; ++b)
                         {
-                            val = Al[a][b](i, j, loc);
+                            val = stencil[a][b](i, j, loc);
                             if (std::abs(val) > 1e-12)
                             {
-                                A_.co[elm_ctr] = val;
+                                A.co[elm_ctr] = val;
                                 col = findRow(i2, j2, b);
-                                A_.jco[elm_ctr] = col;
+                                A.jco[elm_ctr] = col;
                                 ++elm_ctr;
                             }
                         }
                     }
                 }
-        A_.beg[beg_ctr] = elm_ctr;        
+        A.beg[beg_ctr] = elm_ctr;        
+    }
+    
+    void QG::assembleA()
+    {        
+        // Let's make a 5D array out of 4 3D arrays
+        std::vector<std::vector<Vector3D> > Al = {
+            {Alzz_, Alzp_},
+            {Alpz_, Alpp_} };
+
+        // Assemble the 5D stencil into the matrix A_;
+        assemble(Al, A_);
     }
 
     void QG::assembleB()
-    {
-        for (int i = 0; i < adim_; i++)
-            A_.co[i] = 0.0;
+    {        
+        // Let's make a 5D array out of 4 3D arrays
+        std::vector<std::vector<Vector3D> > Bl = {
+            {Tlzz_, Tlzp_},
+            {Tlpz_, Tlpp_} };
 
-        fillcolB();
-
-        int v = 0;
-        for (int j = 1; j < m_-1; j++)
-        {
-            for (int i = 1; i < n_-1; i++)
-            {
-                B_.co[v] = -Tlzz_(i,j,4);
-                B_.co[v+1] = -Tlzp_(i,j,4);
-                v += 2;
-            }
-        }
-
-        B_.pack();
+        // Assemble the 5D stencil into the matrix A_;
+        assemble(Bl, B_);
     }
 
     void QG::jacob(double const *un, double sig)
@@ -484,15 +479,18 @@ namespace QG
         {
             Tlzz_[i] = 0.0;
             Tlzp_[i] = 0.0;
+            Tlpz_[i] = 0.0; // not used
+            Tlpz_[i] = 0.0; // not used
         }
 
+        // Residual formulation: Bdx/dt + F(x) = 0        
         double F = par_(10);
         for (int j = 1; j < m_-1; j++)
         {
             for (int i = 1; i < n_-1; i++)
             {
-                Tlzz_(i,j,4) = 1.0;
-                Tlzp_(i,j,4) = -F;
+                Tlzz_(i,j,4) = -1.0;
+                Tlzp_(i,j,4) = F;
             }
         }
     }
@@ -556,55 +554,6 @@ namespace QG
         }
     }
     
-
-    void QG::fillcolB()
-    {
-        /*
-         *     fill the collumns of B
-         *     2 5
-         *     1 4 7 // only position 4 used
-         *       3 6
-         */
-        int v = 0;
-
-        for (int i = 0; i < n_; i++) // SOUTH j=1
-        {
-            int row = 2 * i;
-            B_.beg[row] = v;
-            B_.beg[row+1] = v;
-        }
-
-        for (int j = 1; j < m_-1; j++) // WEST: i=1
-        {
-            int row = 2 * n_ * j;
-            B_.beg[row] = v;
-            B_.beg[row+1] = v;
-
-            for (int i = 1; i < n_-1; i++) // CENTRAL
-            {
-                row = 2 * (n_ * j + i);
-                B_.beg[row] = v;
-                B_.beg[row+1] = v+2;
-                B_.jco[v] = row;
-                B_.jco[v+1] = row + 1;
-                v += 2;
-            }
-
-            row = 2 * (n_ * j + n_-1); // EAST: i=N
-            B_.beg[row] = v;
-            B_.beg[row+1] = v;
-        }
-
-        for (int i = 0; i < n_; i++) // NORTH j=M
-        {
-            int row = 2 * (n_ * (m_-1) + i);
-            B_.beg[row] = v;
-            B_.beg[row+1] = v;
-        }
-
-        B_.beg[ndim_] = v;
-    }
-
     void QG::compute_forcing()
     {
         for (int i = 0; i < tx_.size(); i++)
