@@ -45,8 +45,8 @@ x    = zeros(n,1);
 sig  = 1.0/(dt*th);
 B    = qg.mass(n);
 rhs  = qg.rhs(x);
-qg.jacob(x, sig);
-dx   = qg.solve(-rhs);
+%qg.jacob(x, sig);
+%dx   = qg.solve(-rhs);
 
 %%% Test ...: periodic boundary conditions... todo
 %
