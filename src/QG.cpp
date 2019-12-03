@@ -194,9 +194,7 @@ namespace QG
             {Tlpz_, Tlpp_} };
 
         // Assemble the 5D stencil into the matrix B_;
-        assemble(Bl, B_);
-
-        
+        assemble(Bl, B_);        
     }
 
     void QG::jacob(double const *un, double sig)
@@ -210,8 +208,8 @@ namespace QG
 
         for (int i = 0; i < Alzz_.size(); i++)
         {
-            Alzz_[i] = Llzz_[i] + Nlzz_[i] + sig * Tlzz_[i];
-            Alzp_[i] = Llzp_[i] + Nlzp_[i] + sig * Tlzp_[i];
+            Alzz_[i] = Llzz_[i] + Nlzz_[i] - sig * Tlzz_[i];
+            Alzp_[i] = Llzp_[i] + Nlzp_[i] - sig * Tlzp_[i];
             Alpz_[i] = Llpz_[i];
             Alpp_[i] = Llpp_[i];
         }
@@ -232,8 +230,8 @@ namespace QG
 
         for (int i = 0; i < Alzz_.size(); i++)
         {
-            Alzz_[i] = Llzz_[i] + Nlzz_[i] + sig * Tlzz_[i];
-            Alzp_[i] = Llzp_[i] + Nlzp_[i] + sig * Tlzp_[i];
+            Alzz_[i] = Llzz_[i] + Nlzz_[i] - sig * Tlzz_[i];
+            Alzp_[i] = Llzp_[i] + Nlzp_[i] - sig * Tlzp_[i];
             Alpz_[i] = Llpz_[i];
             Alpp_[i] = Llpp_[i];
         }
@@ -374,7 +372,6 @@ namespace QG
     void QG::mass(double *M)
     {
         timedep();
-
         assembleB();
 
         for (int i = 0; i < ndim_; i++)
@@ -387,8 +384,9 @@ namespace QG
                     if (B_.co[j] != 0.0)
                     {
                         std::cerr << "Mass matrix has wrong format" << std::endl;
-                        std::cerr << "i = " << i << ", j = " << B_.jco[j] << ", val = " << B_.co[j] << std::endl;
-                        // exit(1);
+                        std::cerr << "i = " << i << ", j = " << B_.jco[j];
+                        std::cerr << ", val = " << B_.co[j] << std::endl;
+                        exit(1);
                     }
                 }
                 else

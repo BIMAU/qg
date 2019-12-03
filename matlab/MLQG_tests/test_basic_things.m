@@ -51,6 +51,39 @@ end
 
 assert( norm(dx,2) < 1e-7 )
 
+%% Test 4: perform a few backward Euler time steps
+
+rhs = @ (x) qg.rhs(x);
+
+x0 = zeros(n,1);
+
+s  = 1.0/(dt*th);
+B  = qg.mass(n);
+
+F = @(x) qg.rhs(x) ;
+
+x  = x0;
+F0 = F(x);
+
+for t = 1:3    
+    for k = 1:10        
+
+        rhs = B*(x-x0)/(dt*th) + F(x) + (1-th)/th * F0; 
+        qg.jacob(x, s);
+        dx = qg.solve(-rhs);
+        x  = x + dx;
+
+        fprintf('%2.3e\n', norm(dx,2));
+        
+        if norm(dx,2) < 1e-7
+            break;
+        end
+    end    
+    fprintf('\n');
+    x0 = x;
+    F0 = F(x);    
+end
+
 %%% Test ...: periodic boundary conditions... todo
 %
 %nx = 8; ny = 8;
