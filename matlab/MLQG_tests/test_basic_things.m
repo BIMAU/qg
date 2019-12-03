@@ -34,27 +34,22 @@ B = qg.mass(n);
 assert(norm(B(:)-testdata.B(:),2) == 0);
 
 
-%% Test 3: test time-dependent matrix solve
+%% Test 3: test Newton iteration
 
-qg.set_par(11, 0.0001);  % enable some wind stress
+% Try to convergence from zero to 10% wind stress with Re=45:
+qg.set_par(11, 0.1);  % enable  wind stress
+qg.set_par(5, 45);    % 
 
-dt = 0.01;  % time step size
-th = 1.0;   % theta
+rhs  = @ (x) qg.rhs(x);
+x    = zeros(n,1);
 
-xold = zeros(n,1);
-Fold = qg.rhs(xold);
-sig  = 1.0/(dt*th);
-B    = qg.mass(n);
-rhs  = @ (x) B*(x-xold)/(dt*th) + qg.rhs(x) + (1-th)/th * Fold;
-x    = xold;
-
-for i = 1:5
-    qg.jacob(x, sig);
-    dx = qg.solve(-rhs(x));
+for i = 1:20
+    qg.jacob(x);
+    dx = qg.solve(-qg.rhs(x));
     x = x + dx;
-    fprintf('%f\n', norm(x,2));
 end
 
+assert( norm(dx,2) < 1e-7 )
 
 %%% Test ...: periodic boundary conditions... todo
 %
