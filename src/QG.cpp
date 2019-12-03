@@ -180,16 +180,17 @@ namespace QG
 
         // Assemble the 5D stencil into the matrix A_;
         assemble(Al, A_);
+
     }
 
     void QG::assembleB()
-    {        
+    {
         // Let's make a 5D array out of 4 3D arrays
         std::vector<std::vector<Vector3D> > Bl = {
             {Tlzz_, Tlzp_},
             {Tlpz_, Tlpp_} };
 
-        // Assemble the 5D stencil into the matrix A_;
+        // Assemble the 5D stencil into the matrix B_;
         assemble(Bl, B_);
     }
 

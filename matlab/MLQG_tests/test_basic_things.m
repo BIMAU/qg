@@ -34,6 +34,20 @@ B = qg.mass(n);
 assert(norm(B(:)-testdata.B(:),2) == 0);
 
 
+%% Test 3: test time-dependent matrix solve
+
+qg.set_par(11, 0.1);  % enable some wind stress
+
+dt = 0.01;  % time step size
+th = 1.0;   % theta
+
+x    = zeros(n,1); 
+sig  = 1.0/(dt*th);
+B    = qg.mass(n);
+rhs  = qg.rhs(x);
+qg.jacob(x, sig);
+dx   = qg.solve(-rhs);
+
 %%% Test ...: periodic boundary conditions... todo
 %
 %nx = 8; ny = 8;
