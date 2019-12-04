@@ -13,7 +13,6 @@ F = qg.rhs(x);
 assert(numel(F) == n);
 assert(norm(F,2) == 0);
 
-
 %% Test 2: test matrices and rhs against data
 
 testdata = load('testdata.mat');
@@ -36,17 +35,17 @@ assert(norm(B(:)-testdata.B(:),2) == 0);
 
 %% Test 3: test Newton iteration
 
-% Try to convergence from zero to 10% wind stress with Re=45:
+% Try to converge from zero to 10% wind stress with Re=45:
 qg.set_par(11, 0.1);  % enable  wind stress
 qg.set_par(5, 45);    % 
 
-rhs  = @ (x) qg.rhs(x);
-x    = zeros(n,1);
+rhs = @ (x) qg.rhs(x);
+x   = zeros(n,1);
 
 for i = 1:20
     qg.jacob(x);
     dx = qg.solve(-qg.rhs(x));
-    x = x + dx;
+    x  = x + dx;
 end
 
 assert( norm(dx,2) < 1e-7 )
@@ -57,6 +56,8 @@ rhs = @ (x) qg.rhs(x);
 
 x0 = zeros(n,1);
 
+dt = 0.01;
+th = 1;
 s  = 1.0/(dt*th);
 B  = qg.mass(n);
 
@@ -73,16 +74,33 @@ for t = 1:3
         dx = qg.solve(-rhs);
         x  = x + dx;
 
-        fprintf('%2.3e\n', norm(dx,2));
-        
         if norm(dx,2) < 1e-7
             break;
         end
-    end    
-    fprintf('\n');
+    end
+    assert(norm(dx,2) < 1e-7);
     x0 = x;
     F0 = F(x);    
 end
+
+%% Test 5: periodic boundaries
+
+qg = QG(nx, ny, 1);
+qg.set_par(11, 0.001); % enable  wind stress
+qg.set_par(5, 45);     % 
+
+rhs = @ (x) qg.rhs(x);
+x   = zeros(n,1);
+
+for i = 1:2
+    qg.jacob(x);
+    dx = qg.solve(-qg.rhs(x));
+    x  = x + dx;
+    fprintf('%f\n', norm(dx,2));
+end
+
+%assert( norm(dx,2) < 1e-7 )
+
 
 %%% Test ...: periodic boundary conditions... todo
 %
