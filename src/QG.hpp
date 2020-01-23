@@ -95,7 +95,8 @@ public:
     void apply(double const *x, double *y);
 
 protected:
-    double curl(double x, double y);
+    double windFun(double x, double y);
+    double windFun2(double x, double y);
     void compute_forcing();
     void compute_linear();
 

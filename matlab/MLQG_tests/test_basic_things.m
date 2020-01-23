@@ -68,7 +68,6 @@ F0 = F(x);
 
 for t = 1:3    
     for k = 1:10        
-
         rhs = B*(x-x0)/(dt*th) + F(x) + (1-th)/th * F0; 
         qg.jacob(x, s);
         dx = qg.solve(-rhs);
@@ -82,36 +81,3 @@ for t = 1:3
     x0 = x;
     F0 = F(x);    
 end
-
-%% Test 5: periodic boundaries
-
-qg = QG(nx, ny, 1);
-qg.set_par(11, 0.001); % enable  wind stress
-qg.set_par(5, 45);     % 
-
-rhs = @ (x) qg.rhs(x);
-x   = zeros(n,1);
-
-for i = 1:2
-    qg.jacob(x);
-    dx = qg.solve(-qg.rhs(x));
-    x  = x + dx;
-    fprintf('%f\n', norm(dx,2));
-end
-
-%assert( norm(dx,2) < 1e-7 )
-
-
-%%% Test ...: periodic boundary conditions... todo
-%
-%nx = 8; ny = 8;
-%n = nx * ny * 2;
-%x = rand(n,1);
-%qg = QG(nx, ny, 0);
-%J1 = qg.jacobian(x, 0.0);
-%figure(1); spy(J1);
-%
-%qg = QG(nx, ny, 1);
-%J2 = qg.jacobian(x, 0.0);
-%figure(2); spy(J2);
-%figure(3); spy(J2-J1);                  

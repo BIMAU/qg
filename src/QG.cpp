@@ -118,14 +118,14 @@ namespace QG
         j2 = j + (loc%3)-1;
         i2 = i + (loc/3)-1;
 
-        // periodic boundaries
+        // resolve periodic boundaries
         if (periodic_)
         {
             if (i2 == n_) i2 = 0;
             if (i2 == -1) i2 = n_-1;
             if (j2 == m_) j2 = 0;
             if (j2 == -1) j2 = m_-1;
-        }        
+        }
     }
 
     void QG::assemble(std::vector<std::vector<Vector3D> > const &stencil, Matrix &A)
@@ -297,9 +297,9 @@ namespace QG
         u_to_psi(un, om, ps);
         nlin_rhs(om, ps);
 
-        for (int j = 1; j < m_-1; j++)
+        for (int j = jmin_; j < jmax_; j++)
         {
-            for (int i = 1; i < n_-1; i++)
+            for (int i = imin_; i < imax_; i++)
             {
                 int row = 2 * (n_ * j + i);
                 Frc(row) = alpha_tau * tx_(i,j);
@@ -395,12 +395,21 @@ namespace QG
         }
     }
 
-    double QG::curl(double x, double y)
+    double QG::windFun(double x, double y)
     {
         double asym = par_(19);
-        double y2 = (y-ymin_) / (ymax_-ymin_);
+        double y2   = (y-ymin_) / (ymax_-ymin_);
         return - (1. - asym) * sin(2 * M_PI * y2)
-            -       asym  * sin(    M_PI * y2);
+            - asym * sin(M_PI * y2);
+    }
+
+    // wind forcing according to [Edeling, 2019]
+    double QG::windFun2(double x, double y)
+    {
+        double asym = par_(19);
+        double y2   = (y-ymin_) / (ymax_-ymin_);
+        double x2   = (x-xmin_) / (xmax_-xmin_);
+        return -sin(5*2*M_PI*x2+M_PI/2)*sin(5*2*M_PI*y2+M_PI/2);
     }
 
     void QG::lin()
@@ -490,9 +499,9 @@ namespace QG
 
         // Residual formulation: Bdx/dt + F(x) = 0        
         double F = par_(10);
-        for (int j = 1; j < m_-1; j++)
+        for (int j = jmin_; j < jmax_; j++)
         {
-            for (int i = 1; i < n_-1; i++)
+            for (int i = imin_; i < imax_; i++)
             {
                 Tlzz_(i,j,4) = -1.0;
                 Tlzp_(i,j,4) = F;
@@ -567,11 +576,11 @@ namespace QG
             ty_[i] = 0.0;
         }
 
-        for (int j = 1; j < m_-1; j++)
+        for (int j = jmin_; j < jmax_; j++)
         {
-            for (int i = 1; i < n_-1; i++)
+            for (int i = imin_; i < imax_; i++)
             {
-                tx_(i, j) = curl(x_(i),y_(j));
+                tx_(i, j) = windFun2(x_(i),y_(j));
                 ty_(i, j) = 0.0;
             }
         }
@@ -691,12 +700,6 @@ namespace QG
 
         for (int i = 0; i < atom.size(); i++)
             atom[i] = 0.0;
-
-        // if not periodic we only compute interior points
-        int jmin_ = (periodic_) ? 0 : 1;
-        int jmax_ = (periodic_) ? m_ : m_-1;
-        int imin_ = (periodic_) ? 0 : 1;
-        int imax_ = (periodic_) ? n_ : n_-1;
 
         switch (type)
         {

@@ -116,7 +116,7 @@ namespace QG
 
     Vector2D::~Vector2D()
     {}
-
+    
     double &Vector2D::operator[](int i)
     {
         return data_[i];
@@ -129,11 +129,15 @@ namespace QG
 
     double &Vector2D::operator()(int i, int j)
     {
+        i = (n_ + i) % n_;
+        j = (m_ + j) % m_;
         return data_[i + j*m_];
     }
 
     double const &Vector2D::operator()(int i, int j) const
     {
+        i = (n_ + i) % n_;
+        j = (m_ + j) % m_;
         return data_[i + j*m_];
     }
 
