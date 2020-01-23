@@ -580,7 +580,11 @@ namespace QG
         {
             for (int i = imin_; i < imax_; i++)
             {
-                tx_(i, j) = windFun2(x_(i),y_(j));
+                if (periodic_)
+                    tx_(i, j) = windFun2(x_(i),y_(j));
+                else
+                    tx_(i, j) = windFun(x_(i),y_(j));
+                
                 ty_(i, j) = 0.0;
             }
         }
