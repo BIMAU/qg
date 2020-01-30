@@ -52,6 +52,13 @@ namespace QG
         dx_ = (xmax_ - xmin_) / (n_ - 1);
         dy_ = (ymax_ - ymin_) / (m_ - 1);
 
+        // when periodic xmax == xmin and we don't need both in our grid.
+        if (periodic_)
+        {
+            dx_ = (xmax_ - xmin_) / n_;
+            dy_ = (ymax_ - ymin_) / m_;
+        }
+            
         for (int i = 0; i < n_; i++)
             x_[i] = i * dx_ + xmin_;
         for (int i = 0; i < m_; i++)
@@ -409,7 +416,7 @@ namespace QG
         double asym = par_(19);
         double y2   = (y-ymin_) / (ymax_-ymin_);
         double x2   = (x-xmin_) / (xmax_-xmin_);
-        return -sin(5*2*M_PI*x2+M_PI/2)*sin(5*2*M_PI*y2+M_PI/2);
+        return -cos(2*M_PI*x2)*cos(2*M_PI*y2);
     }
 
     void QG::lin()

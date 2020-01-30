@@ -25,7 +25,8 @@ end
 % scaling
 maxp = max(max(plotfield)); 
 % plot
-contourf(x,y,fact*plotfield'/maxp); 
+contourf(x,y,fact*plotfield'/maxp);
+%imagesc(x,y,fact*plotfield'/maxp); 
 xlabel('x/L')
 ylabel('y/L')
 title('')
