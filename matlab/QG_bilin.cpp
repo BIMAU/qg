@@ -17,13 +17,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("QG_bilin:prhs", "Input must be a real uint64 scalar.");
     QG::QG *qg = reinterpret_cast<QG::QG *>(*((uint64_t *)mxGetData(prhs[0])));
 
-
     double *x = mxGetPr(prhs[1]);
     int mx = mxGetM(prhs[1]);
     int nx = mxGetN(prhs[1]);
     
     double *y = mxGetPr(prhs[2]);
-    //  int my = mxGetM(prhs[2]);
+    // int my = mxGetM(prhs[2]);
     // int ny = mxGetN(prhs[2]);
 
     plhs[0] = mxCreateDoubleMatrix((mwSize)mx, (mwSize)nx, mxREAL);

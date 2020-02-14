@@ -20,7 +20,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     double *x = mxGetPr(prhs[1]);
     int m = mxGetM(prhs[1]);
     int n = mxGetN(prhs[1]);
-
+    
     plhs[0] = mxCreateDoubleMatrix((mwSize)m, (mwSize)n, mxREAL);
     double *y = mxGetPr(plhs[0]);
 
@@ -28,6 +28,5 @@ void mexFunction(int nlhs, mxArray *plhs[],
     for (int i = 0; i < m*n; i++)
         y[i] = x[i];
 
-    qg->compute_precon();
     qg->solve(y);
 }

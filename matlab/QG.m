@@ -67,6 +67,13 @@ classdef QG < handle
             y = QG_apply(h.instance, x);
         end
 
+        function y = compute_precon(h)
+            if nargin ~= 1
+                error('No input arguments required');
+            end
+            QG_compute_precon(h.instance);
+        end
+        
         function y = solve(h, x)
             if nargin ~= 2
                 error('One input argument required');

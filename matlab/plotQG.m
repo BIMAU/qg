@@ -25,8 +25,13 @@ end
 % scaling
 maxp = max(max(plotfield)); 
 % plot
-contourf(x,y,fact*plotfield'/maxp);
-%imagesc(x,y,fact*plotfield'/maxp); 
+%colorbar
+imagesc(x,y,fact*plotfield'); hold on
+contour(x,y,fact*plotfield',10,'k'); hold off
+map = my_colmap();
+colormap(map);
+colorbar
+set(gca,'ydir','normal')
 xlabel('x/L')
 ylabel('y/L')
 title('')

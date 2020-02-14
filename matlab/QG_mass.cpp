@@ -8,7 +8,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[])
 {
     if (nrhs != 2)
-        mexErrMsgIdAndTxt("QG_mass:nrhs", "No input argument required.");
+        mexErrMsgIdAndTxt("QG_mass:nrhs", "One input argument required.");
     if (nlhs != 1)
         mexErrMsgIdAndTxt("QG_mass:nlhs", "One output argument required.");
 

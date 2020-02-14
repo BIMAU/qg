@@ -80,14 +80,14 @@ namespace QG
          *     7:   No (free) slip parameter NS  - 1.0 (0.0)
          *     10:  F
          ******************************************************************************/
-        // par_(1) = taudim*Lxdim/(rhodim*hdim*udim**2)     // par 1&2 omgedraaid
+        //par_(1) = taudim_*Lxdim_/(rhodim_*hdim_*std::pow(udim_,2)); 
         par_(1) = 1.0e+03;
         par_(2) = beta0dim_*Lxdim_*Lxdim_/udim_;
-        // par_(3) = bfdim*Lxdim/udim;
+        //par_(3) = bfdim_*Lxdim_/udim_;
         par_(3) = 0.0; // no bottom friction
         par_(4) = Lydim_/Lxdim_;
         par_(5) = udim_*Lxdim_/Ahdim_;
-        // par_(10) = (f0dim*Lxdim)**2/(gdim*hdim);
+        // par_(10) = std::pow((f0dim_*Lxdim_),2)/(gdim_*hdim_);
         par_(10) = 0.0;
         par_(11) = 0.0;
 
@@ -224,6 +224,8 @@ namespace QG
         boundaries();
         assembleA();
         Asort();
+        
+        
     }
 
     void QG::jacobian(double const *un, double sig, int *beg, int *jco, double *co )
@@ -334,6 +336,12 @@ namespace QG
             for (int v = A_.beg[i]; v < A_.beg[i+1]; v++)
                 b[i] += A_.co[v] * un[A_.jco[v]];
         }
+
+        if (periodic_)
+        {
+            // b[ndim_-2] = un[ndim_-2];
+            b[ndim_-1] = un[ndim_-1];
+        }
     }
 
     void QG::bilin(double const *un,double const *vn, double *b)
@@ -400,6 +408,12 @@ namespace QG
                     M[i] = B_.co[j];
             }
         }
+
+        if (periodic_)
+        {
+            //M[ndim_-2] = 0;
+            M[ndim_-1] = 0;
+        }
     }
 
     double QG::windFun(double x, double y)
@@ -413,10 +427,9 @@ namespace QG
     // wind forcing according to [Edeling, 2019]
     double QG::windFun2(double x, double y)
     {
-        double asym = par_(19);
         double y2   = (y-ymin_) / (ymax_-ymin_);
         double x2   = (x-xmin_) / (xmax_-xmin_);
-        return -cos(2*M_PI*x2)*cos(2*M_PI*y2);
+        return std::pow(2,3/2)*cos(5*2*M_PI*x2)*cos(5*2*M_PI*y2);
     }
 
     void QG::lin()
@@ -433,13 +446,19 @@ namespace QG
         double Beta = par_(2);
         double rbf  = par_(3);
 
+        std::cout << " compute lin, pars: " << "Re:   " << Re << std::endl;
+        std::cout << "                    " << "Beta: " << Beta << std::endl;
+        std::cout << "                    " << "rbf:  " << rbf << std::endl;
+        
         deriv(1, z);   // ALLEEN BIJ GEBRUIK BODEMFRICTIE NIET NUL
         deriv(2, dxx); // ALLEEN GETALLEN: VOOR BEIDE VGL TE GEBRUIKEN
         deriv(3, dyy); 
         deriv(4, cor);
 
+        double alpha_tau = par_(11) * par_(1);
+        
         for (int i = 0; i < Llzz_.size(); i++)
-            Llzz_[i] = -(dxx[i] + dyy[i]) / Re + rbf * z[i];
+            Llzz_[i] = -(dxx[i] + dyy[i]) / Re + rbf * z[i];// + alpha_tau * z[i];
         for (int i = 0; i < Llzp_.size(); i++)
             Llzp_[i] = Beta * cor[i];
 
@@ -463,6 +482,7 @@ namespace QG
             Nlzz_[i] = Udx[i] + Vdy[i];
         for (int i = 0; i < Nlzp_.size(); i++)
             Nlzp_[i] = - F*(Udx[i] + Vdy[i]);
+        
         // for (int i = 0; i < Nlpp_.size(); i++)
         //     Nlpp_[i] = 0.0;
         // for (int i = 0; i < Nlpz_.size(); i++)
@@ -537,41 +557,55 @@ namespace QG
  *     1 4 7
  *       3 6
  */
-        if (periodic_) return;
-        
-        double oml2 =    par_(6) / 2.0;
-        double oml3 = -3*par_(6) / (dx_*dx_); // for equidistant grids no differences
-        double omr2 =    par_(6) / 2.0;
-        double omr3 = -3*par_(6) / (dx_*dx_);
-        double omb2 =    par_(7) / 2.0;
-        double omb3 = -3*par_(7) / (dy_*dy_);
-        double omt2 =    par_(7) / 2.0;
-        double omt3 = -3*par_(7) / (dy_*dy_);
-
-        for (int i = 0; i < n_; i++)
+        if (periodic_)
         {
-            Alzz_(i,0,4) = 1.0; // SOUTH:i=(1,N), j=1
-            Alzz_(i,0,5) = omb2;
-            Alzp_(i,0,5) = omb3;
-            Alpp_(i,0,4) = 1.0;
-
-            Alzz_(i,m_-1,4) = 1.0; // NORTH:i=(1,N), j=M
-            Alzz_(i,m_-1,3) = omt2;
-            Alzp_(i,m_-1,3) = omt3;
-            Alpp_(i,m_-1,4) = 1.0;
+            for (int i = 0; i < 8; ++i)
+            {
+                //Alzz_(n_-1,m_-1,i) = 0;
+                //Alzp_(n_-1,m_-1,i) = 0;
+                Alpz_(n_-1,m_-1,i) = 0;
+                Alpp_(n_-1,m_-1,i) = 0;
+            }
+            //Alzz_(n_-1,m_-1,4) = 1;
+            Alpp_(n_-1,m_-1,4) = 1;
         }
-
-        for (int j = 1; j < m_-1; j++)
+        else
         {
-            Alzz_(0,j,4) = 1.0; // WEST: i=1      , j=(2,M-1)
-            Alzz_(0,j,7) = oml2;
-            Alzp_(0,j,7) = oml3;
-            Alpp_(0,j,4) = 1.0;
+        
+            double oml2 =    par_(6) / 2.0;
+            double oml3 = -3*par_(6) / (dx_*dx_); // for equidistant grids no differences
+            double omr2 =    par_(6) / 2.0;
+            double omr3 = -3*par_(6) / (dx_*dx_);
+            double omb2 =    par_(7) / 2.0;
+            double omb3 = -3*par_(7) / (dy_*dy_);
+            double omt2 =    par_(7) / 2.0;
+            double omt3 = -3*par_(7) / (dy_*dy_);
 
-            Alzz_(n_-1,j,4) = 1.0; //EAST: i=N      , j=(2,M-1)
-            Alzz_(n_-1,j,1) = omr2;
-            Alzp_(n_-1,j,1) = omr3;
-            Alpp_(n_-1,j,4) = 1.0;
+            for (int i = 0; i < n_; i++)
+            {
+                Alzz_(i,0,4) = 1.0; // SOUTH:i=(1,N), j=1
+                Alzz_(i,0,5) = omb2;
+                Alzp_(i,0,5) = omb3;
+                Alpp_(i,0,4) = 1.0;
+
+                Alzz_(i,m_-1,4) = 1.0; // NORTH:i=(1,N), j=M
+                Alzz_(i,m_-1,3) = omt2;
+                Alzp_(i,m_-1,3) = omt3;
+                Alpp_(i,m_-1,4) = 1.0;
+            }
+
+            for (int j = 1; j < m_-1; j++)
+            {
+                Alzz_(0,j,4) = 1.0; // WEST: i=1      , j=(2,M-1)
+                Alzz_(0,j,7) = oml2;
+                Alzp_(0,j,7) = oml3;
+                Alpp_(0,j,4) = 1.0;
+
+                Alzz_(n_-1,j,4) = 1.0; //EAST: i=N      , j=(2,M-1)
+                Alzz_(n_-1,j,1) = omr2;
+                Alzp_(n_-1,j,1) = omr3;
+                Alpp_(n_-1,j,4) = 1.0;
+            }
         }
     }
     
@@ -590,7 +624,7 @@ namespace QG
                 if (periodic_)
                     tx_(i, j) = windFun2(x_(i),y_(j));
                 else
-                    tx_(i, j) = windFun(x_(i),y_(j));
+                    tx_(i, j) = windFun2(x_(i),y_(j));
                 
                 ty_(i, j) = 0.0;
             }
@@ -609,7 +643,8 @@ namespace QG
     void QG::nonlin(int type, Vector3D &atom, Vector2D const &om, Vector2D const &ps)
     {
         /*
-         *     nonlinear terms for the zeta and psi equation
+         *     nonlin
+         ear terms for the zeta and psi equation
          *     1:  Udx     (udx)
          *     2:  Vdy     (vdy)
          *     3:  udZx
@@ -842,7 +877,7 @@ namespace QG
     {
         apply_scaling(x);
 
-        int ierr = cgstab(x, 1e-6);
+        int ierr = cgstab(x, 1e-3);
 
         remove_scaling();
 

@@ -11,6 +11,7 @@ set(QG_MEX_FILES
   QG_jacobian
   QG_mass
   QG_apply
+  QG_compute_precon
   QG_solve
   QG_set_par
   QG_get_par)
