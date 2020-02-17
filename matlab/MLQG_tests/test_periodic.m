@@ -2,7 +2,7 @@
 nx = 128;
 ny = 128;
 n  = nx * ny * 2;
-qg = QG(nx, ny, 0);
+qg = QG(nx, ny, 1);
 
 % qg.set_par(11, 0.1);  % wind stress
                       % qg.set_par(5, 45);    % Reynolds number
@@ -61,28 +61,29 @@ day = 3600 * 24 / tdim;
 
 Ah = 1.8e-05;
 Ldim*Udim/Ah
-Re = 7000;
-wind = 20;
-%qg.set_par(1, 1);   % alpha_tau
+Re   = 5000;
+wind = 0;
+% qg.set_par(1, 1);    % alpha_tau
 qg.set_par(11, wind);  % enable  wind stress
-qg.set_par(5, Re);   % Reynolds number
-qg.set_par(2, 0.0);  % no rotation
+qg.set_par(5,    Re);  % Reynolds number
+qg.set_par(2,   0.0);  % no rotation
 
 rhs = @ (x) qg.rhs(x);
 
 xgrid = linspace(0,2*pi,nx);
 ygrid = linspace(0,2*pi,ny);
 
-%z0 = sin(4*xgrid)'*sin(4*ygrid) + ...
-%     0.4*cos(3*xgrid)'*cos(3*ygrid) + ...
-%     0.3*cos(5.0*xgrid)'*cos(5.0*ygrid) + ...
-%     0.02*sin(xgrid) + 0.02*cos(ygrid);
- 
-z0 = 0.01*(rand(nx,ny)-0.5);
+z0 = sin(4*xgrid)'*sin(4*ygrid) + ...
+     0.4*cos(3*xgrid)'*cos(3*ygrid) + ...
+     0.3*cos(5.0*xgrid)'*cos(5.0*ygrid) + ...
+     0.02*sin(xgrid) + 0.02*cos(ygrid);
+
+%z0 = sin(4*xgrid)'*sin(4*ygrid);
+
+%z0 = 1*(rand(nx,ny)-0.5);
 
 x0 = zeros(n,1);
-x0(1:2:end) = z0(:);
-
+x0(1:2:end) = 200*z0(:);
 dt = 0.001;
 
 th = 1.0;          % theta
@@ -94,7 +95,7 @@ F = @(x) qg.rhs(x) ;
 x  = x0;
 F0 = F(x);
 
-kDes = 3.5;
+kDes = 3.3;
 figure(1)
 t = 0;
 states = [];
@@ -102,7 +103,8 @@ times = [];
 storeTime = 0;
 tic
 while t < 365*day
-    fprintf('dt = %2.2e, Newton: \n', dt);
+    fprintf(' t = %2.2e days,  \n',  t / day);
+    fprintf('dt = %2.2e days \n Newton: \n', dt / day);
     %[L,U] = ilu(J, struct('type','ilutp','droptol',1e-5));
     fprintf('start Newton\n')
     for k = 1:10
@@ -130,14 +132,21 @@ while t < 365*day
 
     if t > storeTime
         states = [states, x];
-        times  = [times, t];    
+        times  = [times, t];
+        
         plotQG(nx,ny,2,x)
         titleString = sprintf('t = %f days', t / day);
         title(titleString);
-        exportfig(['out_D_Re',num2str(Re),'_wind',num2str(wind),'.eps'])
-        storeTime = t + day;
+        exportfig(['psi_Re',num2str(Re),'.eps'])
+
+        plotQG(nx,ny,1,x,false)
+        titleString = sprintf('t = %f days', t / day);
+        title(titleString);
+        exportfig(['zeta_Re',num2str(Re),'.eps'])
+
+        storeTime = t + day / 2;
     end
 end
 toc
 
-save(['D_N128Re',num2str(Re),'_wind',[num2str(wind)],'.mat'],'states','times');
+save(['N',num2str(nx),'_Re',num2str(Re),'.mat'],'states','times');
