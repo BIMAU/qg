@@ -2,7 +2,7 @@
 nx = 128;
 ny = 128;
 n  = nx * ny * 2;
-qg = QG(nx, ny, 1);
+qg = QG(nx, ny, 0);
 
 % qg.set_par(11, 0.1);  % wind stress
                       % qg.set_par(5, 45);    % Reynolds number
@@ -61,10 +61,11 @@ day = 3600 * 24 / tdim;
 
 Ah = 1.8e-05;
 Ldim*Udim/Ah
-
+Re = 7000;
+wind = 20;
 %qg.set_par(1, 1);   % alpha_tau
-qg.set_par(11, 10);   % enable  wind stress
-qg.set_par(5, 1000); % Reynolds number
+qg.set_par(11, wind);  % enable  wind stress
+qg.set_par(5, Re);   % Reynolds number
 qg.set_par(2, 0.0);  % no rotation
 
 rhs = @ (x) qg.rhs(x);
@@ -77,12 +78,12 @@ ygrid = linspace(0,2*pi,ny);
 %     0.3*cos(5.0*xgrid)'*cos(5.0*ygrid) + ...
 %     0.02*sin(xgrid) + 0.02*cos(ygrid);
  
-z0 = 0.1*(rand(nx,ny)-0.5);
+z0 = 0.01*(rand(nx,ny)-0.5);
 
 x0 = zeros(n,1);
 x0(1:2:end) = z0(:);
 
-dt = 0.01;
+dt = 0.001;
 
 th = 1.0;          % theta
 s  = 1.0/(dt*th);
@@ -98,10 +99,10 @@ figure(1)
 t = 0;
 states = [];
 times = [];
+storeTime = 0;
 tic
-while t < 10 * day
+while t < 365*day
     fprintf('dt = %2.2e, Newton: \n', dt);
-    fprintf('compute ilu\n')
     %[L,U] = ilu(J, struct('type','ilutp','droptol',1e-5));
     fprintf('start Newton\n')
     for k = 1:10
@@ -114,41 +115,29 @@ while t < 10 * day
         %dx = qg.solve(-rhs);
         x  = x + dx;
         fprintf('||dx|| = %2.5e\n', norm(dx));
-        if norm(dx,2) < 1e-3
+        if norm(dx,2) < 1e-5
             break;
         end
     end   
     t  = t + dt;
     dt = kDes / k * dt;
-    s  = 1.0/(dt*th);
+    s  = 1.0 / (dt*th);
          
     %assert(norm(dx,2) < 1e-7);
     
     x0 = x;
-    F0 = F(x);   
-    
-    
-    states = [states, x];
-    times  = [times, t];             
+    F0 = F(x);
+
+    if t > storeTime
+        states = [states, x];
+        times  = [times, t];    
+        plotQG(nx,ny,2,x)
+        titleString = sprintf('t = %f days', t / day);
+        title(titleString);
+        exportfig(['out_D_Re',num2str(Re),'_wind',num2str(wind),'.eps'])
+        storeTime = t + day;
+    end
 end
 toc
 
-plotQG(nx,ny,2,x)
-titleString = sprintf('t = %f days', t / day);
-title(titleString);
-drawnow
-
-%J  = qg.jacobian(x, 0);
-%[V,D] = eigs(J,8,'smallestabs');
-%format long
-%evalues = diag(D)
-%
-%figure(2)
-%plot(real(evalues),imag(evalues),'*')
-%
-%figure(3)
-%plotQG(nx,ny,1,V(:,1)); colorbar
-%
-%figure(4)
-%plotQG(nx,ny,2,V(:,1)); colorbar
-%
+save(['D_N128Re',num2str(Re),'_wind',[num2str(wind)],'.mat'],'states','times');
