@@ -86,6 +86,8 @@ public:
     int compute_precon();
     int solve(double *x);
 
+    void compute_uv(double const *un, double *u, double *v);
+
     double get_par(int par);
     void set_par(int par, double val);
 

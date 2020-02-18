@@ -20,16 +20,23 @@ classdef QG < handle
             end
             y = QG_rhs(h.instance, x);
         end
+
+        function [u,v] = compute_uv(h, x)
+            if nargin ~= 2
+                error('One input argument required');
+            end
+            [u,v] = QG_compute_uv(h.instance, x);
+        end
         
-	function Z = bilin(h, V,W)
+        function Z = bilin(h, V,W)
             if nargin ~= 3
                 error('Two input arguments required');
             end
-	    mV=size(V,2);mW=size(W,2);
+            mV=size(V,2);mW=size(W,2);
             for i=1:mV
-	      for j=1:mW
-		Z(:,(i-1)*mW+j) = QG_bilin(h.instance, V(:,i),W(:,j));
-              end
+                for j=1:mW
+                    Z(:,(i-1)*mW+j) = QG_bilin(h.instance, V(:,i),W(:,j));
+                end
             end
         end        
 
@@ -51,7 +58,7 @@ classdef QG < handle
             nnz=beg(length(x)+1);
             A = crs2sp(1+double(beg),1+double(jco(1:nnz)),-co(1:nnz));
         end
-       
+        
         function  M=mass(h,n)
             if nargin ~= 2
                 error('One input argument required');

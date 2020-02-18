@@ -6,6 +6,7 @@ set(QG_MEX_FILES
   QG_init
   QG_free
   QG_rhs
+  QG_compute_uv
   QG_bilin
   QG_jacob
   QG_jacobian

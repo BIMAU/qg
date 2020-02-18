@@ -208,7 +208,7 @@ namespace QG
     {
         Vector2D om(n_, m_);
         Vector2D ps(n_, m_);
-
+        
         u_to_psi(un, om, ps);
         nlin_jac(om, ps);
         timedep();
@@ -337,11 +337,34 @@ namespace QG
                 b[i] += A_.co[v] * un[A_.jco[v]];
         }
 
+        // Dirichlet condition on psi
         if (periodic_)
         {
-            // b[ndim_-2] = un[ndim_-2];
             b[ndim_-1] = un[ndim_-1];
         }
+    }
+
+    // Use central differences to obtain u and v from ps
+    void QG::compute_uv(double const *un, double *u, double *v)
+    {
+        Vector2D om(n_, m_);
+        Vector2D ps(n_, m_);
+
+        u_to_psi(un, om, ps);
+        
+        double r2dx = 1.0/(2*dx_);
+        double r2dy = 1.0/(2*dy_);
+        
+        for (int j = jmin_; j < jmax_; j++)
+        {
+            for (int i = imin_; i < imax_; i++)
+            {
+                u[i+j*m_] = -r2dy*(ps(i,j+1)-ps(i,j-1));
+                //v[i+j*m_] =  r2dx*(ps(i+1,j)-ps(i-1,j));
+                v[i+j*m_] = i+j;
+            }
+        }
+
     }
 
     void QG::bilin(double const *un,double const *vn, double *b)
@@ -455,7 +478,7 @@ namespace QG
         deriv(3, dyy); 
         deriv(4, cor);
 
-        double alpha_tau = par_(11) * par_(1);
+        // double alpha_tau = par_(11) * par_(1);
         
         for (int i = 0; i < Llzz_.size(); i++)
             Llzz_[i] = -(dxx[i] + dyy[i]) / Re + rbf * z[i];// + alpha_tau * z[i];
