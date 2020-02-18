@@ -624,7 +624,7 @@ namespace QG
                 if (periodic_)
                     tx_(i, j) = windFun2(x_(i),y_(j));
                 else
-                    tx_(i, j) = windFun2(x_(i),y_(j));
+                    tx_(i, j) = windFun(x_(i),y_(j));
                 
                 ty_(i, j) = 0.0;
             }

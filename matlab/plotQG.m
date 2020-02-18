@@ -1,39 +1,46 @@
-function [] = plotQG(n,m,XX,state)
+function [] = plotQG(n,m,XX,state,contours)
 % Plotting QG model:
 % n,m: horizontal grid size
 % XX: 1,2 index of field you want to plot
 
-% It's QG so nun = 2
-nun = 2;
-plotfield = reshape(state(XX:nun:end),n,m);
+    if nargin < 5
+        contours = true;
+    end
 
-% constants 
-udim = 1.6e-02; 
-ldim = 1.0e+06; 
-hdim = 6.0e+02; 
-fact = udim*hdim*ldim/1.0e+06; 
+    % It's QG so nun = 2
+    nun = 2;
+    plotfield = reshape(state(XX:nun:end),n,m);
 
-% grid
-for i=1:n
-    x(i) = (i-1)/(n-1);
-end
+    % constants 
+    udim = 1.6e-02; 
+    ldim = 1.0e+06; 
+    hdim = 6.0e+02; 
+    fact = udim*hdim*ldim/1.0e+06; 
 
-for j=1:m
-    y(j) = (j-1)/(m-1); 
-end
+    % grid
+    for i=1:n
+        x(i) = (i-1)/(n-1);
+    end
 
-% scaling
-maxp = max(max(plotfield)); 
-% plot
-%colorbar
-imagesc(x,y,fact*plotfield'); hold on
-contour(x,y,fact*plotfield',10,'k'); hold off
-map = my_colmap();
-colormap(map);
-colorbar
-set(gca,'ydir','normal')
-xlabel('x/L')
-ylabel('y/L')
-title('')
+    for j=1:m
+        y(j) = (j-1)/(m-1); 
+    end
+
+    % scaling
+    maxp = max(max(plotfield)); 
+    % plot
+    %colorbar
+    imagesc(x,y,plotfield');
+    if contours
+        hold on
+        contour(x,y,plotfield',10,'k'); hold off
+    end
+    map = my_colmap();
+    colormap(map);
+    colorbar
+    set(gca,'ydir','normal')
+    xlabel('x/L')
+    ylabel('y/L')
+    title('')
 
 end

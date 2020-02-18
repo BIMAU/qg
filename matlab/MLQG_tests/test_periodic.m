@@ -5,7 +5,7 @@ n  = nx * ny * 2;
 qg = QG(nx, ny, 1);
 
 % qg.set_par(11, 0.1);  % wind stress
-                      % qg.set_par(5, 45);    % Reynolds number
+                        % qg.set_par(5, 45);    % Reynolds number
 
 % load testing data
 % testdata = load('testdata.mat');
@@ -31,7 +31,8 @@ qg = QG(nx, ny, 1);
     %     D(:,i)  = abs(Jn(:,i)  - J(:,i));
     %     err(i)  = max(D(:,i));
     % end
-% 
+    %
+
 %%  --> check dit in relatieve zin...
 % Jn = sparse(Jn);
 % D(abs(D) < 1) = 0.0;
@@ -63,6 +64,7 @@ Ah = 1.8e-05;
 Ldim*Udim/Ah
 Re   = 5000;
 wind = 0;
+
 % qg.set_par(1, 1);    % alpha_tau
 qg.set_par(11, wind);  % enable  wind stress
 qg.set_par(5,    Re);  % Reynolds number
@@ -96,7 +98,6 @@ x  = x0;
 F0 = F(x);
 
 kDes = 3.3;
-figure(1)
 t = 0;
 states = [];
 times = [];
@@ -105,17 +106,15 @@ tic
 while t < 365*day
     fprintf(' t = %2.2e days,  \n',  t / day);
     fprintf('dt = %2.2e days \n Newton: \n', dt / day);
-    %[L,U] = ilu(J, struct('type','ilutp','droptol',1e-5));
     fprintf('start Newton\n')
+
     for k = 1:10
+
         rhs = B*(x-x0)/(dt*th) + F(x) + (1-th)/th * F0;
         J   = qg.jacobian(x, s);
         dx  = J \ rhs;
+        x   = x + dx;
 
-        %qg.jacob(x,s);
-        %qg.compute_precon();
-        %dx = qg.solve(-rhs);
-        x  = x + dx;
         fprintf('||dx|| = %2.5e\n', norm(dx));
         if norm(dx,2) < 1e-5
             break;
@@ -132,19 +131,21 @@ while t < 365*day
 
     if t > storeTime
         states = [states, x];
-        times  = [times, t];
-        
+        times  = [times,  t];
+
+        figure(1)
         plotQG(nx,ny,2,x)
         titleString = sprintf('t = %f days', t / day);
         title(titleString);
         exportfig(['psi_Re',num2str(Re),'.eps'])
 
+        figure(2)
         plotQG(nx,ny,1,x,false)
         titleString = sprintf('t = %f days', t / day);
         title(titleString);
         exportfig(['zeta_Re',num2str(Re),'.eps'])
 
-        storeTime = t + day / 2;
+        storeTime = t + day;
     end
 end
 toc
