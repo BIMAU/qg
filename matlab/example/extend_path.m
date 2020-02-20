@@ -1,4 +1,2 @@
-addpath ~/swe_perturbed/matlab/
-addpath ~/bilinear_do_mdo_methods/common/
-addpath ~/bilinear_do_mdo_methods/DO
+%add the path to the matlab and mex files
 addpath /mnt/D/local/matlab
