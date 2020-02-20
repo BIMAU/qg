@@ -1,6 +1,6 @@
 % Initialize QG
-nx = 128;
-ny = 128;
+nx = 512;
+ny = 512;
 n  = nx * ny * 2;
 qg = QG(nx, ny, 1);
 
@@ -62,7 +62,7 @@ day = 3600 * 24 / tdim;
 
 Ah = 1.8e-05;
 Ldim*Udim/Ah
-Re   = 5000;
+Re   = 8000;
 wind = 0;
 
 % qg.set_par(1, 1);    % alpha_tau
@@ -72,21 +72,26 @@ qg.set_par(2,   0.0);  % no rotation
 
 rhs = @ (x) qg.rhs(x);
 
-xgrid = linspace(0,2*pi,nx);
-ygrid = linspace(0,2*pi,ny);
+xgrid = ((1:nx)-1)*2*pi/nx;
+ygrid = ((1:ny)-1)*2*pi/ny;
 
 z0 = sin(4*xgrid)'*sin(4*ygrid) + ...
      0.4*cos(3*xgrid)'*cos(3*ygrid) + ...
      0.3*cos(5.0*xgrid)'*cos(5.0*ygrid) + ...
      0.02*sin(xgrid) + 0.02*cos(ygrid);
 
-%z0 = sin(4*xgrid)'*sin(4*ygrid);
+
+z0 = sin(5*xgrid)'*sin(5*ygrid) + ...
+     0.5*cos(4*xgrid+0.1)'*cos(4*ygrid+0.1) + ...
+     0.2*sin(3*xgrid+0.3)'*sin(3*ygrid+0.3);
 
 %z0 = 1*(rand(nx,ny)-0.5);
 
 x0 = zeros(n,1);
-x0(1:2:end) = 200*z0(:);
-dt = 0.001;
+x0(1:2:end) = 0.2*z0(:)/(3600*24/tdim); % nondimensional and
+                                        % realistic vorticity
+
+dt = 0.01;
 
 th = 1.0;          % theta
 s  = 1.0/(dt*th);
@@ -102,8 +107,9 @@ t = 0;
 states = [];
 times = [];
 storeTime = 0;
+days = 600;
 tic
-while t < 365*day
+while t < days*day
     fprintf(' t = %2.2e days,  \n',  t / day);
     fprintf('dt = %2.2e days \n Newton: \n', dt / day);
     fprintf('start Newton\n')
@@ -129,25 +135,27 @@ while t < 365*day
     x0 = x;
     F0 = F(x);
 
-    if t > storeTime
+    if t > storeTime || t > days*day
         states = [states, x];
         times  = [times,  t];
 
-        figure(1)
-        plotQG(nx,ny,2,x)
-        titleString = sprintf('t = %f days', t / day);
-        title(titleString);
-        exportfig(['psi_Re',num2str(Re),'.eps'])
+% $$$         figure(1)
+% $$$         plotQG(nx,ny,2,x)
+% $$$         titleString = sprintf('t = %f days', t / day);
+% $$$         title(titleString);
+% $$$         %        exportfig(['psi_Re',num2str(Re),'.eps'])
 
         figure(2)
-        plotQG(nx,ny,1,x,false)
+        plotQG(nx,ny,1,3600*24/tdim*x,false)
         titleString = sprintf('t = %f days', t / day);
         title(titleString);
-        exportfig(['zeta_Re',num2str(Re),'.eps'])
+        %        exportfig(['zeta_Re',num2str(Re),'.eps'])
 
         storeTime = t + day;
+        drawnow
     end
 end
 toc
 
-save(['N',num2str(nx),'_Re',num2str(Re),'.mat'],'states','times');
+save(['N',num2str(nx),'_Re',num2str(Re),'_days',num2str(days),'.mat']...
+     ,'states','times','nx','ny','Re','t','dt','wind');

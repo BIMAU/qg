@@ -360,8 +360,7 @@ namespace QG
             for (int i = imin_; i < imax_; i++)
             {
                 u[i+j*m_] = -r2dy*(ps(i,j+1)-ps(i,j-1));
-                //v[i+j*m_] =  r2dx*(ps(i+1,j)-ps(i-1,j));
-                v[i+j*m_] = i+j;
+                v[i+j*m_] =  r2dx*(ps(i+1,j)-ps(i-1,j));
             }
         }
 
@@ -452,7 +451,7 @@ namespace QG
     {
         double y2   = (y-ymin_) / (ymax_-ymin_);
         double x2   = (x-xmin_) / (xmax_-xmin_);
-        return std::pow(2,3/2)*cos(5*2*M_PI*x2)*cos(5*2*M_PI*y2);
+        return cos(12*2*M_PI*x2)*cos(12*2*M_PI*y2);
     }
 
     void QG::lin()
