@@ -43,9 +43,7 @@ classdef QG < handle
             end
             [beg,jco,co]=QG_jacobian(h.instance, x, sig);
             nnz=beg(length(x)+1);
-           % size(beg)
-	   % A = csr2sp (beg+1,jco+1,co);
-           A = csr2sp (1+double(beg),1+double(jco(1:nnz)),-co(1:nnz));
+            A = crs2sp(1+double(beg),1+double(jco(1:nnz)),-co(1:nnz));
         end
        
         function  M=mass(h,n)
