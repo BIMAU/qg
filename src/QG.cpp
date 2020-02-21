@@ -451,7 +451,7 @@ namespace QG
     {
         double y2   = (y-ymin_) / (ymax_-ymin_);
         double x2   = (x-xmin_) / (xmax_-xmin_);
-        return cos(12*2*M_PI*x2)*cos(12*2*M_PI*y2);
+        return sin(16*2*M_PI*x2)*sin(16*2*M_PI*y2);
     }
 
     void QG::lin()

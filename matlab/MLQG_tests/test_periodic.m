@@ -1,6 +1,6 @@
 % Initialize QG
-nx = 512;
-ny = 512;
+nx = 256;
+ny = 256;
 n  = nx * ny * 2;
 qg = QG(nx, ny, 1);
 
@@ -62,8 +62,8 @@ day = 3600 * 24 / tdim;
 
 Ah = 1.8e-05;
 Ldim*Udim/Ah
-Re   = 8000;
-wind = 0;
+Re   = 5000;
+wind = 2;
 
 % qg.set_par(1, 1);    % alpha_tau
 qg.set_par(11, wind);  % enable  wind stress
@@ -85,7 +85,7 @@ z0 = sin(5*xgrid)'*sin(5*ygrid) + ...
      0.5*cos(4*xgrid+0.1)'*cos(4*ygrid+0.1) + ...
      0.2*sin(3*xgrid+0.3)'*sin(3*ygrid+0.3);
 
-%z0 = 1*(rand(nx,ny)-0.5);
+z0 = (rand(nx,ny)-0.5)+(sin(4*xgrid)'*sin(4*ygrid));
 
 x0 = zeros(n,1);
 x0(1:2:end) = 0.2*z0(:)/(3600*24/tdim); % nondimensional and
@@ -139,19 +139,19 @@ while t < days*day
         states = [states, x];
         times  = [times,  t];
 
-% $$$         figure(1)
-% $$$         plotQG(nx,ny,2,x)
-% $$$         titleString = sprintf('t = %f days', t / day);
-% $$$         title(titleString);
-% $$$         %        exportfig(['psi_Re',num2str(Re),'.eps'])
+        subplot(1,2,1);
+        plotQG(nx,ny,2,x)
+        titleString = sprintf('t = %f days', t / day);
+        title(titleString);
+        %        exportfig(['psi_Re',num2str(Re),'.eps'])
 
-        figure(2)
+        subplot(1,2,2);
         plotQG(nx,ny,1,3600*24/tdim*x,false)
         titleString = sprintf('t = %f days', t / day);
         title(titleString);
         %        exportfig(['zeta_Re',num2str(Re),'.eps'])
 
-        storeTime = t + day;
+        storeTime = t + 10*day;
         drawnow
     end
 end
