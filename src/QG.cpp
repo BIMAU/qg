@@ -21,7 +21,7 @@ namespace QG
         beta0dim_(1.6e-11),
         Lxdim_(1.0e+06),
         Lydim_(1.0e+06),
-        udim_(1.6e-02),
+        udim_(3.171e-02),  // 3.171e-02 gives timescale of ~1year.
         gdim_(2.0e-02),
         rhodim_(1.0e+03),
         taudim_(1.5e-01),
