@@ -34,6 +34,7 @@ fid=fopen('par_m_file.m','w');
   fprintf(fid,'outint= %12.5e;\n',integr_pars.outint);
   fprintf(fid,'Re= %12.5e;\n',qg.get_par(5));
   fprintf(fid,'sfc= %12.5e;\n',sfc);
+  fprintf(fid,'stochsize= %12.5e;\n',stochiter);
 fclose(fid);
 %Problem specification
 %We want 
@@ -118,5 +119,5 @@ for i=1:m
   semilogy(timeseries.time,timeseries.vars(i,:));
 end
 hold off
-showV([x,V],[0; timeseries.vars(:,end)],"Det. Sol. + Flds",1,nx,nx,2,1,4);
+showV([x,V],[0; timeseries.vars(:,end)],"Det. Sol. + Flds",1,nx,nx,2,1,4,0);
 

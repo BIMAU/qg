@@ -1,5 +1,5 @@
 par_m_file 
-dest_time=1.0
+dest_time=T;
 
 fid=fopen('timeslices.txt')
 cnt=0;
@@ -17,14 +17,11 @@ fclose(fid);
 %vsm(UY),vsm(VY),vsm(SY)
 stochsize=size(Y,2);
 Var=(diag(SY)/sqrt(stochsize)).^2;
-showV(V( :,1:4)*VY,Var(1:4),'DO',1,nx,nx,2,1,4)
-pause
+showV(V( :,1:4)*VY,Var(1:4),'DO',1,nx,nx,2,1,4,0)
 
 qg = QG(nx, ny);
 %set Reynolds number
 qg.set_par(5,Re)
-%set Full windstressfield
-qg.set_par(11,1)
   
 n = nx * ny * 2;
 
@@ -60,9 +57,9 @@ if nx==32
   norm(A*X*M'+M*X*A'+B*B')
 end
 fprintf('Basis prolongated\n')
-norm(V'*V-eye(size(V,2)))
-norm(V'*M*V-eye(size(V,2)))
+%norm(V'*V-eye(size(V,2)))
+%norm(V'*M*V-eye(size(V,2)))
   Var=diag(S(1:15,1:15))
 
-showV(V( :,1:4),Var(1:4),'RAILS',1,nx,nx,2,1,4)
+showV(V( :,1:4),Var(1:4),'RAILS',1,nx,nx,2,1,4,10)
 
