@@ -1,7 +1,7 @@
 function ret=stochforcing(nrows, massarray) 
 
 l=0.125;
-C=1e-6;
+C=1 ;
 nx=sqrt(nrows/2);
 
 for col=0:1

@@ -3,9 +3,6 @@ ny = 64;
 n = nx * ny * 2;
 qg = QG(nx, ny);
 
-% Set zet
-%zeta = 1/n;
-%qg.set_par(20, zeta);
 
 %set Reynolds number
 qg.set_par(5,20)
@@ -18,8 +15,7 @@ tol=1e-10;
 
 m=4;
 stochiter=1000;
-%V=zeros(n,m);
-%Y=zeros(m,stochiter);
+sfc=1e-6;
 
 integr_pars.ndtsub=1;
 integr_pars.dt=1e-2;
@@ -36,14 +32,15 @@ fid=fopen('par_m_file.m','w');
   fprintf(fid,'dt= %12.5e;\n',integr_pars.dt);
   fprintf(fid,'T= %12.5e;\n',integr_pars.T);
   fprintf(fid,'outint= %12.5e;\n',integr_pars.outint);
-fprintf(fid,'Re= %12.5e;\n',qg.get_par(5));
+  fprintf(fid,'Re= %12.5e;\n',qg.get_par(5));
+  fprintf(fid,'sfc= %12.5e;\n',sfc);
 fclose(fid);
 %Problem specification
 %We want 
 %We want a positive mass matrix since mass ought to be positive
 Mass=qg.mass(n);
 %Stochastic forcing
-c=1e7*stochforcing(n,full(diag(Mass)));
+c=sfc*stochforcing(n,full(diag(Mass)));
 %If the mass is positive the rhs should have a negative Jacobian
 f1=@(X,b)b-qg.rhs(X); %f1(X,0) has the desired sign, we want to be able to add something to it, i.e. b.
 f2=@(X)qg.jacobian(X,0.0);
@@ -87,10 +84,10 @@ mc=size(c,2);
 if (mc > m) 
   fprintf("Space stochastic forcing bigger than the stochastic space V\n");
 end  
-c=c(:,1);m=4;mc=1; % test with an even forcing
+%c=c(:,1);m=4;mc=1; % test with an even forcing
 rng(2);
 V=[c,randn(n,m-mc)];
-if 1
+if 0
   % make initial fields even
   V(2:2:end,:)=0;
   for i=2:m
