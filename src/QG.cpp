@@ -58,7 +58,7 @@ namespace QG
             dx_ = (xmax_ - xmin_) / n_;
             dy_ = (ymax_ - ymin_) / m_;
         }
-            
+
         for (int i = 0; i < n_; i++)
             x_[i] = i * dx_ + xmin_;
         for (int i = 0; i < m_; i++)
@@ -70,6 +70,15 @@ namespace QG
         imin_ = (periodic_) ? 0 : 1;
         imax_ = (periodic_) ? n_ : n_-1;
 
+        // only when periodic:
+        useIntegral_  = false;
+        useDirichlet_ = true;
+        
+        // row for integral condition on psi (only used when periodic)
+        intI_ = n_-1;
+        intJ_ = m_-1;
+        intRowPsi_ = (periodic_) ? findRow(intI_, intJ_, 1) : -1;
+
         /******************************************************************************
          *     1:   alpha_tau
          *     2:   beta parameter
@@ -80,7 +89,7 @@ namespace QG
          *     7:   No (free) slip parameter NS  - 1.0 (0.0)
          *     10:  F
          ******************************************************************************/
-        //par_(1) = taudim_*Lxdim_/(rhodim_*hdim_*std::pow(udim_,2)); 
+        //par_(1) = taudim_*Lxdim_/(rhodim_*hdim_*std::pow(udim_,2));
         par_(1) = 1.0e+03;
         par_(2) = beta0dim_*Lxdim_*Lxdim_/udim_;
         //par_(3) = bfdim_*Lxdim_/udim_;
@@ -117,7 +126,7 @@ namespace QG
     }
 
     // shift: give coordinates of neighbour at location loc. Indexing:
-    //        2 5     
+    //        2 5
     //        1 4 7
     //          3 6
     void QG::shift(int i, int j, int &i2, int &j2, int loc)
@@ -135,11 +144,11 @@ namespace QG
         }
     }
 
-    void QG::assemble(std::vector<std::vector<Vector3D> > const &stencil, Matrix &A)
+    void QG::assemble(std::vector<std::vector<Vector3D> > const &stencil, Matrix &A, bool enableIntRow)
     {
         for (int i = 0; i < adim_; i++)
             A.co[i] = 0.0;
-        
+
         int ZZ = 0; // state component zeta index
         int PP = 1; // state component psi index
 
@@ -147,49 +156,69 @@ namespace QG
 
         int i2,j2;
         double val;
-        int col;
+        int row,col;
 
         int elm_ctr = 0;
         int beg_ctr = 0;
-        
+
         for (int j = 0; j < m_; ++j)
             for (int i = 0; i < n_; ++i)
                 for (int a = ZZ; a <= PP; ++a)
                 {
+                    row = findRow(i, j, a);
                     A.beg[beg_ctr] = elm_ctr;
                     ++beg_ctr;
 
-                    for (int loc = 1; loc <= np; ++loc)
+                    bool intRow = enableIntRow && (row == intRowPsi_);
+                    if (!intRow)
                     {
-                        shift(i, j, i2, j2, loc);
-                        
-                        // now I know the neighbour location i2,j2 and
-                        // I can get the dependency for Z and P
-                        for (int b = ZZ; b <= PP; ++b)
+                        for (int loc = 1; loc <= np; ++loc)
                         {
-                            val = stencil[a][b](i, j, loc);
-                            if (std::abs(val) > 1e-12)
+                            shift(i, j, i2, j2, loc);
+
+                            // now I know the neighbour location i2,j2 and
+                            // I can get the dependency for Z and P
+                            for (int b = ZZ; b <= PP; ++b)
                             {
+                                val = stencil[a][b](i, j, loc);
+                                if (std::abs(val) > 1e-12)
+                                {
+                                    A.co[elm_ctr] = val;
+                                    col = findRow(i2, j2, b);
+                                    A.jco[elm_ctr] = col;
+                                    ++elm_ctr;
+                                }
+                            }
+                        }
+                    }
+                    else // apply integral condition # FIXME: factorize
+                    {
+                        val = 1; // ugly
+                        for (int j = jmin_; j < jmax_; j++)
+                        {
+                            for (int i = imin_; i < imax_; i++)
+                            {
+                                col = findRow(i, j, PP);
                                 A.co[elm_ctr] = val;
-                                col = findRow(i2, j2, b);
                                 A.jco[elm_ctr] = col;
                                 ++elm_ctr;
                             }
                         }
                     }
                 }
-        A.beg[beg_ctr] = elm_ctr;        
+        A.beg[beg_ctr] = elm_ctr;
     }
-    
+
     void QG::assembleA()
-    {        
+    {
         // Let's make a 5D array out of 4 3D arrays
         std::vector<std::vector<Vector3D> > Al = {
             {Alzz_, Alzp_},
             {Alpz_, Alpp_} };
 
         // Assemble the 5D stencil into the matrix A_;
-        assemble(Al, A_);
+        // With integral conditions if asked for.
+        assemble(Al, A_, useIntegral_);
 
     }
 
@@ -201,14 +230,14 @@ namespace QG
             {Tlpz_, Tlpp_} };
 
         // Assemble the 5D stencil into the matrix B_;
-        assemble(Bl, B_);        
+        assemble(Bl, B_);
     }
 
     void QG::jacob(double const *un, double sig)
     {
         Vector2D om(n_, m_);
         Vector2D ps(n_, m_);
-        
+
         u_to_psi(un, om, ps);
         nlin_jac(om, ps);
         timedep();
@@ -224,8 +253,6 @@ namespace QG
         boundaries();
         assembleA();
         Asort();
-        
-        
     }
 
     void QG::jacobian(double const *un, double sig, int *beg, int *jco, double *co )
@@ -258,7 +285,7 @@ namespace QG
         }
     }
 
-  
+
     void QG::writeA(char const *name, double const *un, double sig)
     {
         jacob(un, sig);
@@ -337,10 +364,22 @@ namespace QG
                 b[i] += A_.co[v] * un[A_.jco[v]];
         }
 
-        // Dirichlet condition on psi
+        // Integral condition on last element psi
         if (periodic_)
         {
-            b[ndim_-1] = un[ndim_-1];
+            if (useIntegral_)
+            {
+                b[intRowPsi_] = 0;
+                for (int j = jmin_; j < jmax_; j++)
+                {
+                    for (int i = imin_; i < imax_; i++)
+                    {
+                        b[intRowPsi_] += un[findRow(i,j,1)];
+                    }
+                }
+            }
+            else if (useDirichlet_)
+                b[intRowPsi_] = un[intRowPsi_];
         }
     }
 
@@ -351,26 +390,25 @@ namespace QG
         Vector2D ps(n_, m_);
 
         u_to_psi(un, om, ps);
-        
+
         double r2dx = 1.0/(2*dx_);
         double r2dy = 1.0/(2*dy_);
-        
+
         for (int j = jmin_; j < jmax_; j++)
         {
             for (int i = imin_; i < imax_; i++)
             {
-                u[i+j*m_] = -r2dy*(ps(i,j+1)-ps(i,j-1));
-                v[i+j*m_] =  r2dx*(ps(i+1,j)-ps(i-1,j));
+                u[i+j*n_] = -r2dy*(ps(i,j+1)-ps(i,j-1));
+                v[i+j*n_] =  r2dx*(ps(i+1,j)-ps(i-1,j));
             }
         }
-
     }
 
     void QG::bilin(double const *un,double const *vn, double *b)
     {
         Vector2D om(n_, m_);
         Vector2D ps(n_, m_);
-    
+
         u_to_psi(un, om, ps);
         nlin_rhs(om, ps);
 
@@ -387,7 +425,7 @@ namespace QG
         Asort();
 
         // This is the reverse of the fortran version!!!
-        // B = Au 
+        // B = Au
         for (int i = 0; i < ndim_; i++)
         {
             b[i] = 0;
@@ -433,8 +471,7 @@ namespace QG
 
         if (periodic_)
         {
-            //M[ndim_-2] = 0;
-            M[ndim_-1] = 0;
+            M[intRowPsi_] = 0;
         }
     }
 
@@ -471,14 +508,14 @@ namespace QG
         std::cout << " compute lin, pars: " << "Re:   " << Re << std::endl;
         std::cout << "                    " << "Beta: " << Beta << std::endl;
         std::cout << "                    " << "rbf:  " << rbf << std::endl;
-        
+
         deriv(1, z);   // ALLEEN BIJ GEBRUIK BODEMFRICTIE NIET NUL
         deriv(2, dxx); // ALLEEN GETALLEN: VOOR BEIDE VGL TE GEBRUIKEN
-        deriv(3, dyy); 
+        deriv(3, dyy);
         deriv(4, cor);
 
         // double alpha_tau = par_(11) * par_(1);
-        
+
         for (int i = 0; i < Llzz_.size(); i++)
             Llzz_[i] = -(dxx[i] + dyy[i]) / Re + rbf * z[i];// + alpha_tau * z[i];
         for (int i = 0; i < Llzp_.size(); i++)
@@ -504,7 +541,7 @@ namespace QG
             Nlzz_[i] = Udx[i] + Vdy[i];
         for (int i = 0; i < Nlzp_.size(); i++)
             Nlzp_[i] = - F*(Udx[i] + Vdy[i]);
-        
+
         // for (int i = 0; i < Nlpp_.size(); i++)
         //     Nlpp_[i] = 0.0;
         // for (int i = 0; i < Nlpz_.size(); i++)
@@ -546,7 +583,7 @@ namespace QG
             Tlpz_[i] = 0.0; // not used
         }
 
-        // Residual formulation: Bdx/dt + F(x) = 0        
+        // Residual formulation: Bdx/dt + F(x) = 0
         double F = par_(10);
         for (int j = jmin_; j < jmax_; j++)
         {
@@ -581,19 +618,21 @@ namespace QG
  */
         if (periodic_)
         {
-            for (int i = 0; i < 8; ++i)
+            if (useDirichlet_)
             {
-                //Alzz_(n_-1,m_-1,i) = 0;
-                //Alzp_(n_-1,m_-1,i) = 0;
-                Alpz_(n_-1,m_-1,i) = 0;
-                Alpp_(n_-1,m_-1,i) = 0;
+                // remove matrix coefficients at Dirichlet row
+                for (int i = 0; i < 8; ++i)
+                {
+                    Alpz_(intI_,intJ_,i) = 0;
+                    Alpp_(intI_,intJ_,i) = 0;
+                }
+                // set Dirichlet coefficient
+                Alpp_(intI_,intJ_,4) = 1;
             }
-            //Alzz_(n_-1,m_-1,4) = 1;
-            Alpp_(n_-1,m_-1,4) = 1;
         }
         else
         {
-        
+
             double oml2 =    par_(6) / 2.0;
             double oml3 = -3*par_(6) / (dx_*dx_); // for equidistant grids no differences
             double omr2 =    par_(6) / 2.0;
@@ -630,7 +669,7 @@ namespace QG
             }
         }
     }
-    
+
     void QG::compute_forcing()
     {
         for (int i = 0; i < tx_.size(); i++)
@@ -647,7 +686,7 @@ namespace QG
                     tx_(i, j) = windFun2(x_(i),y_(j));
                 else
                     tx_(i, j) = windFun(x_(i),y_(j));
-                
+
                 ty_(i, j) = 0.0;
             }
         }
@@ -913,7 +952,7 @@ namespace QG
         compute_scaling();
 
         apply_scaling();
- 
+
         int *volg = new int[ndim_];
         for (int i = 0; i < ndim_; i++)
             volg[i] = -1;
@@ -1037,7 +1076,7 @@ namespace QG
     {
         if (dot(b, b) < 1e-20)
             return 1;
- 
+
         double *p = new double[ndim_];
         double *q = new double[ndim_];
         double *r = new double[ndim_];

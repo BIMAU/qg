@@ -42,6 +42,13 @@ class QG
     int jmin_;
     int jmax_;
 
+    // resolve singular problem when boundaries periodic
+    bool useDirichlet_, useIntegral_;
+    
+    // row for integral condition on psi (only used when periodic)
+    int intI_, intJ_;
+    int intRowPsi_; 
+
     Vector1D x_;
     Vector1D y_;
 
@@ -105,7 +112,7 @@ protected:
     int findRow(int i, int j, int XX);
     void shift(int i, int j, int &i2, int &j2, int loc);
 
-    void assemble(std::vector<std::vector<Vector3D> > const &stencil, Matrix &A);
+    void assemble(std::vector<std::vector<Vector3D> > const &stencil, Matrix &A, bool enableIntRow = false);
     void assembleA();
     void assembleB();
     void fillcolB();
