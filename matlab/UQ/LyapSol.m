@@ -17,7 +17,7 @@ fclose(fid);
 %vsm(UY),vsm(VY),vsm(SY)
 stochsize=size(Y,2);
 Var=(diag(SY)/sqrt(stochsize)).^2;
-showV(V( :,1:4)*VY,Var(1:4),'DO',1,nx,nx,2,1,4,0)
+showV(V*VY( :,1:4),Var(1:4),'DO',1,nx,nx,2,1,4,0)
 
 qg = QG(nx, ny);
 %set Reynolds number
