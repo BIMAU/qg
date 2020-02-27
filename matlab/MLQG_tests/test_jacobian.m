@@ -2,8 +2,8 @@
 nx = 12;
 ny = 12;
 n  = nx * ny * 2;
-qg = QG(nx, ny);
 
+qg = QG(nx, ny);
 qg.set_par(11, 1);  % wind stress
 qg.set_par(5, 45);  % Reynolds number
 
@@ -11,7 +11,7 @@ qg.set_par(5, 45);  % Reynolds number
 testdata = load('testdata.mat');
 xr = testdata.xr(1:n);
 
-%% Test 1: analytical jacobian vs numerical jacobian
+%% Test 1: analytical Jacobian vs numerical jacobian
 J = -qg.jacobian(xr, 0.0);
 rhsold = qg.rhs(xr);
 
@@ -25,7 +25,7 @@ end
 
 assert(norm(err,2) < 1e-4);
 
-%% Test 2: jacobian with time dependent contribution
+%% Test 2: Jacobian with time dependent contribution
 dt    = 0.01;
 th    = 1.0;
 B     = qg.mass(n);
@@ -45,6 +45,24 @@ for i = 1:n
     xr(i)  = xr(i) + pert;
     err(i) = max(abs(( G(xr) - G0 ) / pert  - J(:,i) ));
     xr(i)  = xr(i) - pert;
+end
+
+assert(norm(err,2) < 1e-4);
+
+%% Test 3: test periodic Jacobian (analytical vs numerical)
+qg = QG(nx, ny, 1);
+qg.set_par(11, 1);  % wind stress
+qg.set_par(5, 45);  % Reynolds number
+
+J = -qg.jacobian(xr, 0.0);
+rhsold = qg.rhs(xr);
+
+pert = 1e-6;
+err  = zeros(n,1);
+for i = 1:n
+    xr(i) = xr(i) + pert;
+    err(i)  = max(abs(( qg.rhs(xr) - rhsold ) / pert  - J(:,i) ));
+    xr(i) = xr(i) - pert;
 end
 
 assert(norm(err,2) < 1e-4);
