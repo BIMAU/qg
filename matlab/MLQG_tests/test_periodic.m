@@ -33,7 +33,15 @@ z0 = sin(5*xgrid)'*sin(5*ygrid) + ...
      0.5*cos(4*xgrid+0.1)'*cos(4*ygrid+0.1) + ...
      0.2*sin(3*xgrid+0.3)'*sin(3*ygrid+0.3);
 
-z0 = (rand(nx,ny)-0.5)+(sin(4*xgrid)'*sin(4*ygrid));
+rng(7);
+z0 = 1*(rand(nx,ny)-0.5)+(sin(4*xgrid)'*sin(4*ygrid));
+
+z0 = 0;
+for i = 1:4
+    z0 = z0 + 1/i*(sin((4+0.1*randn())*xgrid+0.1*randn())'*sin((4+0.1* ...
+                                                      randn())*ygrid+0.1*randn()));
+end
+
 
 x0 = zeros(n,1);
 x0(1:2:end) = 0.2*z0(:)/(3600*24/tdim); % nondimensional and
@@ -55,7 +63,7 @@ t = 0;
 states = [];
 times = [];
 storeTime = 0;
-Tend = Re;     % e-folding timescale largest mode (?)
+Tend = Re; % timescale in years
 
 tic
 while t < Tend
@@ -69,7 +77,9 @@ while t < Tend
         dx  = J \ rhs;
         x   = x + dx;
         if norm(dx,2) < 1e-3
-            fprintf('||dx|| = %2.5e\n', norm(dx));
+            fprintf('||dx|| = %2.5e, k = %d\n', norm(dx),k);
+            rhs = B*(x-x0)/(dt*th) + F(x) + (1-th)/th * F0;
+            fprintf('||F|| = %2.5e \n', norm(rhs, 2));
             break;
         end
     end   
@@ -84,20 +94,28 @@ while t < Tend
         states = [states, x];
         times  = [times,  t];
         
-        subplot(1,2,1);
+        subplot(1,3,1);
         plotQG(nx,ny,2,x);
-        titleString = sprintf('t = %f year', t / year);
+        titleString = sprintf('psi, t = %2.1f years', t / year);
         title(titleString);
         
-        subplot(1,2,2);
+        subplot(1,3,2);
         plotQG(nx,ny,1,3600*24/tdim*x,false);
-        titleString = sprintf('t = %f year', t / year);
+        titleString = sprintf('vorticity');
+        title(titleString);
+        
+        [u,v] = qg.compute_uv(x);
+        subplot(1,3,3);
+        u = reshape(u,nx,ny);
+        v = reshape(v,nx,ny);
+        imagesc((u.^2+v.^2'))
+        titleString = sprintf('u^2 + v^2');
         title(titleString);
         
         fnamebase = ['N',num2str(nx), '_Re', num2str(Re), '_Tend', ...
                  num2str(Tend), '_wind', num2str(wind)];
         
-        exportfig([fnamebase,'.eps'],10,[30,10]);
+        exportfig([fnamebase,'.eps'],10,[40,10]);
 
         fprintf('saving data to %s\n', [fnamebase,'.mat']);
         
