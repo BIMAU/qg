@@ -56,12 +56,14 @@ qg.set_par(5, 45);  % Reynolds number
 
 J = -qg.jacobian(xr, 0.0);
 rhsold = qg.rhs(xr);
-
+Jn = J;
+Jn(:) = 0;
 pert = 1e-6;
 err  = zeros(n,1);
 for i = 1:n
     xr(i) = xr(i) + pert;
-    err(i)  = max(abs(( qg.rhs(xr) - rhsold ) / pert  - J(:,i) ));
+    Jn(:,i) = ( qg.rhs(xr) - rhsold ) / pert;
+    err(i)  = max(abs( Jn(:,i) - J(:,i) ));
     xr(i) = xr(i) - pert;
 end
 
