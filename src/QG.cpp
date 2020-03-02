@@ -364,11 +364,11 @@ namespace QG
                 b[i] += A_.co[v] * un[A_.jco[v]];
         }
 
-        // Integral condition on last element psi
         if (periodic_)
         {
             if (useIntegral_)
             {
+                // Integral condition on last element psi
                 b[intRowPsi_] = 0;
                 for (int j = jmin_; j < jmax_; j++)
                 {
@@ -488,7 +488,7 @@ namespace QG
     {
         double y2   = (y-ymin_) / (ymax_-ymin_);
         double x2   = (x-xmin_) / (xmax_-xmin_);
-        return sin(16*2*M_PI*x2)*sin(16*2*M_PI*y2);
+        return cos(5*2*M_PI*x2)*cos(5*2*M_PI*y2);
     }
 
     void QG::lin()

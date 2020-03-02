@@ -1,6 +1,6 @@
 % Initialize QG
-nx = 128;
-ny = 128;
+nx = 256;
+ny = 256;
 n  = nx * ny * 2;
 qg = QG(nx, ny, 1);
 
@@ -12,7 +12,7 @@ day  = 3600 * 24 / tdim;
 year = 365*day;
 
 Re   = 10000;
-wind = 0;
+wind = 0.5;
 
 qg.set_par(11, wind);  % wind stress (stirring) amplitude
 qg.set_par(5,    Re);  % Reynolds number
@@ -42,10 +42,9 @@ for i = 1:4
                                                       randn())*ygrid+0.1*randn()));
 end
 
-
 x0 = zeros(n,1);
-x0(1:2:end) = 0.2*z0(:)/(3600*24/tdim); % nondimensional and
-                                        % realistic vorticity
+x0(1:2:end) = 0.2*z0(:) / (3600*24/tdim); % nondimensional and
+                                          % realistic vorticity
 
 dt = 0.01;
 
@@ -63,7 +62,7 @@ t = 0;
 states = [];
 times = [];
 storeTime = 0;
-Tend = Re; % timescale in years
+Tend = 100; % timescale in years
 
 tic
 while t < Tend
@@ -113,7 +112,7 @@ while t < Tend
         title(titleString);
         
         fnamebase = ['N',num2str(nx), '_Re', num2str(Re), '_Tend', ...
-                 num2str(Tend), '_wind', num2str(wind)];
+                 num2str(Tend), '_F', num2str(wind)];
         
         exportfig([fnamebase,'.eps'],10,[40,10]);
 
