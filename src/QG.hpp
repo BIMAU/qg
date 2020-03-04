@@ -105,7 +105,7 @@ public:
 
 protected:
     double windFun(double x, double y);
-    double windFun2(double x, double y);
+    double periodicF(double x, double y);
     void compute_forcing();
     void compute_linear();
 
