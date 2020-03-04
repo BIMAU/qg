@@ -4,37 +4,46 @@ ny = 256;
 n  = nx * ny * 2;
 qg = QG(nx, ny, 1);
 
-% Henk QG params:
+% QG params:
 Ldim = 1e6;
 Udim = 3.171e-2;
 tdim = Ldim / Udim; % in seconds
 day  = 3600 * 24 / tdim;
 year = 365*day;
 
-Re   = 10000;
-wind = 0.5;
+% Job parameters
+restartFlag = true;
 
-qg.set_par(11, wind);  % wind stress (stirring) amplitude
+Re   = 4e4;   % Reynolds number
+ampl = 0.5;   % Forcing amplitude
+Tend = 100;   % End time, nondim. timescale is in years
+dt   = 0.01;  % Time step 
+th   = 1.0;   % Thet
+t0   = 0;     % time
+
+% Set parameters in QG
+qg.set_par(18, 0.0);   % stirring type
+qg.set_par(11, ampl);  % stirring amplitude
 qg.set_par(5,    Re);  % Reynolds number
 qg.set_par(2,   0.0);  % no rotation
 
-rhs = @ (x) qg.rhs(x);
-
+% Several initial vorticity profile choices can be made here:
 xgrid = ((1:nx)-1)*2*pi/nx;
 ygrid = ((1:ny)-1)*2*pi/ny;
-
-z0 = sin(4*xgrid)'*sin(4*ygrid) + ...
-     0.4*cos(3*xgrid)'*cos(3*ygrid) + ...
-     0.3*cos(5.0*xgrid)'*cos(5.0*ygrid) + ...
-     0.02*sin(xgrid) + 0.02*cos(ygrid);
-
-
-z0 = sin(5*xgrid)'*sin(5*ygrid) + ...
-     0.5*cos(4*xgrid+0.1)'*cos(4*ygrid+0.1) + ...
-     0.2*sin(3*xgrid+0.3)'*sin(3*ygrid+0.3);
-
 rng(7);
-z0 = 1*(rand(nx,ny)-0.5)+(sin(4*xgrid)'*sin(4*ygrid));
+
+% z0 = sin(4*xgrid)'*sin(4*ygrid) + ...
+%      0.4*cos(3*xgrid)'*cos(3*ygrid) + ...
+%      0.3*cos(5.0*xgrid)'*cos(5.0*ygrid) + ...
+%      0.02*sin(xgrid) + 0.02*cos(ygrid);
+% 
+% 
+% z0 = sin(5*xgrid)'*sin(5*ygrid) + ...
+%      0.5*cos(4*xgrid+0.1)'*cos(4*ygrid+0.1) + ...
+%      0.2*sin(3*xgrid+0.3)'*sin(3*ygrid+0.3);
+% 
+% 
+% z0 = 1*(rand(nx,ny)-0.5)+(sin(4*xgrid)'*sin(4*ygrid));
 
 z0 = 0;
 for i = 1:4
@@ -46,24 +55,31 @@ x0 = zeros(n,1);
 x0(1:2:end) = 0.2*z0(:) / (3600*24/tdim); % nondimensional and
                                           % realistic vorticity
 
-dt = 0.01;
+if restartFlag
+    if exist('states') && exist('times')
+        x0 = states(:,end);
+        assert(numel(x0) == n);
+        t0 = times(end);
+        Tend = times(end) + Tend;
+    else
+        fprintf('Cannot restart, no states array available\n');
+        return;
+    end
+end
 
-th = 1.0;          % theta
-s  = 1.0/(dt*th);
-B  = qg.mass(n);
+s  = 1.0/(dt*th); % Contribution on diagonal of Jacobian
+B  = qg.mass(n);  % Mass matrix
 
-F = @(x) qg.rhs(x) ;
+F = @(x) qg.rhs(x); % Right hand side
 
 x  = x0;
 F0 = F(x);
 
-kDes = 3.3;
-t = 0;
+kDes = 3.3; % optimal number of Newton iterations
 states = [];
 times = [];
 storeTime = 0;
-Tend = 100; % timescale in years
-
+t = t0;
 tic
 while t < Tend
     fprintf(' t = %2.2e years,  \n',  t / year);
@@ -101,7 +117,7 @@ while t < Tend
         subplot(1,3,2);
         plotQG(nx,ny,1,3600*24/tdim*x,false);
         titleString = sprintf('vorticity');
-        title(titleString);
+        title(titleString);        
         
         [u,v] = qg.compute_uv(x);
         subplot(1,3,3);
@@ -109,17 +125,19 @@ while t < Tend
         v = reshape(v,nx,ny);
         imagesc((u.^2+v.^2'))
         titleString = sprintf('u^2 + v^2');
-        title(titleString);
+        title(titleString);      
         
-        fnamebase = ['N',num2str(nx), '_Re', num2str(Re), '_Tend', ...
-                 num2str(Tend), '_F', num2str(wind)];
+        ReStr = sprintf('_Re%1.1e',Re);
+        fnamebase = [ 'N', num2str(nx), ReStr, '_Tstart', ...
+                      num2str(round(t0)), '_Tend', num2str(round(Tend)), '_F', ...
+                      num2str(ampl) ];
         
         exportfig([fnamebase,'.eps'],10,[40,10]);
 
         fprintf('saving data to %s\n', [fnamebase,'.mat']);
         
         save([fnamebase,'.mat'], 'states', 'times', 'nx', 'ny', 'Re', ...
-             't', 'dt', 'wind');
+             't', 'dt', 'ampl');
         
 
         storeTime = t + 0.1*year;
