@@ -10,7 +10,7 @@ function [] = plotQG(n,m,XX,state,contours)
     % It's QG so nun = 2
     nun = 2;
     plotfield = reshape(state(XX:nun:end),n,m);
-
+    
     % constants 
     udim = 1.6e-02; 
     ldim = 1.0e+06; 
@@ -27,7 +27,7 @@ function [] = plotQG(n,m,XX,state,contours)
     end
 
     % scaling
-    maxp = max(max(plotfield)); 
+    maxp = max(max(abs(plotfield))); 
     % plot
     %colorbar
     imagesc(x,y,plotfield');
@@ -42,5 +42,9 @@ function [] = plotQG(n,m,XX,state,contours)
     xlabel('x/L')
     ylabel('y/L')
     title('')
+    
+    if (XX == 1)
+        caxis([-maxp, maxp]);
+    end
 
 end
