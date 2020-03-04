@@ -18,11 +18,11 @@ Re   = 4e4;   % Reynolds number
 ampl = 0.5;   % Forcing amplitude
 Tend = 100;   % End time, nondim. timescale is in years
 dt   = 0.01;  % Time step 
-th   = 1.0;   % Thet
+th   = 1.0;   % Theta
 t0   = 0;     % time
 
 % Set parameters in QG
-qg.set_par(18, 0.0);   % stirring type
+qg.set_par(18, 1.0);   % stirring type: 0 = cos(5x), 1 = sin(16x)
 qg.set_par(11, ampl);  % stirring amplitude
 qg.set_par(5,    Re);  % Reynolds number
 qg.set_par(2,   0.0);  % no rotation
