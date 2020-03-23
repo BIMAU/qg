@@ -74,6 +74,8 @@ class QG
     Vector1D diag_;
     Vector1D scaling_;
 
+    bool preconComputed_;
+
 public:
     QG() = delete;
     QG(int m, int n, int perio = 0);

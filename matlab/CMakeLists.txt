@@ -41,7 +41,7 @@ enable_testing()
 set(MATLAB_TEST_FILES
   test_basic_things
   test_jacobian
-  test_periodic)
+  )
 
 foreach(i ${MATLAB_TEST_FILES})
   matlab_add_unit_test(

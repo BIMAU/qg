@@ -107,6 +107,9 @@ namespace QG
         par_(19) = 0.0;
 
         compute_linear();
+
+        // before a solve the user needs to compute a preconditioner
+        preconComputed_ = false;
     }
 
     QG::~QG()
@@ -948,6 +951,12 @@ namespace QG
 
     int QG::solve(double *x)
     {
+        if (!preconComputed_)
+        {
+            std::cout << "No preconditioner computed, unable to solve." << std::endl;
+            return -1;
+        }
+        
         apply_scaling(x);
 
         int ierr = cgstab(x, 1e-3);
@@ -1053,6 +1062,7 @@ namespace QG
 
         remove_scaling();
 
+        preconComputed_ = true;
         return 0;
     }
 
