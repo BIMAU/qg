@@ -13,19 +13,26 @@ year = 365*day;
 
 % Job parameters
 restartFlag = true;
+adaptiveTimeStep = false;
+storeTimeIncr = 0; % store every new state
+                   % storeTimeIncr = 5*day;
+rotation = false;   % enable or disable rotation (beta)
 
-Re   = 4e4;   % Reynolds number
-ampl = 0.5;   % Forcing amplitude
-Tend = 100;   % End time, nondim. timescale is in years
-dt   = 0.01;  % Time step 
-th   = 1.0;   % Theta
-t0   = 0;     % time
+Re   = 4e4;       % Reynolds number
+ampl = 0.5;       % Forcing amplitude
+stir = 1;         % stirring type
+Tend = 300*day;   % End time, nondim. timescale is in years
+dt   = 1.25*day;  % Time step 
+th   = 1.0;       % Theta
+t0   = 0;         % time
 
 % Set parameters in QG
-qg.set_par(18, 1.0);   % stirring type: 0 = cos(5x), 1 = sin(16x)
+qg.set_par(18, stir);  % stirring type: 0 = cos(5x), 1 = sin(16x)
 qg.set_par(11, ampl);  % stirring amplitude
 qg.set_par(5,    Re);  % Reynolds number
-qg.set_par(2,   0.0);  % no rotation
+if ~rotation
+    qg.set_par(2,   0.0);  % no rotation
+end
 
 % Several initial vorticity profile choices can be made here:
 xgrid = ((1:nx)-1)*2*pi/nx;
@@ -42,7 +49,6 @@ rng(7);
 %      0.5*cos(4*xgrid+0.1)'*cos(4*ygrid+0.1) + ...
 %      0.2*sin(3*xgrid+0.3)'*sin(3*ygrid+0.3);
 % 
-% 
 % z0 = 1*(rand(nx,ny)-0.5)+(sin(4*xgrid)'*sin(4*ygrid));
 
 z0 = 0;
@@ -55,6 +61,7 @@ x0 = zeros(n,1);
 x0(1:2:end) = 0.2*z0(:) / (3600*24/tdim); % nondimensional and
                                           % realistic vorticity
 
+% we may also restart from existing states array
 if restartFlag
     if exist('states') && exist('times')
         x0 = states(:,end);
@@ -67,8 +74,8 @@ if restartFlag
     end
 end
 
-s  = 1.0/(dt*th); % Contribution on diagonal of Jacobian
-B  = qg.mass(n);  % Mass matrix
+s  = 1.0/(dt*th);   % Contribution on diagonal of Jacobian
+B  = qg.mass(n);    % Mass matrix
 
 F = @(x) qg.rhs(x); % Right hand side
 
@@ -77,7 +84,7 @@ F0 = F(x);
 
 kDes = 3.3; % optimal number of Newton iterations
 states = [];
-times = [];
+times  = [];
 storeTime = 0;
 t = t0;
 tic
@@ -99,8 +106,10 @@ while t < Tend
         end
     end   
     t  = t + dt;
-    dt = kDes / k * dt;
-    s  = 1.0 / (dt*th);
+    if adaptiveTimeStep
+        dt = kDes / k * dt;
+        s  = 1.0 / (dt*th);
+    end
          
     x0 = x;
     F0 = F(x);
@@ -111,7 +120,7 @@ while t < Tend
         
         subplot(1,3,1);
         plotQG(nx,ny,2,x);
-        titleString = sprintf('psi, t = %2.1f years', t / year);
+        titleString = sprintf('psi, t = %4.0fd', (t-times(1)) / day);
         title(titleString);
         
         subplot(1,3,2);
@@ -123,24 +132,25 @@ while t < Tend
         subplot(1,3,3);
         u = reshape(u,nx,ny);
         v = reshape(v,nx,ny);
-        imagesc((u.^2+v.^2'))
+        imagesc((u.^2+v.^2)')
         titleString = sprintf('u^2 + v^2');
         title(titleString);      
         
         ReStr = sprintf('_Re%1.1e',Re);
         fnamebase = [ 'N', num2str(nx), ReStr, '_Tstart', ...
                       num2str(round(t0)), '_Tend', num2str(round(Tend)), '_F', ...
-                      num2str(ampl) ];
+                      num2str(ampl), '_Stir', num2str(stir), ...
+                      '_Rot',num2str(rotation)];
+        
         
         exportfig([fnamebase,'.eps'],10,[40,10]);
 
         fprintf('saving data to %s\n', [fnamebase,'.mat']);
         
         save([fnamebase,'.mat'], 'states', 'times', 'nx', 'ny', 'Re', ...
-             't', 'dt', 'ampl');
-        
-
-        storeTime = t + 0.1*year;
+             't', 'dt', 'ampl');        
+         
+        storeTime = t + storeTimeIncr;
     end
 end
 toc
