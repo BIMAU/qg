@@ -47,7 +47,7 @@ foreach(i ${MATLAB_TEST_FILES})
   matlab_add_unit_test(
     NAME "${i}"
     TIMEOUT 30
-    UNITTEST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/MLQG_tests/${i}.m"
+    UNITTEST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/tests/${i}.m"
     ADDITIONAL_PATH "${CMAKE_CURRENT_BINARY_DIR}:${CMAKE_CURRENT_SOURCE_DIR}"
     )
 endforeach()

@@ -34,8 +34,8 @@ assert(norm(B(:)-testdata.B(:),2) == 0);
 
 %% Test 3: test Newton iteration
 % Try to converge from zero to 10% wind stress with Re=45:
-qg.set_par(11, 0.01);  % enable wind stress
-qg.set_par(5, 45);    % 
+qg.set_par(11, 0.01); % enable wind stress
+qg.set_par(5, 45);    %
 
 x   = zeros(n,1);
 fprintf('\nNewton\n')
@@ -68,19 +68,19 @@ x  = x0;
 F0 = F(x);
 
 fprintf('\nTimestepping\n')
-for t = 1:3    
-    for k = 1:10        
-        rhs = B*(x-x0)/(dt*th) + F(x) + (1-th)/th * F0; 
+for t = 1:3
+    for k = 1:10
+        rhs = B*(x-x0)/(dt*th) + F(x) + (1-th)/th * F0;
         qg.jacob(x, s);
         qg.compute_precon();
         dx = qg.solve(-rhs);
         x  = x + dx;
-        fprintf('t = %d, k = %d, |dx| = %e\n', t, k, norm(dx,2))            
+        fprintf('t = %d, k = %d, |dx| = %e\n', t, k, norm(dx,2))
         if norm(dx,2) < 1e-7
             break;
         end
     end
     assert(norm(dx,2) < 1e-7);
     x0 = x;
-    F0 = F(x);    
+    F0 = F(x);
 end
