@@ -50,29 +50,29 @@ idx = 1;
 eddyF = zeros(nxc*nyc*2, N);
 
 % create averaging matrix
-% fprintf('building averaging operator...\n')
-% Pf = blockpermutation(nx,ny,nun,ff);  % full block permutation
-                                      % Pc = blockpermutation(nxc,nyc,nun,1); 
-% H  = ones(1,ff^2)/(ff^2);
-% M  = speye(n/(ff^2));
-% H  = kron(M,H);
-% P  = Pc'*H*Pf;
-% fprintf('building averaging operator... done\n')
+fprintf('building averaging operator...\n')
+Pf = blockpermutation(nx,ny,nun,ff);   % full block permutation
+Pc = blockpermutation(nxc,nyc,nun,1);  % coarse block permutation
+H  = ones(1,ff^2)/(ff^2);
+M  = speye(n/(ff^2));
+H  = kron(M,H);                        % compute averages of blocks
+P  = Pc'*H*Pf;                         
+fprintf('building averaging operator... done\n')
 
 tic
 for idx = 1:10
-    fprintf('creating eddy forcing... %d/%d\n', idx, N);           
-    xf  = data.states(:,idx);    
-    F = qg.rhs(xf);
-    F = average(F,nx,ny,nun,ff); 
-    F_a = qg_a.rhs(average(xf,nx,ny,nun,ff));
-    eddyF(:,idx) = F_a-F;
-    
     %fprintf('creating eddy forcing... %d/%d\n', idx, N);           
     %xf  = data.states(:,idx);    
     %F = qg.rhs(xf);
-    %F_a = qg_a.rhs(P*xf);
-    %eddyF(:,idx) = F_a-P*F;
+    %F = average(F,nx,ny,nun,ff); 
+    %F_a = qg_a.rhs(average(xf,nx,ny,nun,ff));
+    %eddyF(:,idx) = F_a-F;
+    
+    fprintf('creating eddy forcing... %d/%d\n', idx, N);           
+    xf  = data.states(:,idx);    
+    F = qg.rhs(xf);
+    F_a = qg_a.rhs(P*xf);
+    eddyF(:,idx) = F_a-P*F;
 
     subplot(1,2,1)
     plotQG(nx,ny,1,scaling*xf,false)
@@ -86,6 +86,6 @@ for idx = 1:10
     colorbar
     caxis(Frange);
     title('Eddy forcing for coarse model')
-
+    
 end
 toc

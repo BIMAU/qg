@@ -15,7 +15,6 @@ function [out] = average(in, nx, ny, nun, ff)
     
     %out(1,idi,idj) = sum(sum(in(1, ff*(idi-1)+(1:ff), ff*(idj-1)+(1:ff))))/(ff*ff);
     %out(2,idi,idj) = sum(sum(in(2, ff*(idi-1)+(1:ff), ff*(idj-1)+(1:ff))))/(ff*ff);
-    keyboard
     
     for j = 1:nyc
         for i = 1:nxc
