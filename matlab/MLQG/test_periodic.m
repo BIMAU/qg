@@ -87,7 +87,7 @@ states = [];
 times  = [];
 storeTime = 0;
 t = t0;
-tic
+
 while t < Tend
     fprintf(' t = %2.2e years,  \n',  t / year);
     fprintf('dt = %2.2e days \n Newton: \n', dt / day);
@@ -155,6 +155,3 @@ while t < Tend
         storeTime = t + storeTimeIncr;
     end
 end
-toc
-toc / 3600
-

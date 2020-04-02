@@ -67,6 +67,7 @@ x = runTimeStepper(dt, th, Tend, xold);
 global W W_in W_ofb W_out noise Nr scaleU scaleY Rstate
 ZA = ZA(10:end-2,:);
 ZD = ZD(10:end-2,:);
+
 trainReservoir(ZA, ZD);
 
 useReservoir = true;
@@ -77,7 +78,7 @@ function [ ] = trainReservoir(trainU, trainY)
     global W W_in W_ofb W_out noise Nr scaleU scaleY Rstate
 
     Nr       = 300;
-    noise    = 0.0;    
+    noise    = 0.0;
     sparsity = .9;
     rhoMax   = 1.2;  % spectral radius
 
@@ -124,29 +125,29 @@ function [ ] = trainReservoir(trainU, trainY)
     predY = tanh(extX*W_out');
     fprintf('#training fields: %d\n', dim);
     fprintf('training error: %e\n', sqrt(mean((predY(:) - trainY(:)).^2)));
-    
+
     % save last reservoir state to use in rhs
     Rstate = X(end,:);
 end
 
 % overload rhs function with ML component
 function [out] = F(x)
-    global W W_in W_out W_ofb noise Rstate scaleU Q nDetails 
-    global nAverage Rstate useReservoir qg 
+    global W W_in W_out W_ofb noise Rstate scaleU Q nDetails
+    global nAverage Rstate useReservoir qg
     global plotComponents
     global nx ny nun n
-    
+
 
     if useReservoir
         x0 = x;
-        
+
         z = Q*x;
-        y0 = z(nAverage+1:end);        
+        y0 = z(nAverage+1:end);
         z = z(1:nAverage);
 
         z  = scaleU * z';
         Rstate = update(Rstate, z, 0*y0');
-     
+
         %y = tanh(W_out*[Rstate(:);0*z(:)]);
         y = tanh(W_out*Rstate(:));
         y = y * scaleU;
@@ -159,7 +160,7 @@ function [out] = F(x)
         x = Q'*z;
 
         figure(1); plotQG(nx,ny,2,x0);  drawnow;
-        title('original solution')        
+        title('original solution')
         figure(2); plotQG(nx,ny,2,xa);  drawnow;
         title('averages')
         figure(3); plotQG(nx,ny,2,xd);  drawnow;
@@ -170,12 +171,12 @@ function [out] = F(x)
         title('solution')
         figure(6); plotQG(nx,ny,2,abs(x-x0)); drawnow;
         title('difference')
-        fprintf('max relative difference p: %e\n', ... 
+        fprintf('max relative difference p: %e\n', ...
                 max(abs(x(2:2:end)-x0(2:2:end)))/max(abs(x0(2:2:end))));
-        fprintf('max relative difference z: %e\n', ... 
+        fprintf('max relative difference z: %e\n', ...
                 max(abs(x(1:2:end)-x0(1:2:end)))/max(abs(x0(1:2:end))));
         error('ending')
-    end    
+    end
 
     out = qg.rhs(real(x));
 end
@@ -187,10 +188,10 @@ function [act] = update(state, u, y)
 end
 
 function [x] = runTimeStepper(dt, th, Tend, x0)
-    global B qg history ZA ZD t Q 
-    global W W_in W_out W_ofb noise Rstate scaleU Q nDetails 
+    global B qg history ZA ZD t Q
+    global W W_in W_out W_ofb noise Rstate scaleU Q nDetails
     global noise Nr
-    global nAverage nDetails  
+    global nAverage nDetails
     global useReservoir plotComponents
     global nx ny nun n
 
@@ -215,6 +216,7 @@ function [x] = runTimeStepper(dt, th, Tend, x0)
         for k = 1:nsteps
             rhs = B*(x-xold)/(dt*th) + F(x) + (1-th)/th * rhsold;
             qg.jacob(x, sig);
+            qg.compute_precon();
             dx = qg.solve(-rhs);
             x = x + dx;
             if norm(dx) < 1e-6
@@ -254,7 +256,7 @@ function [x] = runTimeStepper(dt, th, Tend, x0)
         plotComponents = true;
         rhsold = F(x);
         plotComponents = false;
-        
+
         if ~useReservoir
             z  = Q*x;
             za = z; za(nAverage+1:end) = 0;
@@ -264,31 +266,3 @@ function [x] = runTimeStepper(dt, th, Tend, x0)
         end
     end
 end
-
-% $$$ % test analytical jacobian with numerical jacobian
-% $$$ J = -qg.jacobian(xold, 0.0);
-% $$$
-% $$$ pert = 1e-6;
-% $$$ err = zeros(n,1);
-% $$$ for i = 1:n
-% $$$     xold(i) = xold(i) + pert;
-% $$$     err(i)  = max(abs(( qg.rhs(xold) - rhsold ) / pert  - J(:,i) ));
-% $$$     xold(i) = xold(i) - pert;
-% $$$ end
-% $$$
-% $$$ plot(err);hold on
-% $$$ norm(err)
-% $$$
-% $$$ % test jacobian with time dependent contribution with numerical jacobian
-
-% $$$ G = @(x) -B*(x-xold)/(dt*th) + qg.rhs(x) + (1-th)/th * rhsold
-% $$$ err    = zeros(n,1);
-% $$$ rhsold = G(xold);
-% $$$ J = -qg.jacobian(xold, sig);
-% $$$ for i = 1:n
-% $$$     xold(i) = xold(i) + pert;
-% $$$     err(i)  = max(abs(( G(xold) - rhsold ) / pert  - J(:,i) ));
-% $$$     xold(i) = xold(i) - pert;
-% $$$ end
-% $$$ plot(err); hold off
-% $$$ norm(err)
