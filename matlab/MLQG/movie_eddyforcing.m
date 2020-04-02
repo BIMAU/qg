@@ -1,4 +1,4 @@
-fname = 'N256eddyforcing2.avi';
+fname = 'data/avi/N256eddyforcing2.avi';
 writerObj = VideoWriter(fname, 'Motion JPEG AVI');
 writerObj.FrameRate = 22;
 writerObj.Quality = 90;
