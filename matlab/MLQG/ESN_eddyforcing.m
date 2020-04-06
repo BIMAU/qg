@@ -3,10 +3,16 @@ global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY Rstate
 % load eddy forcing and coarse state data
 fname = 'eddyforcing_N256_Re4.0e+04_Tstart141_Tend142_F0.5';
 data  = load(['data/eddyforcing/', fname, '.mat']);
-
+adim  = data.nxa*data.nya*2;
 % setup input data U: averages and eddy forcings
 U  = [data.xa(:,1:end-1); data.eddyF(:,1:end-1)]';
 Nu = size(U,2);
+
+% QG parameters:
+Ldim = 1e6;
+Udim = 3.171e-2;
+tdim = Ldim / Udim; % in seconds
+scaling = 3600*24/tdim;
 
 % setup output data Y: eddy forcings, one (fixed) timestep further
 Y  = [data.eddyF(:,2:end)'];
@@ -16,21 +22,47 @@ createReservoir();
 
 trainReservoir(U, Y);
 
-for i = 2:size(Y,1)
+% initial (known) eddy forcing
+r  = data.eddyF(:,1);
 
-    subplot(1,2,1)
-    plotQG(nxa,nya,1,scaling*data.states(:,idx),false)
-    caxis(crange);
-    titleString = sprintf('Fine vorticity (day^{-1}), t = %3.0fd', ...
-                          (data.times(idx)-data.times(1)) / day);
+for i = 2:size(data.xa,2)
+    xa = data.xa(:,i-1);
+    u  = [xa; r];
+
+    Rstate(:) = update(Rstate, u' / scaleU , r' / scaleY);
+    
+    % predicted eddy forcing
+    r = tanh(W_out*Rstate(:));
+    r = r * scaleY; % unscale     
+    
+
+    %---------------------------------
+    
+    subplot(2,2,1)
+    plotQG(data.nxa, data.nya,1, scaling*data.xa(:,i), false)
+    titleString = sprintf('Coarse vorticity');
     title(titleString);
-
-    subplot(1,2,2)
-    plotQG(nxa, nya, 1, scaling*eddyF(:,idx), false);
     colorbar
-    caxis(Frange);
+    caxis([-0.2,0.2])
+
+    subplot(2,2,2)
+    plotQG(data.nxa, data.nya, 1, scaling*data.eddyF(:,i), false);
+    colorbar
+    caxis([-10,10])
     title('Eddy forcing for coarse model')
-    drawnow
+
+    subplot(2,2,3)
+    plotQG(data.nxa, data.nya, 1, scaling*r, false);
+    colorbar
+    caxis([-10,10])
+    title('Predicted eddy forcing for coarse model')
+
+    subplot(2,2,4)
+    plotQG(data.nxa, data.nya, 1, scaling*abs((r-data.eddyF(:,i))), false);
+    colorbar    
+    title('abs(diff)')
+
+    exportfig('out.eps',10,[18,18]);
 
 end
 
@@ -39,10 +71,10 @@ function [ ] = createReservoir()
     global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY Rstate
 
     % Reservoir parameters
-    Nr       = 300;
+    Nr       = 100;
     noise    = 0.0;
-    sparsity = 0.9;
-    rhoMax   = 0.9;  % spectral radius
+    sparsity = 0.95;
+    rhoMax   = 0.95;  % spectral radius
 
     % create random matrix
     W = rand(Nr)-0.5;
@@ -91,10 +123,11 @@ function [ ] = trainReservoir(trainU, trainY)
     % compute W_out
     W_out = (P*atanh(trainY))';
     predY = tanh(extX*W_out');
+
     fprintf('#training fields: %d\n', dim);
     fprintf('training error: %e\n', sqrt(mean((predY(:) - trainY(:)).^2)));
 
-    % save last reservoir state to use in rhs
+    % save last reservoir state to use in autonomous mode
     Rstate = X(end,:);
 end
 
