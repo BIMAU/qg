@@ -41,12 +41,13 @@ fname_base = 'N256_Re4.0e+04_Tstart141_Tend142_F0.5';
 data = load(['data/fullmodel/', fname_base, '.mat']);
 assert(nx == data.nx);
 fprintf('load full model data... done\n')
+times = data.times;
 
 scaling = 3600*24/tdim;
 crange = [-0.2,0.2];
 Frange = [-10,10];
 
-N = round(size(data.states,2)/10);
+N = round(size(data.states,2));
 
 idx = 1;
 eddyF = zeros(nxa*nya*2, N);
@@ -79,4 +80,4 @@ fprintf('creating eddy forcing... done: %f\n', Telap);
 fname = ['eddyforcing_', fname_base, '.mat'];
 fprintf('saving data to %s\n', fname);
 save(['data/eddyforcing/',fname], 'eddyF', 'xa', ...
-     'N', 'P', 'nxa', 'nya')
+     'N', 'P', 'nxa', 'nya', 'times')
