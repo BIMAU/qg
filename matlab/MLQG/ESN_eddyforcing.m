@@ -1,5 +1,5 @@
 clear all;
-rng(77);
+rng(7);
 global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY Rstate
 % Load eddy forcing and coarse state data
 fname = 'eddyforcing_N256_Re4.0e+04_Tstart141_Tend142_F0.5';
@@ -10,11 +10,12 @@ data  = load(['data/eddyforcing/', fname, '.mat']);
 %  output data Y: eddy forcings at time (k+1)*dt
 
 N  = size(data.xa,2);  % total # samples
-T  = 100;       % training samples
+T  = 100;              % training cutoff
+Nt = 50;               % # training samples
 
-U  = [data.xa(:,1:T-1); data.eddyF(:,1:T-1)]';
+U  = [data.xa(:,T-Nt:T-1); data.eddyF(:,T-Nt:T-1)]';
 Nu = size(U,2);
-Y  = [data.eddyF(:,2:T)'];
+Y  = [data.eddyF(:,T-Nt+1:T)'];
 Ny = size(Y,2);
 
 % QG parameters:
@@ -32,45 +33,71 @@ trainReservoir(U, Y);
 fprintf('train reservoir... done\n');
 
 fprintf('begin prediction...\n');
+% indices used for prediction (beyond T this is unseen data)
+pRange = T-10:T+10;
+
 % initial (known) eddy forcing
-r  = data.eddyF(:,T-1);
-for i = T:T+10
+r  = data.eddyF(:,pRange(1)-1);
+for i = pRange
     xa = data.xa(:,i-1);
     u  = [xa; r];
 
     Rstate(:) = update(Rstate, u' / scaleU , r' / scaleY);
     
     % predicted eddy forcing
+    r0 = r;
     r = tanh(W_out*Rstate(:));
     r = r * scaleY; % unscale
     
     %-----------------------------------------------------------
     t  = data.times(i);    
-    subplot(2,2,1)
+    subplot(3,2,1)
     plotQG(data.nxa, data.nya,1, day*data.xa(:,i), false)
     titleString = sprintf('Coarse vorticity day %f', (t-data.times(1)) / day);
     title(titleString);
     colorbar
     caxis([-0.2,0.2])
 
-    subplot(2,2,2)
+    subplot(3,2,2)
     plotQG(data.nxa, data.nya, 1, day*data.eddyF(:,i), false);
     colorbar
     caxis([-10,10])
     title('Eddy forcing for coarse model')
 
-    subplot(2,2,3)
+    subplot(3,2,3)
     plotQG(data.nxa, data.nya, 1, day*r, false);
     colorbar
     caxis([-10,10])
     title('Predicted eddy forcing for coarse model')
 
-    subplot(2,2,4)
-    plotQG(data.nxa, data.nya, 1, day*abs((r-data.eddyF(:,i))), false);
+    diff = abs(r-data.eddyF(:,i));
+    subplot(3,2,4)
+    plotQG(data.nxa, data.nya, 1, day*diff, false);
     colorbar    
-    title('abs(diff)')
-    drawnow
+    caxis([-10,10])
+    if i < T
+        col = 'k';
+    else
+        col = 'r';
+    end
+    title(sprintf('abs(diff), 2-norm = %3.2f', norm(day*diff(:))),'color',col);
+    
+    drdt = (r - r0) / (data.times(i)-data.times(i-1));
+    subplot(3,2,5)
+    plotQG(data.nxa, data.nya, 1, day*drdt, false);
+    colorbar
+    %caxis([-10,10])
+    title('drdt (prediction)')
 
+    drdt_true = (data.eddyF(:,i) - data.eddyF(:,i-1)) / (data.times(i)-data.times(i-1));
+    subplot(3,2,6)
+    plotQG(data.nxa, data.nya, 1, day*drdt_true, false);
+    colorbar
+    %caxis([-10,10])
+    title('drdt (data)')
+
+    
+    drawnow
     %exportfig('out.eps',10,[18,18]);
 
 end
@@ -79,9 +106,9 @@ end
 function [ ] = createReservoir()
     global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY Rstate
     % Reservoir parameters
-    Nr       = 300;
+    Nr       = 1000;
     noise    = 0.0;
-    sparsity = 0.95;
+    sparsity = 0.9;
     rhoMax   = 0.9;  % spectral radius
 
     % create random matrix
@@ -121,17 +148,21 @@ function [ ] = trainReservoir(trainU, trainY)
         X(k, :) = update(X(k-1, :), trainU(k, :), trainY(k-1, :));
     end
 
-    % Extend X with raw input columns
-    %extX = [X, trainU];
-    extX = X;
-
-    % Create pseudo inverse
-    P = pinv(extX);
-
-    % compute W_out
-    W_out = (P*atanh(trainY))';
-    predY = tanh(extX*W_out');
-
+    % compute W_out: W_out*X' = atanh(trainY)
+    
+    % Using a pseudo inverse
+    % P = pinv(X);
+    % W_out = (P*atanh(trainY))';
+    
+    % By solving the normal equations and including Tikhonov
+    % regularization
+    lambda  = 100; 
+    Xnormal = X'*X + lambda * speye(Nr);
+    b       = X'*atanh(trainY);
+    W_out   = (Xnormal \ b)';
+     
+    % get training error
+    predY = tanh(X*W_out');
     fprintf('#training fields: %d\n', dim);
     fprintf('training error: %e\n', sqrt(mean((predY(:) - trainY(:)).^2)));
 
