@@ -1,6 +1,6 @@
-clear all;
+
 rng(7);
-global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY Rstate
+global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY X
 % Load eddy forcing and coarse state data
 fname = 'eddyforcing_N256_Re4.0e+04_Tstart141_Tend142_F0.5';
 data  = load(['data/eddyforcing/', fname, '.mat']);
@@ -10,8 +10,19 @@ data  = load(['data/eddyforcing/', fname, '.mat']);
 %  output data Y: eddy forcings at time (k+1)*dt
 
 N  = size(data.xa,2);  % total # samples
-T  = 100;              % training cutoff
-Nt = 50;               % # training samples
+T  = 220;              % training cutoff
+Nt = T-1;              % # training samples
+Nt = 100;
+assert(Nt <= T-1);
+
+% create appropriate scalings for data
+xaScaling = 2.0*max(abs(data.xa(:)));
+efScaling = 2.0*max(abs(data.eddyF(:)));
+xaDim = size(data.xa,1);
+efDim = size(data.eddyF,1);
+
+scaleU = [xaScaling*ones(1,xaDim), efScaling*ones(1,efDim)];
+scaleY = [efScaling*ones(1,efDim)];
 
 U  = [data.xa(:,T-Nt:T-1); data.eddyF(:,T-Nt:T-1)]';
 Nu = size(U,2);
@@ -29,49 +40,67 @@ createReservoir();
 fprintf('create reservoir... done\n');
 
 fprintf('train reservoir...\n');
+tic
 trainReservoir(U, Y);
-fprintf('train reservoir... done\n');
-
+fprintf('train reservoir... done (%fs)\n', toc);
+subplot(4,2,8)
+plot(X(2,:)); hold on
+plot(X(10,:)); hold on
+plot(X(end,:)); hold off
 fprintf('begin prediction...\n');
 % indices used for prediction (beyond T this is unseen data)
-pRange = T-10:T+10;
+pMin = 10;
+pPlus = 5;
+pRange = T-pMin:T+pPlus;
 
 % initial (known) eddy forcing
 r  = data.eddyF(:,pRange(1)-1);
+
+% reservoir state to use in autonomous mode
+Rstate = X(end-pMin,:);
+
+errnorm = [];
+t = []; 
+cl = lines(100);
+cl = cl(iter,:);
+iter = iter + 1;
 for i = pRange
     xa = data.xa(:,i-1);
     u  = [xa; r];
 
-    Rstate(:) = update(Rstate, u' / scaleU , r' / scaleY);
+    Rstate(:) = update(Rstate, u' ./ scaleU, r' ./ scaleY);
     
     % predicted eddy forcing
     r0 = r;
     r = tanh(W_out*Rstate(:));
-    r = r * scaleY; % unscale
+    r = r .* scaleY'; % unscale
     
     %-----------------------------------------------------------
-    t  = data.times(i);    
-    subplot(3,2,1)
+    t  = [t, (data.times(i)-data.times(1)) / day];    
+    fprintf('t = %f\n', t(end));
+    
+    figure(1)
+    subplot(4,2,1)
     plotQG(data.nxa, data.nya,1, day*data.xa(:,i), false)
-    titleString = sprintf('Coarse vorticity day %f', (t-data.times(1)) / day);
+    titleString = sprintf('Coarse vorticity day %f', t(end));
     title(titleString);
     colorbar
     caxis([-0.2,0.2])
 
-    subplot(3,2,2)
+    subplot(4,2,2)
     plotQG(data.nxa, data.nya, 1, day*data.eddyF(:,i), false);
     colorbar
     caxis([-10,10])
     title('Eddy forcing for coarse model')
 
-    subplot(3,2,3)
+    subplot(4,2,3)
     plotQG(data.nxa, data.nya, 1, day*r, false);
     colorbar
     caxis([-10,10])
     title('Predicted eddy forcing for coarse model')
 
     diff = abs(r-data.eddyF(:,i));
-    subplot(3,2,4)
+    subplot(4,2,4)
     plotQG(data.nxa, data.nya, 1, day*diff, false);
     colorbar    
     caxis([-10,10])
@@ -80,36 +109,40 @@ for i = pRange
     else
         col = 'r';
     end
-    title(sprintf('abs(diff), 2-norm = %3.2f', norm(day*diff(:))),'color',col);
     
-    drdt = (r - r0) / (data.times(i)-data.times(i-1));
-    subplot(3,2,5)
+    errnorm = [errnorm, norm(day*diff(:))];
+    title(sprintf('abs(diff), 2-norm = %3.2e', errnorm(end)),'color',col);
+    
+    drdt = (r - r0);% / (data.times(i)-data.times(i-1));
+    subplot(4,2,5)
     plotQG(data.nxa, data.nya, 1, day*drdt, false);
     colorbar
     %caxis([-10,10])
     title('drdt (prediction)')
 
-    drdt_true = (data.eddyF(:,i) - data.eddyF(:,i-1)) / (data.times(i)-data.times(i-1));
-    subplot(3,2,6)
+    drdt_true = (data.eddyF(:,i) - data.eddyF(:,i-1));% / (data.times(i)-data.times(i-1));
+    subplot(4,2,6)
     plotQG(data.nxa, data.nya, 1, day*drdt_true, false);
     colorbar
     %caxis([-10,10])
     title('drdt (data)')
-
+    
+    subplot(4,2,7)
+    plot(t,errnorm,'.-','color',cl); hold on
+    tsep = (data.times(T) - data.times(1)) / day;
+    plot([tsep,tsep], ylim,'r-');
     
     drawnow
-    %exportfig('out.eps',10,[18,18]);
-
 end
 
 
 function [ ] = createReservoir()
-    global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY Rstate
+    global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY 
     % Reservoir parameters
-    Nr       = 1000;
-    noise    = 0.0;
-    sparsity = 0.9;
-    rhoMax   = 0.9;  % spectral radius
+    Nr       = 300;
+    noise    = 0.;
+    sparsity = 0.92;
+    rhoMax   = 1.0;  % spectral radius
 
     % create random matrix
     W = rand(Nr)-0.5;
@@ -130,15 +163,15 @@ function [ ] = createReservoir()
 end
 
 function [ ] = trainReservoir(trainU, trainY)
-    global W W_in W_ofb W_out noise Nr scaleU scaleY Rstate
+    global W W_in W_ofb W_out noise Nr scaleU scaleY X
     
     dim = size(trainU,1);
 
     % scale trainU, trainY
-    scaleU = 1.1*max(abs(trainU(:)));
-    trainU = trainU / scaleU;
-    scaleY = 1.1*max(abs(trainY(:)));
-    trainY = trainY / scaleY;
+    %scaleU = 1.1*max(abs(trainU(:)));
+    trainU = trainU ./ scaleU;
+    %scaleY = 1.1*max(abs(trainY(:)));
+    trainY = trainY ./ scaleY;
 
     % initialize activations X
     X = zeros(dim, Nr);
@@ -156,7 +189,7 @@ function [ ] = trainReservoir(trainU, trainY)
     
     % By solving the normal equations and including Tikhonov
     % regularization
-    lambda  = 100; 
+    lambda  = 1; 
     Xnormal = X'*X + lambda * speye(Nr);
     b       = X'*atanh(trainY);
     W_out   = (Xnormal \ b)';
@@ -166,8 +199,6 @@ function [ ] = trainReservoir(trainU, trainY)
     fprintf('#training fields: %d\n', dim);
     fprintf('training error: %e\n', sqrt(mean((predY(:) - trainY(:)).^2)));
 
-    % save last reservoir state to use in autonomous mode
-    Rstate = X(end,:);
 end
 
 function [act] = update(state, u, y)
