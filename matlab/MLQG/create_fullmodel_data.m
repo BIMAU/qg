@@ -12,17 +12,16 @@ day  = 3600 * 24 / tdim;
 year = 365*day;
 
 % Job parameters
-restartFlag = true;
+restartFlag = true; % restart from existing states array
 adaptiveTimeStep = false;
-storeTimeIncr = 0; % store every new state
-                   % storeTimeIncr = 5*day;
-rotation = false;   % enable or disable rotation (beta)
+storeTimeIncr = 0;  % store every new state
+rotation = true;    % enable or disable rotation (beta)
 
 Re   = 4e4;       % Reynolds number
 ampl = 0.5;       % Forcing amplitude
-stir = 1;         % stirring type
-Tend = 300*day;   % End time, nondim. timescale is in years
-dt   = 1.25*day;  % Time step 
+stir = 0;         % stirring type: 0 = cos(5x), 1 = sin(16x)
+Tend = 10000*day; % End time, nondim. timescale is in years
+dt   = 1.0*day;   % Time step
 th   = 1.0;       % Theta
 t0   = 0;         % time
 
@@ -82,7 +81,7 @@ F = @(x) qg.rhs(x); % Right hand side
 x  = x0;
 F0 = F(x);
 
-kDes = 3.3; % optimal number of Newton iterations
+kDes = 3.3;   % optimal number of Newton iterations
 states = [];
 times  = [];
 storeTime = 0;

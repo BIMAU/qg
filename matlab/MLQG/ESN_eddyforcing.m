@@ -1,9 +1,13 @@
-
 rng(7);
 global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY X
 % Load eddy forcing and coarse state data
 fname = 'eddyforcing_N256_Re4.0e+04_Tstart141_Tend142_F0.5';
 data  = load(['data/eddyforcing/', fname, '.mat']);
+xaDim = size(data.xa,1);
+efDim = size(data.eddyF,1);
+
+% residual (eddy forcing) difference
+data.rDiff = [zeros(efDim,1), data.eddyF(:,2:end) - data.eddyF(:,1:end-1)];
 
 % Setup training data 
 %  input  data U: averages and eddy forcings at time k*dt
@@ -12,21 +16,23 @@ data  = load(['data/eddyforcing/', fname, '.mat']);
 N  = size(data.xa,2);  % total # samples
 T  = 220;              % training cutoff
 Nt = T-1;              % # training samples
-Nt = 100;
+Nt = 200;
+
 assert(Nt <= T-1);
 
 % create appropriate scalings for data
-xaScaling = 2.0*max(abs(data.xa(:)));
+xaScaling = 3.0*max(abs(data.xa(:)));
 efScaling = 2.0*max(abs(data.eddyF(:)));
-xaDim = size(data.xa,1);
-efDim = size(data.eddyF,1);
+rdScaling = 1.1*max(abs(data.rDiff(:)));
 
-scaleU = [xaScaling*ones(1,xaDim), efScaling*ones(1,efDim)];
-scaleY = [efScaling*ones(1,efDim)];
+scaleU = [xaScaling*ones(1,xaDim), efScaling*ones(1,efDim), rdScaling*ones(1,efDim)];
+scaleY = [efScaling*ones(1,efDim), rdScaling*ones(1,efDim)];
+%scaleY = [efScaling*ones(1,efDim)];
 
-U  = [data.xa(:,T-Nt:T-1); data.eddyF(:,T-Nt:T-1)]';
+U  = [data.xa(:,T-Nt:T-1); data.eddyF(:,T-Nt:T-1); data.rDiff(:,T-Nt:T-1)]';
 Nu = size(U,2);
-Y  = [data.eddyF(:,T-Nt+1:T)'];
+Y  = [data.eddyF(:,T-Nt+1:T); data.rDiff(:,T-Nt+1:T)]';
+%Y  = [data.eddyF(:,T-Nt+1:T)]';
 Ny = size(Y,2);
 
 % QG parameters:
@@ -49,12 +55,15 @@ plot(X(10,:)); hold on
 plot(X(end,:)); hold off
 fprintf('begin prediction...\n');
 % indices used for prediction (beyond T this is unseen data)
-pMin = 10;
-pPlus = 5;
+pMin = 1;
+pPlus = 15;
 pRange = T-pMin:T+pPlus;
 
 % initial (known) eddy forcing
 r  = data.eddyF(:,pRange(1)-1);
+
+% initial (known) eddy forcing tangent
+rd = data.rDiff(:,pRange(1)-1);
 
 % reservoir state to use in autonomous mode
 Rstate = X(end-pMin,:);
@@ -64,22 +73,32 @@ t = [];
 cl = lines(100);
 cl = cl(iter,:);
 iter = iter + 1;
+
+%perturb data
+%data.xa = data.xa.*(ones(xaDim, N) + 0.5*randn(xaDim, N));
 for i = pRange
     xa = data.xa(:,i-1);
-    u  = [xa; r];
+    u  = [xa; r; rd];
 
-    Rstate(:) = update(Rstate, u' ./ scaleU, r' ./ scaleY);
+    Rstate(:) = update(Rstate, u' ./ scaleU, [r;rd]' ./ scaleY);
+    %Rstate(:) = update(Rstate, u' ./ scaleU, r' ./ scaleY);
     
     % predicted eddy forcing
     r0 = r;
-    r = tanh(W_out*Rstate(:));
-    r = r .* scaleY'; % unscale
+    
+    y  = tanh(W_out*Rstate(:));
+    y  = y .* scaleY'; % unscale
+    r  = y(1:efDim);
+    rd = y(efDim+1:2*efDim);
+    
+    % rd = r - r0;
+    
+    r = r0 + rd;
     
     %-----------------------------------------------------------
     t  = [t, (data.times(i)-data.times(1)) / day];    
     fprintf('t = %f\n', t(end));
     
-    figure(1)
     subplot(4,2,1)
     plotQG(data.nxa, data.nya,1, day*data.xa(:,i), false)
     titleString = sprintf('Coarse vorticity day %f', t(end));
@@ -113,7 +132,7 @@ for i = pRange
     errnorm = [errnorm, norm(day*diff(:))];
     title(sprintf('abs(diff), 2-norm = %3.2e', errnorm(end)),'color',col);
     
-    drdt = (r - r0);% / (data.times(i)-data.times(i-1));
+    drdt = rd;% / (data.times(i)-data.times(i-1));
     subplot(4,2,5)
     plotQG(data.nxa, data.nya, 1, day*drdt, false);
     colorbar
@@ -139,9 +158,9 @@ end
 function [ ] = createReservoir()
     global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY 
     % Reservoir parameters
-    Nr       = 300;
-    noise    = 0.;
-    sparsity = 0.92;
+    Nr       = 1000;
+    noise    = 0.0;
+    sparsity = 0.9;
     rhoMax   = 1.0;  % spectral radius
 
     % create random matrix
@@ -175,6 +194,10 @@ function [ ] = trainReservoir(trainU, trainY)
 
     % initialize activations X
     X = zeros(dim, Nr);
+    
+    subplot(4,2,2)
+    plot(trainU(10,:));
+    drawnow
 
     % iterate the state, save all neuron activations in X
     for k = 2:dim
@@ -184,15 +207,15 @@ function [ ] = trainReservoir(trainU, trainY)
     % compute W_out: W_out*X' = atanh(trainY)
     
     % Using a pseudo inverse
-    % P = pinv(X);
-    % W_out = (P*atanh(trainY))';
+    P = pinv(X);
+    W_out = (P*atanh(trainY))';
     
     % By solving the normal equations and including Tikhonov
     % regularization
-    lambda  = 1; 
-    Xnormal = X'*X + lambda * speye(Nr);
-    b       = X'*atanh(trainY);
-    W_out   = (Xnormal \ b)';
+    %lambda  = 0.1; 
+    %Xnormal = X'*X + lambda * speye(Nr);
+    %b       = X'*atanh(trainY);
+    %W_out   = (Xnormal \ b)';
      
     % get training error
     predY = tanh(X*W_out');

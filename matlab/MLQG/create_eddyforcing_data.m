@@ -25,15 +25,15 @@ qg.set_par(11, ampl);  % stirring amplitude
 qg.set_par(5,    Re);  % Reynolds number
 
 % Also create a coarse QG model
-ff  = 2;    % coarsening factor
+ff  = 4;    % coarsening factor
 nxa = 256 / ff;
 nya = 256 / ff;
 qg_a = QG(nxa, nya, 1);
 
 % Set parameters in QG
-qg_a.set_par(18,   0.0);    % stirring type: 0 = cos(5x), 1 = sin(16x)
-qg_a.set_par(11,   ampl);   % stirring amplitude
-qg_a.set_par(5,    Re/100); % Reynolds number for coarse model
+qg_a.set_par(18, 0.0);    % stirring type: 0 = cos(5x), 1 = sin(16x)
+qg_a.set_par(11, ampl);   % stirring amplitude
+qg_a.set_par(5,  Re/100); % Reynolds number for coarse model
 
 % load data: full model, fixed timestep
 fprintf('load full model data...\n')
