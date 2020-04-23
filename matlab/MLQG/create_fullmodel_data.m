@@ -1,3 +1,8 @@
+% load existing states array
+% fprintf('loading existing fullmodel data ...\n'); tic;
+% load('data/fullmodel/N256_Re4.0e+04_Tstart142_Tend151_F0.5_Stir0_Rot1.mat');
+% fprintf('loading existing fullmodel data ... done (%fs)\n', toc)
+
 % Initialize QG
 nx = 256;
 ny = 256;
@@ -14,8 +19,8 @@ year = 365*day;
 % Job parameters
 restartFlag = true; % restart from existing states array
 adaptiveTimeStep = false;
-storeTimeIncr = 0;  % store every new state
-rotation = true;    % enable or disable rotation (beta)
+storeTimeIncr = 10*day;  % save to mat and eps
+rotation = true;         % enable or disable rotation (beta)
 
 Re   = 4e4;       % Reynolds number
 ampl = 0.5;       % Forcing amplitude
@@ -113,9 +118,10 @@ while t < Tend
     x0 = x;
     F0 = F(x);
 
+    states = [states, x];
+    times  = [times,  t];
+
     if t > storeTime || t > Tend
-        states = [states, x];
-        times  = [times,  t];
         
         subplot(1,3,1);
         plotQG(nx,ny,2,x);
@@ -125,7 +131,8 @@ while t < Tend
         subplot(1,3,2);
         plotQG(nx,ny,1,3600*24/tdim*x,false);
         titleString = sprintf('vorticity');
-        title(titleString);        
+        title(titleString);
+        caxis([-0.2,0.2])
         
         [u,v] = qg.compute_uv(x);
         subplot(1,3,3);
@@ -147,9 +154,10 @@ while t < Tend
 
         fprintf('saving data to %s\n', [fnamebase,'.mat']);
         
+        % this is slow
         save(['data/fullmodel/',fnamebase,'.mat'], ...
              'states', 'times', 'nx', 'ny', 'Re', ...
-             't', 'dt', 'ampl');        
+             't', 'dt', 'ampl', '-v7.3');        
          
         storeTime = t + storeTimeIncr;
     end

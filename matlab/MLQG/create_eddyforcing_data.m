@@ -12,20 +12,21 @@ tdim = Ldim / Udim; % in seconds
 day  = 3600 * 24 / tdim;
 year = 365*day;
 
-Re   = 4e4;   % Reynolds number on fine grid
-ampl = 0.5;   % Forcing amplitude
-Tend = 100;   % End time, nondim. timescale is in years
-dt   = 0.01;  % Time step
-th   = 1.0;   % Theta
-t0   = 0;     % time
+Re   = 4e4;      % Reynolds number on fine grid
+ampl = 0.5;      % Forcing amplitude
+Tend = 100;      % End time, nondim. timescale is in years
+dt   = 0.01;     % Time step
+th   = 1.0;      % Theta
+t0   = 0;        % time
+Re_a = Re / 100; % Reynolds number for coarse model
 
 % Set parameters in QG
 qg.set_par(18,  0.0);  % stirring type: 0 = cos(5x), 1 = sin(16x)
 qg.set_par(11, ampl);  % stirring amplitude
-qg.set_par(5,    Re);  % Reynolds number
+qg.set_par(5,  Re_a);  % Reynolds number
 
 % Also create a coarse QG model
-ff  = 4;    % coarsening factor
+ff  = 8;    % coarsening factor
 nxa = 256 / ff;
 nya = 256 / ff;
 qg_a = QG(nxa, nya, 1);
@@ -37,7 +38,8 @@ qg_a.set_par(5,  Re/100); % Reynolds number for coarse model
 
 % load data: full model, fixed timestep
 fprintf('load full model data...\n')
-fname_base = 'N256_Re4.0e+04_Tstart141_Tend142_F0.5';
+% fname_base = 'N256_Re4.0e+04_Tstart141_Tend142_F0.5';
+fname_base = 'N256_Re4.0e+04_Tstart142_Tend169_F0.5_Stir0_Rot1';
 data = load(['data/fullmodel/', fname_base, '.mat']);
 assert(nx == data.nx);
 fprintf('load full model data... done\n')
@@ -77,7 +79,8 @@ for idx = 1:N
 end
 Telap = toc;
 fprintf('creating eddy forcing... done: %f\n', Telap);
-fname = ['eddyforcing_', fname_base, '.mat'];
+ReStr = sprintf('_Re%1.1e',Re_a);
+fname = ['eddyforcing_ff',num2str(ff),ReStr,'_', fname_base,'.mat'];
 fprintf('saving data to %s\n', fname);
 save(['data/eddyforcing/',fname], 'eddyF', 'xa', ...
      'N', 'P', 'nxa', 'nya', 'times')
