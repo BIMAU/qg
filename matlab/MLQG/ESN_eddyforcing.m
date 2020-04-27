@@ -4,7 +4,7 @@ global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY X
 % fname = 'eddyforcing_N256_Re4.0e+04_Tstart141_Tend142_F0.5';
 % fname = 'eddyforcing_ff4_Re4.0e+02_N256_Re4.0e+04_Tstart141_Tend142_F0.5';
 % fname = 'eddyforcing_ff4_Re4.0e+02_N256_Re4.0e+04_Tstart142_Tend169_F0.5_Stir0_Rot1';
-fname = 'eddyforcing_ff8_Re4.0e+02_N256_Re4.0e+04_Tstart142_Tend169_F0.5_Stir0_Rot1';
+fname = 'eddyforcing_ff8_Re4.0e+02_N256_Re4.0e+04_Tstart142_Tend151_F0.5_Stir0_Rot1';
 data  = load(['data/eddyforcing/', fname, '.mat']);
 xaDim = size(data.xa,1);
 efDim = size(data.eddyF,1);

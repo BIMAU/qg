@@ -26,7 +26,7 @@ qg.set_par(11, ampl);  % stirring amplitude
 qg.set_par(5,  Re_a);  % Reynolds number
 
 % Also create a coarse QG model
-ff  = 8;    % coarsening factor
+ff  = 4;    % coarsening factor
 nxa = 256 / ff;
 nya = 256 / ff;
 qg_a = QG(nxa, nya, 1);
@@ -37,12 +37,12 @@ qg_a.set_par(11, ampl);   % stirring amplitude
 qg_a.set_par(5,  Re/100); % Reynolds number for coarse model
 
 % load data: full model, fixed timestep
-fprintf('load full model data...\n')
+fprintf('load full model data...\n'); tic;
 % fname_base = 'N256_Re4.0e+04_Tstart141_Tend142_F0.5';
-fname_base = 'N256_Re4.0e+04_Tstart142_Tend169_F0.5_Stir0_Rot1';
+fname_base = 'N256_Re4.0e+04_Tstart142_Tend151_F0.5_Stir0_Rot1';
 data = load(['data/fullmodel/', fname_base, '.mat']);
 assert(nx == data.nx);
-fprintf('load full model data... done\n')
+fprintf('load full model data... done (%fs)\n', toc);
 times = data.times;
 
 scaling = 3600*24/tdim;
