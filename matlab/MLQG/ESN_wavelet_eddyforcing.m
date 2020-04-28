@@ -47,6 +47,5 @@ rbar = rbar(id);
 test = zeros(dim,1);
 test(10) = 1;
 r = H*rbar;
-subplot(2,2,2);
 plotQG(nxa, nya, 1, day*r, false)
 colorbar

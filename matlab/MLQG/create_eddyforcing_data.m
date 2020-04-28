@@ -39,7 +39,8 @@ qg_a.set_par(5,  Re/100); % Reynolds number for coarse model
 % load data: full model, fixed timestep
 fprintf('load full model data...\n'); tic;
 % fname_base = 'N256_Re4.0e+04_Tstart141_Tend142_F0.5';
-fname_base = 'N256_Re4.0e+04_Tstart142_Tend151_F0.5_Stir0_Rot1';
+% fname_base = 'N256_Re4.0e+04_Tstart142_Tend151_F0.5_Stir0_Rot1';
+fname_base = 'N256_Re4.0e+04_Tstart151_Tend179_F0.5_Stir0_Rot1';
 data = load(['data/fullmodel/', fname_base, '.mat']);
 assert(nx == data.nx);
 fprintf('load full model data... done (%fs)\n', toc);

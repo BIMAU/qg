@@ -22,7 +22,7 @@ Nt = T-1;              % # training samples
                        % Nt = 100;
 
 assert(Nt <= T-1);
-return
+
 % create appropriate scalings for data
 xaScaling = 3.0*max(abs(data.xa(:)));
 efScaling = 2.0*max(abs(data.eddyF(:)));
