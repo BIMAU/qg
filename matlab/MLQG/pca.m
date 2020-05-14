@@ -1,4 +1,4 @@
-function [PC CovMat] = pca(G, dim)
+function [PC CovMat Var] = pca(G, dim)
 %% PC-Analysis. [signals Var PC] = PCA(G). 
 % Accepts an {m}x{n} matrix 
 % containing {m} variables, measured {n} times.  
@@ -23,4 +23,7 @@ else
     [~, S, PC] = svds(Y, dim);
 end
 fprintf(' computing svd... done (%fs)\n', toc)
+
+S = diag(S);
+Var = S.*S;
 end
