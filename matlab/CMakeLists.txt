@@ -1,43 +1,46 @@
 find_package(Matlab COMPONENTS MAIN_PROGRAM)
 
-include_directories(${PROJECT_SOURCE_DIR}/src)
+if (FOUND_Matlab)
 
-set(QG_MEX_FILES
-  QG_init
-  QG_free
-  QG_rhs
-  QG_bilin
-  QG_jacob
-  QG_jacobian
-  QG_mass
-  QG_apply
-  QG_solve
-  QG_set_par
-  QG_get_par)
+  include_directories(${PROJECT_SOURCE_DIR}/src)
 
-foreach(i ${QG_MEX_FILES})
-  matlab_add_mex(NAME "${i}" SRC "${i}.cpp")
+  set(QG_MEX_FILES
+    QG_init
+    QG_free
+    QG_rhs
+    QG_bilin
+    QG_jacob
+    QG_jacobian
+    QG_mass
+    QG_apply
+    QG_solve
+    QG_set_par
+    QG_get_par)
 
-  # Matlab 2018b hack
-  target_compile_options(${i} PRIVATE "-fvisibility=default")
+  foreach(i ${QG_MEX_FILES})
+    matlab_add_mex(NAME "${i}" SRC "${i}.cpp")
 
-  target_link_libraries(${i} qg)
+    # Matlab 2018b hack
+    target_compile_options(${i} PRIVATE "-fvisibility=default")
 
-  install(TARGETS ${i} DESTINATION matlab)
-endforeach()
+    target_link_libraries(${i} qg)
 
-set(QG_MATLAB_FILES
-  QG.m
-  plotQG.m
-  crs2sp.m
-  stochforcing.m)
+    install(TARGETS ${i} DESTINATION matlab)
+  endforeach()
 
-install(FILES ${QG_MATLAB_FILES} DESTINATION matlab)
+  set(QG_MATLAB_FILES
+    QG.m
+    plotQG.m
+    crs2sp.m
+    stochforcing.m)
 
-# enable_testing()
-# matlab_add_unit_test(
-#     NAME stokes0
-#     TIMEOUT 30
-#     UNITTEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stokes0.m
-#     ADDITIONAL_PATH "${CMAKE_CURRENT_BINARY_DIR}:${CMAKE_CURRENT_SOURCE_DIR}"
-# )
+  install(FILES ${QG_MATLAB_FILES} DESTINATION matlab)
+
+  # enable_testing()
+  # matlab_add_unit_test(
+  #     NAME stokes0
+  #     TIMEOUT 30
+  #     UNITTEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stokes0.m
+  #     ADDITIONAL_PATH "${CMAKE_CURRENT_BINARY_DIR}:${CMAKE_CURRENT_SOURCE_DIR}"
+  # )
+endif ()
