@@ -30,11 +30,13 @@ if ~exist('cont')
                      'state', [], 'pars', [], 'history', []);
 end
 
+% Converge to an initial zero steady state
 x = zeros(n, 1);
-
 x = newton(qg, x, 1e-10);
 
+% Loop over the list of targets
 for i=1:length(cont)
+    % Load states from a previous run if available
     state = cont{i}.state;
     if ~isempty(state)
         for j=1:length(cont{i}.pars)
@@ -46,6 +48,7 @@ for i=1:length(cont)
         cont{i}.history = struct('psi_max', [], 'psi_min', [], 'par', []);
     end
 
+    % Start from a state other than the previous one
     if ~isempty(cont{i}.from)
         x = cont{cont{i}.from}.state;
         for j=1:length(cont{cont{i}.from}.pars)
@@ -53,12 +56,13 @@ for i=1:length(cont)
         end
     end
 
+    % Obtain all continuation parameters
     par = cont{i}.par;
     ds = cont{i}.ds;
     target = cont{i}.target;
     maxit = cont{i}.maxit;
 
-    % Get the initial tangent
+    % Get the initial tangent (2.2.5 - 2.2.7). 'l' is called mu in Erik's thesis.
     delta = 1e-6;
     l = qg.get_par(par);
     fval = qg.rhs(x);
@@ -67,9 +71,11 @@ for i=1:length(cont)
     dl = (qg.rhs(x) - fval) / delta;
     qg.set_par(par, l);
 
+    % Compute the jacobian at x and solve with it (2.2.5)
     qg.jacob(x);
     dx = -qg.solve(dl);
 
+    % Scaling of the initial tangent (2.2.7)
     dl = 1;
     nrm = sqrt(zeta * dx'*dx + dl'*dl);
     dl = dl / nrm;
@@ -83,16 +89,20 @@ for i=1:length(cont)
         l0 = l;
         x0 = x;
 
+        % Predictor (2.2.3)
         l = l0 + ds * dl0;
         x = x0 + ds * dx0;
 
+        % Corrector (2.2.9 and onward)
         [x2, l2] = newtoncorrector(qg, par, ds, x, x0, l, l0, 1e-10);
 
+        % Set the new values computed by the corrector
         dl = l2 - l0;
         l = l2;
         dx = x2 - x0;
         x = x2;
 
+        % Store useful information about parameters of iterest
         psi_max = max(x(2:2:n));
         psi_min = min(x(2:2:n));
         fprintf('par = %2d, l = %f, max psi = %f, min psi = %f\n', ...
@@ -102,7 +112,8 @@ for i=1:length(cont)
         cont{i}.history.par = [cont{i}.history.par, l];
 
         if (abs(dl) < 1e-10 || l >= target)
-            % Converge onto the end point
+            % Converge onto the end point (we usually go past it, so we
+            % use Newton to converge)
             l = target;
             qg.set_par(par, l);
             x = newton(qg, x, 1e-10);
@@ -117,9 +128,12 @@ for i=1:length(cont)
             break
         end
 
+        % Compute the tangent (2.2.4)
         dx0 = dx / ds;
         dl0 = dl / ds;
     end
+
+    % Store the state and parameters for future runs
     cont{i}.state = x;
     cont{i}.pars = [];
     for j=1:20
