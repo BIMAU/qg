@@ -1,6 +1,6 @@
 find_package(Matlab COMPONENTS MAIN_PROGRAM)
 
-if (FOUND_Matlab)
+if (Matlab_FOUND)
 
   include_directories(${PROJECT_SOURCE_DIR}/src)
 
