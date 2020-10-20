@@ -1,6 +1,5 @@
 rng(77)
 global W W_in W_ofb W_out noise Nr Nu Ny scaleU scaleY X alpha x1max x2max nxa nya 
-
 global extendX outputActivation reservoirStateInit
 
 % QG parameters:
@@ -43,7 +42,7 @@ reservoirStateInit = 'rand';  % 'zero', 'rand'
 Vx  = V(:,sep+1:sep+dimx);
 Va  = V(:,1:sep);
 N   = size(data.xa,2);  % total # samples/experiments
-T   = round(0.65*S);     % training cutoff
+T   = round(0.65*S);    % training cutoff
 Nt  = T-1;              % # training samples
                         % Nt = 100;
 
@@ -248,8 +247,8 @@ function [ ] = createReservoir()
     
     % W_in(1:Nr/2, Nu/2+1:end) = 0;
     % W_in(Nr/2+1:end, 1:Nu/2) = 0;
-
-    % Create output feedback weight matrix
+ 
+   % Create output feedback weight matrix
     % D = [(1:Nr)', ceil(Ny*rand(Nr,1)), (rand(Nr,1)*2-1)];
     % W_ofb = spconvert(D);
     W_ofb = 0.1*(rand(Nr, Ny) * 2 - 1);

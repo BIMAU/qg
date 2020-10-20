@@ -1,9 +1,9 @@
 % Initialize full QG model
 nun = 2;
-nx = 256;
-ny = 256;
-n = nx*ny*nun;
-qg = QG(nx, ny, 1);  % periodic bdc setup
+nx  = 256;
+ny  = 256;
+n   = nx*ny*nun;
+qg  = QG(nx, ny, 1);  % periodic bdc setup
 
 % QG parameters:
 Ldim = 1e6;
@@ -15,9 +15,6 @@ year = 365*day;
 Re   = 4e4;      % Reynolds number on fine grid
 ampl = 0.5;      % Forcing amplitude
 Tend = 100;      % End time, nondim. timescale is in years
-dt   = 0.01;     % Time step
-th   = 1.0;      % Theta
-t0   = 0;        % time
 Re_a = Re / 100; % Reynolds number for coarse model
 
 % Set parameters in QG
@@ -26,9 +23,9 @@ qg.set_par(11, ampl);  % stirring amplitude
 qg.set_par(5,  Re_a);  % Reynolds number
 
 % Also create a coarse QG model
-ff  = 4;    % coarsening factor
-nxa = 256 / ff;
-nya = 256 / ff;
+ff   = 4; % coarsening factor
+nxa  = 256 / ff;
+nya  = 256 / ff;
 qg_a = QG(nxa, nya, 1);
 
 % Set parameters in QG

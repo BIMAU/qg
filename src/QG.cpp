@@ -73,7 +73,7 @@ namespace QG
         // only when periodic:
         useIntegral_  = false;
         useDirichlet_ = true;
-        
+
         // row for integral condition on psi (only used when periodic)
         intI_ = n_-1;
         intJ_ = m_-1;
@@ -122,7 +122,7 @@ namespace QG
 
         lin(); // linear part which is independent of the state
     }
-    
+
     // fully 0-based (including XX) find row function
     int QG::findRow(int i, int j, int XX)
     {
@@ -956,7 +956,7 @@ namespace QG
             std::cout << "No preconditioner computed, unable to solve." << std::endl;
             return -1;
         }
-        
+
         apply_scaling(x);
 
         int ierr = cgstab(x, 1e-3);

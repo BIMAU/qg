@@ -47,12 +47,12 @@ rng(7);
 %      0.4*cos(3*xgrid)'*cos(3*ygrid) + ...
 %      0.3*cos(5.0*xgrid)'*cos(5.0*ygrid) + ...
 %      0.02*sin(xgrid) + 0.02*cos(ygrid);
-% 
-% 
+%
+%
 % z0 = sin(5*xgrid)'*sin(5*ygrid) + ...
 %      0.5*cos(4*xgrid+0.1)'*cos(4*ygrid+0.1) + ...
 %      0.2*sin(3*xgrid+0.3)'*sin(3*ygrid+0.3);
-% 
+%
 % z0 = 1*(rand(nx,ny)-0.5)+(sin(4*xgrid)'*sin(4*ygrid));
 
 z0 = 0;
@@ -86,7 +86,7 @@ F = @(x) qg.rhs(x); % Right hand side
 x  = x0;
 F0 = F(x);
 
-kDes = 3.3;   % optimal number of Newton iterations
+kDes   = 3.3;    % optimal number of Newton iterations
 states = [];
 times  = [];
 storeTime = 0;
@@ -95,7 +95,7 @@ t = t0;
 while t < Tend
     fprintf(' t = %2.2e years,  \n',  t / year);
     fprintf('dt = %2.2e days \n Newton: \n', dt / day);
-    fprintf('start Newton \n')
+    fprintf('start Newton \n');
 
     for k = 1:10
         rhs = B*(x-x0)/(dt*th) + F(x) + (1-th)/th * F0;
@@ -108,13 +108,13 @@ while t < Tend
             fprintf('||F|| = %2.5e \n', norm(rhs, 2));
             break;
         end
-    end   
+    end
     t  = t + dt;
     if adaptiveTimeStep
         dt = kDes / k * dt;
         s  = 1.0 / (dt*th);
     end
-         
+
     x0 = x;
     F0 = F(x);
 
@@ -122,43 +122,43 @@ while t < Tend
     times  = [times,  t];
 
     if t > storeTime || t > Tend
-        
+
         subplot(1,3,1);
         plotQG(nx,ny,2,x);
         titleString = sprintf('psi, t = %4.0fd', (t-times(1)) / day);
         title(titleString);
-        
+
         subplot(1,3,2);
         plotQG(nx,ny,1,3600*24/tdim*x,false);
         titleString = sprintf('vorticity');
         title(titleString);
         caxis([-0.2,0.2])
-        
+
         [u,v] = qg.compute_uv(x);
         subplot(1,3,3);
         u = reshape(u,nx,ny);
         v = reshape(v,nx,ny);
         imagesc((u.^2+v.^2)')
         titleString = sprintf('u^2 + v^2');
-        title(titleString);      
-        
+        title(titleString);
+
         ReStr = sprintf('_Re%1.1e',Re);
         fnamebase = [ 'N', num2str(nx), ReStr, '_Tstart', ...
                       num2str(round(t0)), '_Tend', ...
                       num2str(round(Tend)), '_F', ...
                       num2str(ampl), '_Stir', num2str(stir), ...
                       '_Rot',num2str(rotation)];
-        
-        
+
+
         exportfig(['data/eps/',fnamebase,'.eps'],10,[40,10]);
 
         fprintf('saving data to %s\n', [fnamebase,'.mat']);
-        
+
         % this is slow
         save(['data/fullmodel/',fnamebase,'.mat'], ...
              'states', 'times', 'nx', 'ny', 'Re', ...
-             't', 'dt', 'ampl', '-v7.3');        
-         
+             't', 'dt', 'ampl', '-v7.3');
+
         storeTime = t + storeTimeIncr;
     end
 end
