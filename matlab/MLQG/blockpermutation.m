@@ -41,7 +41,7 @@ function [P,Q] = blockpermutation(n,m,nun,bs,nested)
         out{1} = P;
         blocks = 1;
         for i = 2:total
-            fprintf('\nnested block permutation\n');
+            fprintf('Nested block permutation\n');
 
             % total number of blocks in full domain n*m
             blocks = blocks * (ndom / size) * (mdom / size);
@@ -54,9 +54,9 @@ function [P,Q] = blockpermutation(n,m,nun,bs,nested)
             out{i} = kron(speye(blocks), ...
                           create_permutation(ndom, mdom, nun, size));
 
-            fprintf('block  size: %d \n', size);
-            fprintf('domain size: %d x %d \n', ndom, mdom);
-            fprintf('total number of blocks: %d \n', blocks);
+            fprintf('  block size: %d \n', size);
+            fprintf('  subdomain size: %d x %d \n', ndom, mdom);
+            fprintf('  number of blocks in whole domain: %d \n', blocks);
 
             Q = out{i} * Q; % combined operator
         end
