@@ -4,45 +4,80 @@
 % the stripe pattern (figure 3). With nested block permutations the
 % differences are increasingly more local.
 
-bs = 32;        % block size for permutation P
+clear all
+bs  = 32;       % block size for permutation P
 n   = 128;      % grid size
 nun = 2;        % number of unknowns in per grid point
 dim = nun*n*n;  % total dimension
 
 [all, QQ] = blockpermutation(n, n, nun, bs, true);
+P = all{1};
 
 % create data
-A =  peaks(n);
-B = -peaks(n).^2/100;
+A =  10*peaks(n/2);
+A =  [A, A; A, A];
+B = -peaks(n/2).^2/100;
+B =  [B, B; B, B];
+C =  peaks(n);
 
-figure(1); 
+subplot(2,2,1)
 imagesc(A')
+title('dof 1')
 set(gca,'ydir','normal')
 colorbar
 
-figure(2); 
+subplot(2,2,2)
 imagesc(B')
+title('dof 2')
 set(gca,'ydir','normal')
 colorbar
 
 % get data in the ordering we're used to
-A = [A(:), B(:)]';
+if nun == 2
+    A = [A(:), B(:)]';
+elseif nun == 3
+    A = [A(:), B(:), C(:)]';
+end
 A =  A(:);
 
 % wavelet operator
-H = haarmat(bs^2);
-H = kron(speye(dim / bs / bs), H);
+H   = haarmat(bs^2);
+H   = kron(speye(dim / (bs*bs)), H);
 
-nested = size(all,1);
-
-r = randn(dim,1);
-PP = speye(dim);
-for i = 1:nested
-    PP   = all{i} * PP ;
-    Hrqp = T*H*PP;
-    figure(2+i)
-    x = Hrqp*A(:);
-    x = x + r.*x / 10;
-    y = Hrqp'*x;
-    plotQG(n,n,2,y,false)
+% reordering permutation
+T  = speye(dim);
+id = [];
+for i = 1:bs^2
+    id = [id, (i:bs^2:dim)];
 end
+T(:,id) = T(:,1:dim);
+
+% dimension reduction
+drd = dim/32;
+
+% ordinary wavelet transform with single 'large' block permutation
+Ht  = T*H*P;
+% reduced dimension
+Hp  = Ht(1:drd,:);
+% compute reduced order coordinates / coefficients
+x1  = Hp*A(:);
+% transform back to original space
+y1  = Hp'*x1;
+
+subplot(2,2,3)
+imagesc(reshape(y1(1:nun:dim),n,n)');
+title('ordinary wavelet projection')
+set(gca,'ydir','normal')
+colorbar
+
+% the same thing now with the full nested block permutation QQ
+Ht  = T*H*QQ;
+Hp  = Ht(1:drd,:);
+x2  = Hp*A(:);
+y2  = Hp'*x2;
+
+subplot(2,2,4)
+imagesc(reshape(y2(1:nun:dim),n,n)');
+title('wavelet projection with nested P')
+set(gca,'ydir','normal')
+colorbar
