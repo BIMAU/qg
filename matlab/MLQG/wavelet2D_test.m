@@ -1,7 +1,8 @@
 % This is a demonstration of the nested permutations that can be used
-% with a 2D block decomposition. Applying a wavelet to a column-major
-% block permuted array gives non-local differences. This is visible in
-% the stripe pattern (figure 3). With nested block permutations the
+% with a 2D block decomposition. The example shows low-order
+% projections with two different variants of wavelet + permutation
+% operators. Applying a wavelet to a column-major block permuted array
+% gives non-local differences. With nested block permutations the
 % differences are increasingly more local.
 
 clear all
