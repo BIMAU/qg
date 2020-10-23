@@ -157,7 +157,7 @@ while t < Tend
         % this is slow
         save(['data/fullmodel/',fnamebase,'.mat'], ...
              'states', 'times', 'nx', 'ny', 'Re', ...
-             't', 'dt', 'ampl', '-v7.3');
+             't', 'dt', 'ampl', 'stir', '-v7.3');
 
         storeTime = t + storeTimeIncr;
     end

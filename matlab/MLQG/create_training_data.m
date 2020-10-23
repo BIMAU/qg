@@ -1,7 +1,7 @@
 %%% QG TRAINING DATA CREATION
 fprintf('load full model data...\n'); tic;
-% orig_base = 'N256_Re4.0e+04_Tstart151_Tend179_F0.5_Stir0_Rot1';
-% fmdata = load(['data/fullmodel/', orig_base, '.mat']);
+orig_base = 'N256_Re4.0e+04_Tstart151_Tend179_F0.5_Stir0_Rot1';
+fmdata = load(['data/fullmodel/', orig_base, '.mat']);
 fprintf('load full model data... done (%fs)\n', toc);
 
 nun = 2; % number of unknowns
@@ -11,6 +11,7 @@ ny  = fmdata.ny;
 % full model parameters
 Re_f = fmdata.Re;    % Reynolds number on fine grid
 ampl = fmdata.ampl;  % Forcing amplitude
+stir = 0;
 
 %% coarse model setup
 ff   = 2;            % coarsing factor #TODO: ff > 2
@@ -19,7 +20,7 @@ nxc  = nx / ff;
 nyc  = ny / ff;
 
 qgc  = QG(nxc, nyc, 1); % coarse QG with periodic bdc
-qgc.set_par(18,  0.0);  % stirring type: 0 = cos(5x), 1 = sin(16x)
+qgc.set_par(18, stir);  % stirring type: 0 = cos(5x), 1 = sin(16x)
 qgc.set_par(11, ampl);  % stirring amplitude
 qgc.set_par(5,  Re_c);  % Reynolds number for coarse model
 
@@ -55,8 +56,8 @@ fprintf('saving data to %s\n', [fname_base,'.mat']);
 RX = RX(:,1:tpars.Nt);
 tic
 save(['data/training/', fname_base, '.mat'], ...
-      'RX', 'ERX', 'orig_base', 'R', 'Re_c', ...
-      'nxc', 'nyc', 'tpars');
+     'RX', 'ERX', 'orig_base', 'R', 'Re_c', ...
+     'ampl', 'stir', 'nxc', 'nyc', 'tpars');
 toc
 
 function [ERX] = generate_coarse_predictions(model, RX, tpars)
