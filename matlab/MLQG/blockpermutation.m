@@ -22,40 +22,40 @@ function [P,Q] = blockpermutation(n,m,nun,bs,nested)
 
     ndom = n;
     mdom = m;
-    size = bs;
-    P = create_permutation(ndom, mdom, nun, size);
+    sz = bs;
+    P = create_permutation(ndom, mdom, nun, sz);
     Q = P;
 
     if (nested)
         % total number of block permutations
         total = 1;
-        while ((size / 2) >= 2)
+        while ((sz / 2) >= 2)
             total = total + 1;
-            size = size / 2;
+            sz  = sz / 2;
         end
-        % if this fails the original bsize is not a power of 2
-        assert(size == 2);
+        % if this fails the original bsz is not a power of 2
+        assert(sz == 2);
 
-        size   = bs; % reset block size
+        sz   = bs; % reset block sz
         out    = cell(total,1);
         out{1} = P;
-        blocks = 1;
+        blocks = nun;
         for i = 2:total
-            fprintf('Nested block permutation\n');
+            fprintf('Nested block permutation %d\n', i);
 
             % total number of blocks in full domain n*m
-            blocks = blocks * (ndom / size) * (mdom / size);
+            blocks = blocks * (ndom / sz) * (mdom / sz);
 
             % domain in which we perform a new block decomposition
-            ndom = size; mdom = size;
+            ndom = sz; mdom = sz;
 
-            % nested block size
-            size = size / 2;
+            % nested block sz
+            sz = sz / 2;
             out{i} = kron(speye(blocks), ...
-                          create_permutation(ndom, mdom, nun, size));
+                          create_permutation(ndom, mdom, 1, sz));
 
-            fprintf('  block size: %d \n', size);
-            fprintf('  subdomain size: %d x %d \n', ndom, mdom);
+            fprintf('  block sz: %d \n', sz);
+            fprintf('  subdomain sz: %d x %d \n', ndom, mdom);
             fprintf('  number of blocks in whole domain: %d \n', blocks);
 
             Q = out{i} * Q; % combined operator
@@ -66,8 +66,8 @@ end
 
 function [P] = create_permutation(n,m,nun,bs)
     dim = n*m*nun;
-    P = sparse(dim,dim);
-    k = 0;
+    P   = sparse(dim,dim);
+    k   = 0;
     for posj = 0:bs:n-bs
         rangej = posj+1:posj+bs;
         for posi = 0:bs:m-bs
