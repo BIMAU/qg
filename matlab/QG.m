@@ -49,7 +49,7 @@ classdef QG < handle
             if nargin ~= 2
                 error('One input argument required');
             end
-            [u,v] = QG_compute_uv(h.instance, x);
+            [u,v] = QG_compute_uv(h.instance, x(:));
         end
 
         function Z = bilin(h, V,W)
