@@ -1,11 +1,24 @@
 % load existing states array
-% fprintf('loading existing fullmodel data ...\n'); tic;
-% load('data/fullmodel/N256_Re4.0e+04_Tstart142_Tend151_F0.5_Stir0_Rot1.mat');
-% fprintf('loading existing fullmodel data ... done (%fs)\n', toc)
+%fprintf('loading existing fullmodel data ...\n'); tic;
+%fmdata = load('data/fullmodel/N256_Re4.0e+04_Tstart142_Tend151_F0.5_Stir0_Rot1.mat');
+%fprintf('loading existing fullmodel data ... done (%fs)\n', toc)
+
+load 'data/fullmodel/N128_Re1.0e+04_Tstart151_Tend179_F0.5_Stir0_Rot1.mat'
+
+
+% [~,~,R1,~] = gridTransfers(fmdata.nx, 'periodic');
+% R1         = kron(R1, [1,0;0,1]);
+% [~,~,R2,~] = gridTransfers(fmdata.nx/2, 'periodic');
+% R2         = kron(R2, [1,0;0,1]);
+% x_init     = R1*fmdata.states;
+% x_init     = x_init(:,end);
+x_init = states(:,end);
+
+%%
 
 % Initialize QG
-nx = 256;
-ny = 256;
+nx = 128;
+ny = 128;
 n  = nx * ny * 2;
 qg = QG(nx, ny, 1);
 
@@ -17,12 +30,12 @@ day  = 3600 * 24 / tdim;
 year = 365*day;
 
 % Job parameters
-restartFlag = true; % restart from existing states array
+restartFlag      = true;  % restart from existing states array
 adaptiveTimeStep = false;
-storeTimeIncr = 10*day;  % save to mat and eps
-rotation = true;         % enable or disable rotation (beta)
+storeTimeIncr = 100*day;   % save to mat and eps
+rotation = true;          % enable or disable rotation (beta)
 
-Re   = 4e4;       % Reynolds number
+Re   = 1e4;       % Reynolds number
 ampl = 0.5;       % Forcing amplitude
 stir = 0;         % stirring type: 0 = cos(5x), 1 = sin(16x)
 Tend = 10000*day; % End time, nondim. timescale is in years
@@ -67,11 +80,11 @@ x0(1:2:end) = 0.2*z0(:) / (3600*24/tdim); % nondimensional and
 
 % we may also restart from existing states array
 if restartFlag
-    if exist('states') && exist('times')
-        x0 = states(:,end);
+    if exist('x_init') && exist('fmdata')
+        x0 = x_init;
         assert(numel(x0) == n);
-        t0 = times(end);
-        Tend = times(end) + Tend;
+        t0 = fmdata.times(end);
+        Tend = fmdata.times(end) + Tend;
     else
         fprintf('Cannot restart, no states array available\n');
         return;
@@ -91,7 +104,7 @@ states = [];
 times  = [];
 storeTime = 0;
 t = t0;
-
+%%
 while t < Tend
     fprintf(' t = %2.2e years,  \n',  t / year);
     fprintf('dt = %2.2e days \n Newton: \n', dt / day);
@@ -123,24 +136,26 @@ while t < Tend
 
     if t > storeTime || t > Tend
 
-        subplot(1,3,1);
+        subplot(2,2,1);
         plotQG(nx,ny,2,x);
         titleString = sprintf('psi, t = %4.0fd', (t-times(1)) / day);
         title(titleString);
 
-        subplot(1,3,2);
+        subplot(2,2,2);
         plotQG(nx,ny,1,3600*24/tdim*x,false);
         titleString = sprintf('vorticity');
         title(titleString);
-        caxis([-0.2,0.2])
 
         [u,v] = qg.compute_uv(x);
-        subplot(1,3,3);
+        subplot(2,2,3);
         u = reshape(u,nx,ny);
         v = reshape(v,nx,ny);
         imagesc((u.^2+v.^2)')
         titleString = sprintf('u^2 + v^2');
         title(titleString);
+
+        subplot(2,2,4)
+        plotQGspectrum(qg, nx, ny, x, 5);
 
         ReStr = sprintf('_Re%1.1e',Re);
         fnamebase = [ 'N', num2str(nx), ReStr, '_Tstart', ...

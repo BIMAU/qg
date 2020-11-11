@@ -1,7 +1,8 @@
 %%% QG TRAINING DATA CREATION
 fprintf('load full model data...\n'); tic;
-orig_base = 'N256_Re4.0e+04_Tstart151_Tend179_F0.5_Stir0_Rot1';
-fmdata = load(['data/fullmodel/', orig_base, '.mat']);
+%orig_base = 'N256_Re4.0e+04_Tstart151_Tend179_F0.5_Stir0_Rot1';
+orig_base = 'N128_Re1.0e+04_Tstart159_Tend187_F0.5_Stir0_Rot1'
+%fmdata = load(['data/fullmodel/', orig_base, '.mat']);
 fprintf('load full model data... done (%fs)\n', toc);
 
 nun = 2; % number of unknowns
@@ -38,8 +39,8 @@ RX    = R*X; % restriction
 %% generate predictions
 tpars     = {};
 tpars.dt  = fmdata.dt;
-%tpars.Nt  = Nt;
-tpars.Nt  = 365; % a year (time step is 1 day)
+tpars.Nt  = Nt;
+%tpars.Nt  = 365; % a year (time step is 1 day)
 tpars.T   = ceil(tpars.Nt*tpars.dt);
 ERX       = generate_coarse_predictions(qgc, RX, tpars);
 
@@ -70,7 +71,9 @@ function [ERX] = generate_coarse_predictions(model, RX, tpars)
     fprintf('Generate predictions... \n');
     avgK = 0;
     for i = 1:tpars.Nt
-        fprintf('     %d / %d \n', i, tpars.Nt);
+        if mod(i,10) == 0
+            fprintf('     %d / %d \n', i, tpars.Nt);
+        end
         [ERX(:,i), k] = model.step(RX(:,i), tpars.dt);
         avgK = avgK + k;
     end
