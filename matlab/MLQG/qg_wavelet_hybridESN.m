@@ -1,6 +1,6 @@
 compute = true;
 enslave = false;
-hybrid  = true;
+hybrid  = false;
 movie   = false;
 
 Ldim    = 1e6;
@@ -169,9 +169,11 @@ if compute
 
     subplot(2,3,3)
 
+    hold on
     plot(err_hyb(1:i)); hold on
     plot(err_std(1:i)); 
-    plot(xlim, [5, 5]); hold off % ARBITRARY #FIXME
+    plot(xlim, [5, 5]);  % ARBITRARY #FIXME
+    hold off
 
     subplot(2,3,6)
     cols = lines(10);
