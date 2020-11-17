@@ -8,7 +8,9 @@ function [stopFlag, testSpec, predSpec] = qg_stopping_criterion(qg, predY, testY
     predSpec = computeQGspectrum(qg, scaling*predY);
 
     sd   = find(testSpec > 1e-10);
-    diff = (log(testSpec(sd)) - log(predSpec(sd)));
+    testSpec = testSpec(sd);
+    predSpec = predSpec(sd);
+    diff = (log(testSpec) - log(predSpec));
     err  = norm(diff,2);
     fprintf(' error: %1.2e\n', err);
 
