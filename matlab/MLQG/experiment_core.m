@@ -1,4 +1,4 @@
-function [predY, fullY] = experiment_core(model, training_data, ...
+function [predY, testY] = experiment_core(model, training_data, ...
                                           esn_pars, run_pars)
     % Core routine for running an experiment
     % model:         qg or ks
@@ -6,7 +6,7 @@ function [predY, fullY] = experiment_core(model, training_data, ...
     %                and coarse model predictions based on restricted
     %                ground truth data.
     % predY:         full dimensional predictions
-    % fullY:         full dimensional truths
+    % testY:         full dimensional truths
 
     RX  = training_data.RX;       % restricted data
     PRX = training_data.PRX;      % model predictions based on restricted data
@@ -45,12 +45,12 @@ function [predY, fullY] = experiment_core(model, training_data, ...
     assert(run_pars.train_range(end)+1 == run_pars.test_range(1));
     trainU = U(:, run_pars.train_range)'; % input training
     trainY = Y(:, run_pars.train_range)'; % output training
-    testU  = U(:,  run_pars.test_range)'; % input testing
-    testY  = Y(:,  run_pars.test_range)'; % output testing
-    fullY  = RX(:, 2:end); % additional full dimensional output
-    fullY  = fullY(:, run_pars.test_range)';
+                                          
+    % full dimensional output testing
+    testY = RX(:, 2:end); 
+    testY = testY(:, run_pars.test_range)';
 
-    Npred = size(testU, 1);    % number of prediction steps
+    Npred = numel(run_pars.test_range); % number of prediction steps
     predY = zeros(Npred, dim); % full dimensional predictions
 
     % initialization for the predictions
@@ -99,11 +99,16 @@ function [predY, fullY] = experiment_core(model, training_data, ...
         end
 
         predY(i,:) = yk;
+        
+        % check stopping criterion
+        stop = run_pars.stopping_criterion(model, predY(i,:), testY(i,:));
+        if stop
+            break;
+        end
     end
 
-    % full dimensional vectors are returned
     predY = predY(1:i,:);
-    fullY = fullY(1:i,:);
+    testY = testY(1:i,:);
 end
 
 function [pars_out] = default_esn_parameters(pars_in)

@@ -97,7 +97,7 @@ if compute
     state = esn.X(end,:);
     predY = zeros(Npred, dim);
     predS = zeros(Npred, dim);
-    [~, ~, nSpec, ~] = computeQGspectrum(qgc, nxc, nyc, zeros(dim,1));
+    [~, ~, nSpec, ~] = computeQGspectrum(qgc, zeros(dim,1));
     testSpec  = zeros(Npred, nSpec);
     predSpecY = zeros(Npred, nSpec);
     predSpecS = zeros(Npred, nSpec);
@@ -150,9 +150,9 @@ if compute
         predS(i,:) = yks;
         
         % compute spectra
-        testSpec(i,:)  = computeQGspectrum(qgc, nxc, nyc, scaling*testY(i,:));
-        predSpecY(i,:) = computeQGspectrum(qgc, nxc, nyc, scaling*predY(i,:));
-        predSpecS(i,:) = computeQGspectrum(qgc, nxc, nyc, scaling*predS(i,:));
+        testSpec(i,:)  = computeQGspectrum(qgc, scaling*testY(i,:));
+        predSpecY(i,:) = computeQGspectrum(qgc, scaling*predY(i,:));
+        predSpecS(i,:) = computeQGspectrum(qgc, scaling*predS(i,:));
 
         % decide where to test in the spectrum
         sd = find(testSpec(i,:) > 1e-10);
@@ -165,7 +165,7 @@ if compute
 
     % plotting -------------
     subplot(2,3,1)
-    plotQG(nxc,nyc,1, scaling*fullY(:,i), false)
+    plotQG(nxc, nyc, 1, scaling*fullY(:,i), false)
 
     subplot(2,3,3)
 

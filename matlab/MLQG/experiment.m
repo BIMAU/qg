@@ -1,6 +1,6 @@
 fprintf('load training data...\n'); tic;
 fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
-trdata = load(['data/training/', fname_base, '.mat']);
+%trdata = load(['data/training/', fname_base, '.mat']);
 fprintf('load training data... done (%fs)\n', toc);
 
 nxc  = trdata.nxc;
@@ -25,7 +25,6 @@ qgc.set_par(11, ampl);  % stirring amplitude
 qgc.set_par(18, stir);  % stirring type: 0 = cos(5x), 1 = sin(16x)
 
 esn_pars.Nr = 3000;
-
 trdata.PRX = trdata.ERX;
 
 % dimension reduction Na
@@ -40,16 +39,17 @@ run_pars.Na = Na;
 
 run_pars.esn_on   = true;
 run_pars.model_on = true;
+run_pars.stopping_criterion = @qg_stopping_criterion;
 
 cutoff = round(trdata.tpars.Nt * 3 / 4);
 run_pars.train_range = 1:cutoff;
 run_pars.test_range  = cutoff+1:cutoff+50;
 
-[predY, fullY] = experiment_core(qgc, trdata, esn_pars, run_pars);
+[predY, testY] = experiment_core(qgc, trdata, esn_pars, run_pars);
 
-% %%
 % for i = 1:4:numel(run_pars.test_range)
 %     plotQG(nxc,nyc,1,scaling*(predY(i,:)),false)
 %     caxis([-0.25,0.25]);
 %     drawnow
 % end
+
