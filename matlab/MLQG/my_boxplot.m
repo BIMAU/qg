@@ -1,0 +1,6 @@
+function [] = my_boxplot(x_index, array)
+    plot(x_index, median(array), 'k+','markersize', 8); hold on
+    plot(repmat(x_index,1,2), ...
+         [quantile(array,0.25), quantile(array,0.75)], ...
+         'k.-','markersize', 8)
+end
