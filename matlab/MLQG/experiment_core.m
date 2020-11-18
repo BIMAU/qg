@@ -1,4 +1,4 @@
-function [predY, testY] = experiment_core(model, training_data, ...
+function [predY, testY, err] = experiment_core(model, training_data, ...
                                           esn_pars, run_pars)
     % Core routine for running an experiment
     % model:         qg or ks
@@ -30,13 +30,23 @@ function [predY, testY] = experiment_core(model, training_data, ...
     if hybrid
         fprintf('Create input/output data for hybrid ESN\n');
         exp_type = 'hybrid';
-        U = [Ha' * RX(:,1:end-1); Ha' * PRX(:,1:end-1)];
-        Y = [Ha' * RX(:,2:end )];
+        if isfield(training_data, 'HaRX') && isfield(training_data, 'HaPRX')
+            U = [training_data.HaRX(:,1:end-1); training_data.HaPRX(:,1:end-1)];
+            Y = [training_data.HaRX(:,2:end )];
+        else
+            U = [Ha' * RX(:,1:end-1); Ha' * PRX(:,1:end-1)];
+            Y = [Ha' * RX(:,2:end )];
+        end
     elseif esn_only
         fprintf('Create input/output data for standalone ESN\n');
         exp_type = 'esn_only';
-        U = [Ha' * RX(:,1:end-1)];
-        Y = [Ha' * RX(:,2:end)];
+        if isfield(training_data, 'HaRX') && isfield(training_data, 'HaPRX')
+            U = [training_data.HaRX(:,1:end-1)];
+            Y = [training_data.HaRX(:,2:end)];
+        else
+            U = [Ha' * RX(:,1:end-1)];
+            Y = [Ha' * RX(:,2:end)];
+        end
     elseif model_only
         exp_type = 'model_only';
     end
@@ -52,6 +62,7 @@ function [predY, testY] = experiment_core(model, training_data, ...
 
     Npred = numel(run_pars.test_range); % number of prediction steps
     predY = zeros(Npred, dim); % full dimensional predictions
+    err   = zeros(Npred, 1);   % error array
 
     % initialization for the predictions
     yk = RX(:, run_pars.test_range(1));
@@ -101,14 +112,16 @@ function [predY, testY] = experiment_core(model, training_data, ...
         predY(i,:) = yk;
         
         % check stopping criterion
-        stop = run_pars.stopping_criterion(model, predY(i,:), testY(i,:));
+        [stop, err(i)] = run_pars.stopping_criterion(model, predY(i,:), testY(i,:));
         if stop
             break;
         end
     end
 
+    % truncate output arrays
     predY = predY(1:i,:);
     testY = testY(1:i,:);
+    err   = err(1:i);
 end
 
 function [pars_out] = default_esn_parameters(pars_in)

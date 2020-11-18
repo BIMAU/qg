@@ -1,13 +1,26 @@
-function [ ] = experiment(pid, jobs)
+function [ ] = experiment(varargin)
+% The core experiment is repeated with <reps>*<shifts> realisations of
+% the network. The training data changes with <shifts>.
+    global pid procs exp_name store
+
+    switch nargin
+      case 0
+        pid   = 0;
+        procs = 1;
+      case 2
+        pid   = varargin{1};
+        procs = varargin{2};
+      otherwise
+        error('Unexpected input');
+    end
+
+    exp_name   = 'test';        % experiment name
+    storeState = 'final';  % which states to store
 
     fprintf('load training data...\n'); tic;
     fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
     trdata = load(['data/training/', fname_base, '.mat']);
     fprintf('load training data... done (%fs)\n', toc);
-
-    %# TODO parallel stuff
-    pid  = 0;
-    jobs = 1;
 
     nxc  = trdata.nxc;
     nyc  = trdata.nyc;
@@ -43,6 +56,10 @@ function [ ] = experiment(pid, jobs)
     run_pars.Hd = H(Na+1:dim,:)';
     run_pars.Na = Na;
 
+    fprintf('transform input/output data with wavelet modes\n');
+    trdata.HaRX  = run_pars.Ha' * trdata.RX;
+    trdata.HaPRX = run_pars.Ha' * trdata.PRX;
+
     run_pars.esn_on   = true; % enable/disable ESN
     run_pars.model_on = true; % enable/disable equations
 
@@ -50,43 +67,87 @@ function [ ] = experiment(pid, jobs)
     % relevant for the experiment
     run_pars.stopping_criterion = @qg_stopping_criterion;
 
-    samples   = 3000;    % samples in the training_range
-    shifts    = 5;       % shifts in training_range
-    maxShift  = 4000;    % largest shift in training_range
-    reps      = 10;      % repetitions
-    preds     = zeros(shifts*reps,1); % predictions
-    maxPreds  = 365;
-    tr_shifts = round(linspace(0,maxShift,shifts)); % shifts in the training_range
+    samples    = 3000;    % samples in the training_range
+    shifts     = 2;       % shifts in training_range
+    maxShift   = 4000;    % largest shift in training_range
+    reps       = 2;       % repetitions
+    maxPreds   = 365;
+    tr_shifts  = round(linspace(0, maxShift, shifts)); % shifts in the training_range
+
+    % The core experiment is repeated with <reps>*<shifts> realisations of
+    % the network. The range of the training data changes with <shifts>.
 
     cvec = combvec((1:reps),(1:shifts))';
     rvec = cvec(:,1);
     svec = cvec(:,2);
 
     Ni = numel(svec);
-    my_inds = my_indices(pid, jobs, Ni);
+    my_inds = my_indices(pid, procs, Ni);
+
+    predictions   = cell(Ni,1);
+    truths        = cell(Ni,1);
+    errs          = cell(Ni,1);
+    num_predicted = zeros(shifts*reps, 1); % valid predicted time steps
 
     for i = my_inds;
         train_range = (1:samples)+tr_shifts(svec(i));
         fprintf(' train range: %d - %d\n', min(train_range), max(train_range));
+
         run_pars.train_range = train_range;
         run_pars.test_range  = train_range(end) + (1:maxPreds);
-        [predY, testY] = experiment_core(qgc, trdata, esn_pars, run_pars);
-        preds(i) = size(predY, 1);
-    end
 
+        [predY, testY, err] = ...
+            experiment_core(qgc, trdata, esn_pars, run_pars);
+
+        num_predicted(i) = size(predY, 1);
+
+        if strcmp(store, 'all')
+            predictions{i} = predY(:,:);
+            truths{i} = testY(:,:);
+        elseif strcmp(store, 'final');
+            predictions{i} = predY(end,:);
+            truths{i} = testY(end,:);
+        end
+
+        errs{i} = err;
+        store_results(my_inds, num_predicted, err, predictions, truths);
+    end
 end
 
-function [inds] = my_indices(pid, jobs, Ni)
+function [] = store_results(my_inds, num_predicted, err, predictions, truths)
+    global pid procs exp_name store
+
+    if procs > 1
+        run_type = 'parallel';
+    else
+        run_type = 'serial';
+    end
+
+    path = sprintf('data/experiments/%s/%s', exp_name, run_type);
+    syscall = sprintf('mkdir -p %s', path);
+    system(syscall);
+
+    if strcmp(run_type, 'parallel')
+        fname = sprintf('%s/results_%d.mat', path, pid);
+    elseif strcmp(run_type, 'serial')
+        fname = sprintf('%s/results.mat', path);
+    end
+
+    fprintf('saving results to %s\n', fname);
+    save(fname, 'my_inds', 'num_predicted', 'err', 'predictions', 'truths');
+end
+
+function [inds] = my_indices(pid, procs, Ni)
 % a simple decomposition to take care of parallel needs
 
-    assert((pid < jobs) && (pid >= 0))
+    assert((pid < procs) && (pid >= 0))
 
-    k  = jobs
+    k = procs;
     decomp = [];
     offset = 0;
     remain = Ni; % elements that remain
-    decomp = cell(jobs);
-    for i = 1:jobs
+    decomp = cell(procs);
+    for i = 1:procs
         subset    = floor(remain / k);
         decomp{i} = offset + 1: offset + subset;
         offset    = offset + subset;

@@ -1,4 +1,4 @@
-function [stopFlag, testSpec, predSpec] = qg_stopping_criterion(qg, predY, testY)
+function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, testY)
     Ldim    = 1e6;
     Udim    = 3.171e-2;
     tdim    = Ldim / Udim; % in seconds
@@ -14,7 +14,7 @@ function [stopFlag, testSpec, predSpec] = qg_stopping_criterion(qg, predY, testY
     err  = norm(diff,2);
     fprintf(' error: %1.2e\n', err);
 
-    % ARBITRARY 
+    % ARBITRARY, make this more informed #FIXME
     if err > 5
         stopFlag = true;
     else
