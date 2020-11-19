@@ -12,7 +12,7 @@ function [predY, testY, err] = experiment_core(model, training_data, ...
     PRX = training_data.PRX;      % model predictions based on restricted data
     dt  = training_data.tpars.dt; % time step size
     dim = size(RX,1);             % sample/state vector dimension
-
+    
     % additional dimension reduction is specified in run_pars
     Na = run_pars.Na;
     Ha = run_pars.Ha;
@@ -66,7 +66,10 @@ function [predY, testY, err] = experiment_core(model, training_data, ...
 
     % initialization for the predictions
     yk = RX(:, run_pars.test_range(1));
-
+    
+    % clean up
+    clear RX PRX U Y
+    
     if run_pars.esn_on
         % set ESN parameters
         esn_pars = default_esn_parameters(esn_pars);
@@ -78,7 +81,7 @@ function [predY, testY, err] = experiment_core(model, training_data, ...
         end
 
         % create ESN, train the ESN and save the final state
-        esn = ESN(esn_pars.Nr, size(U,1), size(Y,1));
+        esn = ESN(esn_pars.Nr, size(trainU,2), size(trainY,2));
         esn.setPars(esn_pars);
         esn.initialize;
         esn.train(trainU, trainY);
