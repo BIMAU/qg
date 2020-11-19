@@ -17,12 +17,14 @@ int main(int argc, char **argv)
     std::cout << "Running transient on pid " << pid
               << ", numProcs = " << numProcs << std::endl;
 
-    std::stringstream command;
-    command << "./experiment " << pid + 1 << " " << numProcs
-            << " > data/experiment/logdir/log" << pid << ".txt";
+    std::stringstream create_dir;
+    create_dir << "mkdir -p data/experiments/logdir";
+    std::system(create_dir.str().c_str());
     
+    std::stringstream command;
+    command << "./experiment " << pid << " " << numProcs
+            << " > data/experiments/logdir/log" << pid << ".txt";
     std::cout << command.str() << std::endl;
-
     std::system(command.str().c_str());
 
     MPI_Finalize();
