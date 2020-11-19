@@ -1,7 +1,10 @@
 function [ ] = experiment(varargin)
 % The core experiment is repeated with <reps>*<shifts> realisations of
 % the network. The training data changes with <shifts>.
+    
     global pid procs exp_name storeState
+    addpath('~/local/matlab/');
+    addpath('~/Projects/ESN/matlab');
     time = tic;
 
     switch nargin
@@ -9,14 +12,23 @@ function [ ] = experiment(varargin)
         pid   = 0;
         procs = 1;
       case 2
-        pid   = varargin{1};
-        procs = varargin{2};
+        pid   = str2num(varargin{1}); % assuming input is a string
+        procs = str2num(varargin{2});
       otherwise
         error('Unexpected input');
     end
 
-    exp_name   = 'test';        % experiment name
+    % parallel seed
+    tm = clock;
+    rng(round(100*pid*sqrt(tm(end))));
+
+    exp_name   = 'test';   % experiment name
     storeState = 'final';  % which states to store
+    
+    fprintf('--------------------------------------------\n')
+    fprintf(' ----   MLQG experiment - procs  = %d \n', procs)
+    fprintf('  ---                   - pid    = %d \n', pid)
+    fprintf('   --   %s \n', exp_name);
 
     fprintf('load training data...\n'); tic;
     fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
