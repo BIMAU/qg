@@ -1,22 +1,37 @@
 function [ ] = experiment(varargin)
 % The core experiment is repeated with <reps>*<shifts> realisations of
 % the network. The training data changes with <shifts>.
-    global pid procs exp_name storeState
     time = tic;
+    
+    global pid procs exp_name storeState
+
+    if ~isdeployed
+        addpath('~/local/matlab/');
+        addpath('~/Projects/ESN/matlab');
+    end
 
     switch nargin
       case 0
         pid   = 0;
         procs = 1;
       case 2
-        pid   = varargin{1};
-        procs = varargin{2};
+        pid   = str2num(varargin{1}); % assuming input is a string
+        procs = str2num(varargin{2});
       otherwise
         error('Unexpected input');
     end
 
-    exp_name   = 'test';        % experiment name
+    % parallel seed
+    tm = clock;
+    rng(round(100*pid*sqrt(tm(end))));
+
+    exp_name   = 'test';   % experiment name
     storeState = 'final';  % which states to store
+    
+    fprintf('--------------------------------------------\n')
+    fprintf(' ----   MLQG experiment - procs  = %d \n', procs)
+    fprintf('  ---                   - pid    = %d \n', pid)
+    fprintf('   --   %s \n', exp_name);
 
     fprintf('load training data...\n'); tic;
     fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
@@ -69,9 +84,9 @@ function [ ] = experiment(varargin)
     run_pars.stopping_criterion = @qg_stopping_criterion;
 
     samples    = 3000;    % samples in the training_range
-    shifts     = 2;       % shifts in training_range
+    shifts     = 12;      % shifts in training_range
     maxShift   = 4000;    % largest shift in training_range
-    reps       = 2;       % repetitions
+    reps       = 8;       % repetitions
     maxPreds   = 365;
     tr_shifts  = round(linspace(0, maxShift, shifts)); % shifts in the training_range
 
@@ -142,7 +157,8 @@ end
 function [inds] = my_indices(pid, procs, Ni)
 % a simple decomposition to take care of parallel needs
 
-    assert((pid < procs) && (pid >= 0))
+    assert((pid < procs) && (pid >= 0), ...
+           ['assertion failed, pid ', num2str(pid)])
 
     k = procs;
     decomp = [];
