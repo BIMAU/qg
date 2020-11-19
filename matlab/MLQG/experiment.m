@@ -1,7 +1,8 @@
 function [ ] = experiment(varargin)
 % The core experiment is repeated with <reps>*<shifts> realisations of
 % the network. The training data changes with <shifts>.
-    global pid procs exp_name store
+    global pid procs exp_name storeState
+    time = tic;
 
     switch nargin
       case 0
@@ -101,21 +102,22 @@ function [ ] = experiment(varargin)
 
         num_predicted(i) = size(predY, 1);
 
-        if strcmp(store, 'all')
+        if strcmp(storeState, 'all')
             predictions{i} = predY(:,:);
             truths{i} = testY(:,:);
-        elseif strcmp(store, 'final');
+        elseif strcmp(storeState, 'final');
             predictions{i} = predY(end,:);
             truths{i} = testY(end,:);
         end
 
         errs{i} = err;
-        store_results(my_inds, num_predicted, err, predictions, truths);
+        store_results(my_inds, num_predicted, errs, predictions, truths);
     end
+    fprintf('done (%fs)\n', toc(time));
 end
 
-function [] = store_results(my_inds, num_predicted, err, predictions, truths)
-    global pid procs exp_name store
+function [] = store_results(my_inds, num_predicted, errs, predictions, truths)
+    global pid procs exp_name
 
     if procs > 1
         run_type = 'parallel';
@@ -134,7 +136,7 @@ function [] = store_results(my_inds, num_predicted, err, predictions, truths)
     end
 
     fprintf('saving results to %s\n', fname);
-    save(fname, 'my_inds', 'num_predicted', 'err', 'predictions', 'truths');
+    save(fname, 'my_inds', 'num_predicted', 'errs', 'predictions', 'truths');
 end
 
 function [inds] = my_indices(pid, procs, Ni)
