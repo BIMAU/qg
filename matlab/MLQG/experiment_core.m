@@ -1,17 +1,15 @@
-function [predY, testY, err] = experiment_core(model, training_data, ...
+function [predY, testY, err] = experiment_core(model, tr_data, ...
                                           esn_pars, run_pars)
     % Core routine for running an experiment
     % model:         qg or ks
-    % training_data: consists of a set of restricted 'ground truth' data
+    % tr_data:       consists of a set of restricted 'ground truth' data
     %                and coarse model predictions based on restricted
     %                ground truth data.
     % predY:         full dimensional predictions
     % testY:         full dimensional truths
 
-    RX  = training_data.RX;       % restricted data
-    PRX = training_data.PRX;      % model predictions based on restricted data
-    dt  = training_data.tpars.dt; % time step size
-    dim = size(RX,1);             % sample/state vector dimension
+    dt  = tr_data.tpars.dt;   % time step size
+    dim = size(tr_data.RX,1); % sample/state vector dimension
     
     % additional dimension reduction is specified in run_pars
     Na = run_pars.Na;
@@ -30,22 +28,22 @@ function [predY, testY, err] = experiment_core(model, training_data, ...
     if hybrid
         fprintf('Create input/output data for hybrid ESN\n');
         exp_type = 'hybrid';
-        if isfield(training_data, 'HaRX') && isfield(training_data, 'HaPRX')
-            U = [training_data.HaRX(:,1:end-1); training_data.HaPRX(:,1:end-1)];
-            Y = [training_data.HaRX(:,2:end )];
+        if isfield(tr_data, 'HaRX') && isfield(tr_data, 'HaPRX')
+            U = [tr_data.HaRX(:,1:end-1); tr_data.HaPRX(:,1:end-1)];
+            Y = [tr_data.HaRX(:,2:end )];
         else
-            U = [Ha' * RX(:,1:end-1); Ha' * PRX(:,1:end-1)];
-            Y = [Ha' * RX(:,2:end )];
+            U = [Ha' * tr_data.RX(:,1:end-1); Ha' * tr_data.PRX(:,1:end-1)];
+            Y = [Ha' * tr_data.RX(:,2:end )];
         end
     elseif esn_only
         fprintf('Create input/output data for standalone ESN\n');
         exp_type = 'esn_only';
-        if isfield(training_data, 'HaRX') && isfield(training_data, 'HaPRX')
-            U = [training_data.HaRX(:,1:end-1)];
-            Y = [training_data.HaRX(:,2:end)];
+        if isfield(tr_data, 'HaRX') && isfield(tr_data, 'HaPRX')
+            U = [tr_data.HaRX(:,1:end-1)];
+            Y = [tr_data.HaRX(:,2:end)];
         else
-            U = [Ha' * RX(:,1:end-1)];
-            Y = [Ha' * RX(:,2:end)];
+            U = [Ha' * tr_data.RX(:,1:end-1)];
+            Y = [Ha' * tr_data.RX(:,2:end)];
         end
     elseif model_only
         exp_type = 'model_only';
@@ -57,7 +55,7 @@ function [predY, testY, err] = experiment_core(model, training_data, ...
     trainY = Y(:, run_pars.train_range)'; % output training
                                           
     % full dimensional output testing
-    testY = RX(:, 2:end); 
+    testY = tr_data.RX(:, 2:end); 
     testY = testY(:, run_pars.test_range)';
 
     Npred = numel(run_pars.test_range); % number of prediction steps
@@ -65,10 +63,10 @@ function [predY, testY, err] = experiment_core(model, training_data, ...
     err   = zeros(Npred, 1);   % error array
 
     % initialization for the predictions
-    yk = RX(:, run_pars.test_range(1));
+    yk = tr_data.RX(:, run_pars.test_range(1));
     
     % clean up
-    clear RX PRX U Y
+    clear U Y tr_data
     
     if run_pars.esn_on
         % set ESN parameters
@@ -88,6 +86,8 @@ function [predY, testY, err] = experiment_core(model, training_data, ...
         esn_state = esn.X(end,:);
     end
 
+    clear trainU trainY
+    
     for i = 1:Npred
         fprintf('Prediction step %4d/%4d, %s\n', i, Npred, exp_type);
         % model prediction of next time step

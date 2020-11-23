@@ -42,8 +42,6 @@ function [ ] = experiment(varargin)
     nyc  = trdata.nyc;
     nun  = 2;
     dim  = nxc*nyc*nun;
-    RX   = trdata.RX;
-    ERX  = trdata.ERX;
     ampl = trdata.ampl;
     stir = trdata.stir;
     Re_c = trdata.Re_c;
@@ -60,7 +58,10 @@ function [ ] = experiment(varargin)
     qgc.set_par(18, stir);  % stirring type: 0 = cos(5x), 1 = sin(16x)
 
     esn_pars.Nr = 3000;
+
+    % naming change
     trdata.PRX = trdata.ERX;
+    rmfield(trdata, 'ERX');
 
     % dimension reduction Na
     Na = dim / 2;
@@ -75,6 +76,7 @@ function [ ] = experiment(varargin)
     fprintf('transform input/output data with wavelet modes\n');
     trdata.HaRX  = run_pars.Ha' * trdata.RX;
     trdata.HaPRX = run_pars.Ha' * trdata.PRX;
+    rmfield(trdata, 'PRX');  %we do not need this one
 
     run_pars.esn_on   = true; % enable/disable ESN
     run_pars.model_on = true; % enable/disable equations
@@ -111,7 +113,6 @@ function [ ] = experiment(varargin)
 
         run_pars.train_range = train_range;
         run_pars.test_range  = train_range(end) + (1:maxPreds);
-
         [predY, testY, err] = ...
             experiment_core(qgc, trdata, esn_pars, run_pars);
 
