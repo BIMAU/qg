@@ -160,6 +160,9 @@ function [inds] = my_indices(pid, procs, Ni)
 
     assert((pid < procs) && (pid >= 0), ...
            ['assertion failed, pid ', num2str(pid)])
+    
+    assert((procs <= Ni), ...
+           ['assertion failed, pid ', num2str(pid)])
 
     k = procs;
     decomp = [];
