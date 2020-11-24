@@ -2,7 +2,7 @@ function [ ] = experiment(varargin)
 % The core experiment is repeated with <reps>*<shifts> realisations of
 % the network. The training data changes with <shifts>.
     time = tic;
-    
+
     global pid procs exp_name storeState
 
     if ~isdeployed
@@ -10,13 +10,18 @@ function [ ] = experiment(varargin)
         addpath('~/Projects/ESN/matlab');
     end
 
+    exp_name   = 'test';  % experiment name
+    storeState = 'final'; % which states to store
+
     switch nargin
       case 0
-        pid   = 0;
-        procs = 1;
+        pid      = 0;
+        procs    = 1;
+
       case 2
-        pid   = str2num(varargin{1}); % assuming input is a string
-        procs = str2num(varargin{2});
+        pid      = str2num(varargin{1}); % assuming input is a string
+        procs    = str2num(varargin{2});
+
       otherwise
         error('Unexpected input');
     end
@@ -25,9 +30,6 @@ function [ ] = experiment(varargin)
     tm = clock;
     rng(round(100*pid*sqrt(tm(end))));
 
-    exp_name   = 'test';   % experiment name
-    storeState = 'final';  % which states to store
-    
     fprintf('--------------------------------------------\n')
     fprintf(' ----   MLQG experiment - procs  = %d \n', procs)
     fprintf('  ---                   - pid    = %d \n', pid)
@@ -57,11 +59,9 @@ function [ ] = experiment(varargin)
     qgc.set_par(11, ampl);  % stirring amplitude
     qgc.set_par(18, stir);  % stirring type: 0 = cos(5x), 1 = sin(16x)
 
-    esn_pars.Nr = 3000;
-
     % naming change
     trdata.PRX = trdata.ERX;
-    rmfield(trdata, 'ERX');
+    rmfield(trdata, 'ERX'); % we do not need this field, save some memory
 
     % dimension reduction Na
     Na = dim / 2;
@@ -76,7 +76,7 @@ function [ ] = experiment(varargin)
     fprintf('transform input/output data with wavelet modes\n');
     trdata.HaRX  = run_pars.Ha' * trdata.RX;
     trdata.HaPRX = run_pars.Ha' * trdata.PRX;
-    rmfield(trdata, 'PRX');  %we do not need this one
+    rmfield(trdata, 'PRX');  % we do not need this field, save some memory
 
     run_pars.esn_on   = true; % enable/disable ESN
     run_pars.model_on = true; % enable/disable equations
@@ -92,9 +92,12 @@ function [ ] = experiment(varargin)
     maxPreds   = 365;
     tr_shifts  = round(linspace(0, maxShift, shifts)); % shifts in the training_range
 
+    % specify hyperparameter range
+    hyp_range  = [500,1000,3000];
+    num_trials = numel(hyp_range);
+
     % The core experiment is repeated with <reps>*<shifts> realisations of
     % the network. The range of the training data changes with <shifts>.
-
     cvec = combvec((1:reps),(1:shifts))';
     rvec = cvec(:,1);
     svec = cvec(:,2);
@@ -102,32 +105,37 @@ function [ ] = experiment(varargin)
     Ni = numel(svec);
     my_inds = my_indices(pid, procs, Ni);
 
-    predictions   = cell(Ni,1);
-    truths        = cell(Ni,1);
-    errs          = cell(Ni,1);
-    num_predicted = zeros(shifts*reps, 1); % valid predicted time steps
+    predictions   = cell(Ni, num_trials);
+    truths        = cell(Ni, num_trials);
+    errs          = cell(Ni, num_trials);
+    num_predicted = zeros(shifts*reps, num_trials); % valid predicted time steps
 
-    for i = my_inds;
-        train_range = (1:samples)+tr_shifts(svec(i));
-        fprintf(' train range: %d - %d\n', min(train_range), max(train_range));
+    for j = 1:num_trials
+        esn_pars.Nr = hyp_range(j);
 
-        run_pars.train_range = train_range;
-        run_pars.test_range  = train_range(end) + (1:maxPreds);
-        [predY, testY, err] = ...
-            experiment_core(qgc, trdata, esn_pars, run_pars);
+        for i = my_inds;
+            train_range = (1:samples)+tr_shifts(svec(i));
+            fprintf(' train range: %d - %d\n', min(train_range), max(train_range));
 
-        num_predicted(i) = size(predY, 1);
+            run_pars.train_range = train_range;
+            run_pars.test_range  = train_range(end) + (1:maxPreds);
+            [predY, testY, err] = ...
+                experiment_core(qgc, trdata, esn_pars, run_pars);
 
-        if strcmp(storeState, 'all')
-            predictions{i} = predY(:,:);
-            truths{i} = testY(:,:);
-        elseif strcmp(storeState, 'final');
-            predictions{i} = predY(end,:);
-            truths{i} = testY(end,:);
+            num_predicted(i, j) = size(predY, 1);
+
+            if strcmp(storeState, 'all')
+                predictions{i, j} = predY(:,:);
+                truths{i, j} = testY(:,:);
+
+            elseif strcmp(storeState, 'final');
+                predictions{i, j} = predY(end,:);
+                truths{i, j} = testY(end,:);
+            end
+
+            errs{i, j} = err;
+            store_results(my_inds, num_predicted, errs, predictions, truths);
         end
-
-        errs{i} = err;
-        store_results(my_inds, num_predicted, errs, predictions, truths);
     end
     fprintf('done (%fs)\n', toc(time));
 end
@@ -160,7 +168,7 @@ function [inds] = my_indices(pid, procs, Ni)
 
     assert((pid < procs) && (pid >= 0), ...
            ['assertion failed, pid ', num2str(pid)])
-    
+
     assert((procs <= Ni), ...
            ['assertion failed, pid ', num2str(pid)])
 
