@@ -10,7 +10,7 @@ function [ ] = experiment(varargin)
         addpath('~/Projects/ESN/matlab');
     end
 
-    exp_name   = 'test';  % experiment name
+    exp_name   = 'fulldimNr';  % experiment name
     storeState = 'final'; % which states to store
 
     switch nargin
@@ -64,7 +64,7 @@ function [ ] = experiment(varargin)
     rmfield(trdata, 'ERX'); % we do not need this field, save some memory
 
     % dimension reduction Na
-    Na = dim / 2;
+    Na = dim;
 
     % create wavelet basis
     bs = 32; % block size
@@ -86,14 +86,14 @@ function [ ] = experiment(varargin)
     run_pars.stopping_criterion = @qg_stopping_criterion;
 
     samples    = 3000;    % samples in the training_range
-    shifts     = 12;      % shifts in training_range
+    shifts     = 25;      % shifts in training_range
     maxShift   = 4000;    % largest shift in training_range
-    reps       = 8;       % repetitions
+    reps       = 4;       % repetitions
     maxPreds   = 365;
     tr_shifts  = round(linspace(0, maxShift, shifts)); % shifts in the training_range
 
     % specify hyperparameter range
-    hyp_range  = [500,1000,3000];
+    hyp_range  = [3000, 4000, 5000, 6000];
     num_trials = numel(hyp_range);
 
     % The core experiment is repeated with <reps>*<shifts> realisations of
@@ -113,7 +113,7 @@ function [ ] = experiment(varargin)
     for j = 1:num_trials
         esn_pars.Nr = hyp_range(j);
 
-        for i = my_inds;
+        parfor i = my_inds;
             train_range = (1:samples)+tr_shifts(svec(i));
             fprintf(' train range: %d - %d\n', min(train_range), max(train_range));
 
