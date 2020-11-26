@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     int pid;
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 
-    std::cout << "Running experiment on pid " << pid
+    std::cout << "Running main on pid " << pid
               << ", procs = " << numProcs << std::endl;
 
     std::stringstream command;
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
             << " > data/experiments/logdir/log" << pid << ".txt";
     std::cout << command.str() << std::endl;
     std::system(command.str().c_str());
-    std::cout <<  "./experiment " << pid << " " << numProcs << " finished" << std::endl;
+    std::cout <<  "./main " << pid << " " << numProcs << " finished" << std::endl;
     MPI_Finalize();
 
     return 0;
