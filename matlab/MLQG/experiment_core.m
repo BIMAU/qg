@@ -14,7 +14,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
     Na = run_pars.Na;
     Ha = run_pars.Ha;
     Hd = run_pars.Hd;
-
+    
     % three different experiments based on settings in run_pars
     hybrid     = logical( (run_pars.esn_on   == true ) && ...
                           (run_pars.model_on == true ) );
@@ -80,7 +80,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
         % create ESN, train the ESN and save the final state
         esn = ESN(esn_pars.Nr, size(trainU,2), size(trainY,2));
         esn.setPars(esn_pars);
-        esn.initialize;
+        esn.initialize;        
         esn.train(trainU, trainY);
         esn_state = esn.X(end,:);
     end

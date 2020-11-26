@@ -119,10 +119,27 @@ function [ ] = experiment(varargin)
             run_pars.test_range  = run_pars.train_range(end) + (1:maxPreds);
             fprintf(' train range: %d - %d\n', min(run_pars.train_range), max(run_pars.train_range));
             fprintf('  test range: %d - %d\n', min(run_pars.test_range), max(run_pars.test_range));
-
-            [predY, testY, err] = ...
-                experiment_core(qgc, trdata, esn_pars, run_pars);
             
+            % Run the experiment in a try/catch block, at most max_tries times.
+            % Sometimes it runs out of memory.
+            try_count = 0;
+            exc_count = 0;
+            max_tries = 5;
+            while (exc_count == try_count) && (try_count < max_tries)
+                try
+                    try_count = try_count + 1;
+                    [predY, testY, err] = ...
+                        experiment_core(qgc, trdata, esn_pars, run_pars);
+                catch ME
+                    fprintf('ERROR: pid %d, i %d, %s\n', pid, i, ME.message);
+                    exc_count = exc_count + 1;
+                end                
+            end
+            if try_count >= max_tries
+                ME = MException('experiment:fatalError', 'Too many fails in experiment_core...');
+                throw(ME);
+            end
+                
             num_predicted(i, j) = size(predY, 1);
             
             if strcmp(storeState, 'all')
@@ -168,7 +185,7 @@ function [inds] = my_indices(pid, procs, Ni)
 % a simple decomposition to take care of parallel needs
 
     assert((pid < procs) && (pid >= 0), ...
-           ['assertion failed, pid ', num2str(pid)])
+           ['assertion erred, pid ', num2str(pid)])
 
     assert((procs <= Ni), ...
            ['assertion failed, pid ', num2str(pid)])
