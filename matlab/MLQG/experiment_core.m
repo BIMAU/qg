@@ -1,5 +1,4 @@
-function [predY, testY, err] = experiment_core(model, tr_data, ...
-                                          esn_pars, run_pars)
+function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_pars)
     % Core routine for running an experiment
     % model:         qg or ks
     % tr_data:       consists of a set of restricted 'ground truth' data
