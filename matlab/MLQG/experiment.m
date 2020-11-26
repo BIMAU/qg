@@ -19,8 +19,8 @@ function [ ] = experiment(varargin)
         procs = 1;
 
       case 2
-        pid = arg2value(varargin{1});
-        pid = arg2value(varargin{2});
+        pid   = arg2value(varargin{1});
+        procs = arg2value(varargin{2});
 
       otherwise
         error('Unexpected input');
