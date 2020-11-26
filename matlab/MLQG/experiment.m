@@ -189,11 +189,3 @@ function [inds] = my_indices(pid, procs, Ni)
 
     inds = decomp{pid+1,:};
 end
-
-function [value] = arg2value(arg)
-    if (ischar(arg) || isstring(arg))
-        value = str2num(arg)
-    else
-        value = arg;
-    end
-end
