@@ -21,7 +21,7 @@ function [errs, nums] = plot_experiment(varargin)
         error('Unexpected input');
     end
 
-    dir      = ['data/experiments/', exp_name, '/', exp_type, '/'];
+    dir = ['data/experiments/', exp_name, '/', exp_type, '/'];
 
     fileNames = cell(procs,1);
     for i = 1:procs
@@ -51,20 +51,19 @@ function [errs, nums] = plot_experiment(varargin)
     assert(i == size(data.num_predicted, 1), ...
            'failed assertion, probably wrong procs');
 
-    subplot(2,1,1)
     my_boxplot(nums);
 
-    % alternative error bound:
-    nums  = nan(n, trials);
-    subplot(2,1,2)
-    run = 1;
-    for j = 1:trials
-        for i = 1:n
-            num = find(errs{i,j}>4.0,1);
-            if ~isempty(num)
-                nums(i,j) = num
-            end
-        end
-    end
-    my_boxplot(nums);
+    % % alternative error bound:
+    % nums  = nan(n, trials);
+    % subplot(2,1,2)
+    % run = 1;
+    % for j = 1:trials
+    %     for i = 1:n
+    %         num = find(errs{i,j}>4.0,1);
+    %         if ~isempty(num)
+    %             nums(i,j) = num
+    %         end
+    %     end
+    % end
+    % my_boxplot(nums);
 end
