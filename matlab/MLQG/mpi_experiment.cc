@@ -18,7 +18,7 @@ int main(int argc, char **argv)
               << ", procs = " << numProcs << std::endl;
 
     std::stringstream command;
-    command << "./experiment " << pid << " " << numProcs
+    command << "./main " << pid << " " << numProcs
             << " > data/experiments/logdir/log" << pid << ".txt";
     std::cout << command.str() << std::endl;
     std::system(command.str().c_str());
