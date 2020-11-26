@@ -15,12 +15,12 @@ function [ ] = experiment(varargin)
 
     switch nargin
       case 0
-        pid      = 0;
-        procs    = 1;
+        pid   = 0;
+        procs = 1;
 
       case 2
-        pid      = str2num(varargin{1}); % assuming input is a string
-        procs    = str2num(varargin{2});
+        pid = arg2value(varargin{1});
+        pid = arg2value(varargin{2});
 
       otherwise
         error('Unexpected input');
@@ -93,7 +93,7 @@ function [ ] = experiment(varargin)
     tr_shifts  = round(linspace(0, maxShift, shifts)); % shifts in the training_range
 
     % specify hyperparameter range
-    hyp_range  = [3000, 4000, 5000, 6000];
+    hyp_range  = [4000, 8000];
     num_trials = numel(hyp_range);
 
     % The core experiment is repeated with <reps>*<shifts> realisations of
@@ -112,18 +112,19 @@ function [ ] = experiment(varargin)
 
     for j = 1:num_trials
         esn_pars.Nr = hyp_range(j);
+        
+        for i = my_inds;
+            run_pars.train_range = (1:samples)+tr_shifts(svec(i));
+            fprintf(' train range: %d - %d\n', min(run_pars.train_range), max(run_pars.train_range));
+            run_pars.test_range  = run_pars.train_range(end) + (1:maxPreds);
+            fprintf(' train range: %d - %d\n', min(run_pars.train_range), max(run_pars.train_range));
+            fprintf('  test range: %d - %d\n', min(run_pars.test_range), max(run_pars.test_range));
 
-        parfor i = my_inds;
-            train_range = (1:samples)+tr_shifts(svec(i));
-            fprintf(' train range: %d - %d\n', min(train_range), max(train_range));
-
-            run_pars.train_range = train_range;
-            run_pars.test_range  = train_range(end) + (1:maxPreds);
             [predY, testY, err] = ...
                 experiment_core(qgc, trdata, esn_pars, run_pars);
-
+            
             num_predicted(i, j) = size(predY, 1);
-
+            
             if strcmp(storeState, 'all')
                 predictions{i, j} = predY(:,:);
                 truths{i, j} = testY(:,:);
@@ -187,4 +188,12 @@ function [inds] = my_indices(pid, procs, Ni)
     end
 
     inds = decomp{pid+1,:};
+end
+
+function [value] = arg2value(arg)
+    if (ischar(arg) || isstring(arg))
+        value = str2num(arg)
+    else
+        value = arg;
+    end
 end
