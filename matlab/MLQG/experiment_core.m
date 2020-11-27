@@ -9,12 +9,12 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
 
     dt  = tr_data.tpars.dt;   % time step size
     dim = size(tr_data.RX,1); % sample/state vector dimension
-    
+
     % additional dimension reduction is specified in run_pars
     Na = run_pars.Na;
     Ha = run_pars.Ha;
     Hd = run_pars.Hd;
-    
+
     % three different experiments based on settings in run_pars
     hybrid     = logical( (run_pars.esn_on   == true ) && ...
                           (run_pars.model_on == true ) );
@@ -52,9 +52,9 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
     assert(run_pars.train_range(end)+1 == run_pars.test_range(1));
     trainU = U(:, run_pars.train_range)'; % input training
     trainY = Y(:, run_pars.train_range)'; % output training
-                                          
+
     % full dimensional output testing
-    testY = tr_data.RX(:, 2:end); 
+    testY = tr_data.RX(:, 2:end);
     testY = testY(:, run_pars.test_range)';
 
     Npred = numel(run_pars.test_range); % number of prediction steps
@@ -63,10 +63,10 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
 
     % initialization for the predictions
     yk = tr_data.RX(:, run_pars.test_range(1));
-    
+
     % clean up
     clear U Y tr_data
-    
+
     if run_pars.esn_on
         % set ESN parameters
         esn_pars = default_esn_parameters(esn_pars);
@@ -80,13 +80,13 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
         % create ESN, train the ESN and save the final state
         esn = ESN(esn_pars.Nr, size(trainU,2), size(trainY,2));
         esn.setPars(esn_pars);
-        esn.initialize;        
+        esn.initialize;
         esn.train(trainU, trainY);
         esn_state = esn.X(end,:);
     end
 
     clear trainU trainY
-    
+
     for i = 1:Npred
         fprintf('Prediction step %4d/%4d, %s\n', i, Npred, exp_type);
         % model prediction of next time step
@@ -112,7 +112,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
         end
 
         predY(i,:) = yk;
-        
+
         % check stopping criterion
         [stop, err(i)] = run_pars.stopping_criterion(model, predY(i,:), testY(i,:));
         if stop

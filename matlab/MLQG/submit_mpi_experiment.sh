@@ -1,9 +1,10 @@
 #!/bin/bash
 
-#SBATCH --time=01:00:00
-#SBATCH --ntasks=4
-#SBATCH --nodes=4
+#SBATCH --time=00:10:00
+#SBATCH --nodes=1
+#SBATCH --tasks=12
 #SBATCH -p short
+#SBATCH --mem-per-cpu=2000
 
 module load MCR/R2018a
 export MCR_CACHE_ROOT=`mktemp -d /scratch-local/mcr.XXXXXX`
@@ -14,10 +15,10 @@ mkdir -p data/experiments/logdir
 rm data/experiments/logdir/*
 
 date=`date +%m%d%y-%H%M`
-procs=4  # Actually the number of nodes. Matlab does threading on a
-         # node.
+nodes=1
+procs=12
 
 echo "MLQG experiment"
 echo " #procs = " $procs
 
-srun -n $procs ./mpi_experiment
+srun -n $nodes ./mpi_experiment $procs
