@@ -10,7 +10,7 @@ function [ ] = experiment(varargin)
         addpath('~/Projects/ESN/matlab');
     end
 
-    exp_name   = 'fulldimNr';  % experiment name
+    exp_name   = 'full8000';  % experiment name
     storeState = 'final'; % which states to store
 
     switch nargin
@@ -21,7 +21,12 @@ function [ ] = experiment(varargin)
       case 2
         pid   = arg2value(varargin{1});
         procs = arg2value(varargin{2});
-
+        
+      case 3 
+        pid    = arg2value(varargin{1});
+        procs  = arg2value(varargin{2});
+        trdata = varargin{3};
+        
       otherwise
         error('Unexpected input');
     end
@@ -35,10 +40,12 @@ function [ ] = experiment(varargin)
     fprintf('  ---                   - pid    = %d \n', pid)
     fprintf('   --   %s \n', exp_name);
 
-    fprintf('load training data...\n'); tic;
-    fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
-    trdata = load(['data/training/', fname_base, '.mat']);
-    fprintf('load training data... done (%fs)\n', toc);
+    if ~exist('trdata','var')
+        fprintf('load training data...\n'); tic;
+        fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
+        trdata = load(['data/training/', fname_base, '.mat']);
+        fprintf('load training data... done (%fs)\n', toc);
+    end
 
     nxc  = trdata.nxc;
     nyc  = trdata.nyc;
@@ -93,7 +100,7 @@ function [ ] = experiment(varargin)
     tr_shifts  = round(linspace(0, maxShift, shifts)); % shifts in the training_range
 
     % specify hyperparameter range
-    hyp_range  = [4000, 8000];
+    hyp_range  = [8000];
     num_trials = numel(hyp_range);
 
     % The core experiment is repeated with <reps>*<shifts> realisations of
