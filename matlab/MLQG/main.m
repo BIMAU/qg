@@ -18,8 +18,14 @@ function [] = main(varargin)
         error('Unexpected input');
     end
 
+    fprintf('load training data...\n'); tic;
+    fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
+    trdata = load(['data/training/', fname_base, '.mat']);
+    fprintf('load training data... done (%fs)\n', toc);
+    
     poolobj = gcp('nocreate');
     if ~isempty(poolobj)
+        fprintf('deleting existing parallel pool\n');
         delete(gcp('nocreate'))
     end
 
@@ -34,10 +40,15 @@ function [] = main(varargin)
     fprintf('-----         main  \n', nodes);
     fprintf('-----  number of nodes: %d\n', nodes);
     fprintf('-----  this node: %d\n', node);
-    fprintf('-----  number of threads: %d\n', threads);
-
+    fprintf('-----  number of threads: %d\n', threads);    
+    
     parfor t = 0:threads-1
-        experiment(node*threads+t, nodes*threads);
+        task = getCurrentTask();
+        clst = getCurrentCluster();
+        fprintf(['| parfor      ID     GID  GPROCS \n', ...
+                 '|    %3d     %3d     %3d     %3d \n'], ...
+                t, task.ID-1, node*threads+t, nodes*threads);
+        experiment(node*threads+t, nodes*threads, trdata);
     end
 
     delete(poolobj);
