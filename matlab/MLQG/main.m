@@ -30,26 +30,31 @@ function [] = main(varargin)
     end
 
     if exist('threads','var')
-        poolobj = parpool(threads);
+        if threads > 1
+            poolobj = parpool(threads);        
+        end
     else
         poolobj = parpool();
+        threads = poolobj.NumWorkers;
     end
 
-    threads = poolobj.NumWorkers;
     fprintf('--------------------------------------------\n')
     fprintf('-----         main  \n', nodes);
     fprintf('-----  number of nodes: %d\n', nodes);
     fprintf('-----  this node: %d\n', node);
     fprintf('-----  number of threads: %d\n', threads);    
-    
-    parfor t = 0:threads-1
-        task = getCurrentTask();
-        clst = getCurrentCluster();
-        fprintf(['| parfor      ID     GID  GPROCS \n', ...
-                 '|    %3d     %3d     %3d     %3d \n'], ...
-                t, task.ID-1, node*threads+t, nodes*threads);
-        experiment(node*threads+t, nodes*threads, trdata);
-    end
 
-    delete(poolobj);
+    if threads > 1
+        parfor t = 0:threads-1
+            task = getCurrentTask();
+            clst = getCurrentCluster();
+            fprintf(['| parfor      ID     GID  GPROCS \n', ...
+                     '|    %3d     %3d     %3d     %3d \n'], ...
+                    t, task.ID-1, node*threads+t, nodes*threads);
+            experiment(node*threads+t, nodes*threads, trdata);
+        end
+        delete(poolobj);
+    else
+        experiment(node*threads, nodes*threads, trdata);
+    end
 end
