@@ -17,9 +17,13 @@ int main(int argc, char **argv)
     std::cout << "Running main on pid " << pid
               << ", procs = " << numProcs << std::endl;
 
+    std::string threads = "1";
+    if (argc == 2)
+        threads = argv[1];
+
     std::stringstream command;
-    command << "./main " <<  pid << " " << numProcs << " " << argv[1]
-            << " > data/experiments/logdir/log" << pid << ".txt";
+    command << "./main " <<  pid << " " << numProcs << " " << threads;
+    // << " > data/experiments/logdir/log" << pid << ".txt";s
     std::cout << command.str() << std::endl;
     std::system(command.str().c_str());
     std::cout <<  "./main " << pid << " " << numProcs << " finished" << std::endl;
