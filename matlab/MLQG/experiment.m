@@ -2,16 +2,20 @@ function [ ] = experiment(varargin)
 % The core experiment is repeated with <reps>*<shifts> realisations of
 % the network. The training data changes with <shifts>.
     time = tic;
-
     global pid procs exp_name storeState
 
     if ~isdeployed
         addpath('~/local/matlab/');
         addpath('~/Projects/ESN/matlab');
     end
+    
+    exp_name   = 'fulldimNr10000-12000';  % experiment name
+    storeState = 'final';    % which states to store
 
-    exp_name   = 'full8000';  % experiment name
-    storeState = 'final'; % which states to store
+    % hyperparameter range
+    hyp_range  = [10000, 12000];
+    xlab       = 'Nr';
+    ylab       = 'Predicted days';
 
     switch nargin
       case 0
@@ -55,6 +59,9 @@ function [ ] = experiment(varargin)
     stir = trdata.stir;
     Re_c = trdata.Re_c;
 
+    % dimension reduction Na
+    Na = dim;
+
     Ldim    = 1e6;
     Udim    = 3.171e-2;
     tdim    = Ldim / Udim; % in seconds
@@ -69,9 +76,6 @@ function [ ] = experiment(varargin)
     % naming change
     trdata.PRX = trdata.ERX;
     rmfield(trdata, 'ERX'); % we do not need this field, save some memory
-
-    % dimension reduction Na
-    Na = dim;
 
     % create wavelet basis
     bs = 32; % block size
@@ -99,8 +103,6 @@ function [ ] = experiment(varargin)
     maxPreds   = 365;
     tr_shifts  = round(linspace(0, maxShift, shifts)); % shifts in the training_range
 
-    % specify hyperparameter range
-    hyp_range  = [8000];
     num_trials = numel(hyp_range);
 
     % The core experiment is repeated with <reps>*<shifts> realisations of
@@ -159,13 +161,14 @@ function [ ] = experiment(varargin)
             end
 
             errs{i, j} = err;
-            store_results(my_inds, num_predicted, errs, predictions, truths);
+            store_results(my_inds, hyp_range, xlab, ylab, ...
+                          num_predicted, errs, predictions, truths);
         end
     end
     fprintf('done (%fs)\n', toc(time));
 end
 
-function [] = store_results(my_inds, num_predicted, errs, predictions, truths)
+function [] = store_results(varargin)
     global pid procs exp_name
 
     if procs > 1
@@ -184,8 +187,18 @@ function [] = store_results(my_inds, num_predicted, errs, predictions, truths)
         fname = sprintf('%s/results.mat', path);
     end
 
-    fprintf('saving results to %s\n', fname);
-    save(fname, 'my_inds', 'num_predicted', 'errs', 'predictions', 'truths');
+    fprintf('saving results to %s\n', fname);    
+    for i = 1:nargin
+        var = inputname(i);
+        eval([var, '= varargin{i};']); 
+        fprintf(' %s', var);
+        if (i == 1)
+            save(fname, var);
+        else
+            save(fname, var, '-append');
+        end            
+    end
+    fprintf('\n');
 end
 
 function [inds] = my_indices(pid, procs, Ni)
