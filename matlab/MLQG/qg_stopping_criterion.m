@@ -12,7 +12,6 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
     predSpec = predSpec(sd);
     diff = (log(testSpec) - log(predSpec));
     err  = norm(diff,2);
-    fprintf(' error: %1.2e\n', err);
 
     % ARBITRARY, make this more informed #FIXME
     if err > 4

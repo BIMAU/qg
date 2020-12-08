@@ -88,7 +88,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
     clear trainU trainY
 
     for i = 1:Npred
-        fprintf('Prediction step %4d/%4d, %s\n', i, Npred, exp_type);
+
         % model prediction of next time step
         Pyk = model.step(yk, dt);
 
@@ -116,6 +116,8 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
         % check stopping criterion
         [stop, err(i)] = run_pars.stopping_criterion(model, predY(i,:), testY(i,:));
         if stop
+            fprintf('Last prediction step %4d/%4d, error %1.2e, %s\n', ...
+                    i, Npred, err(i), exp_type);
             break;
         end
     end

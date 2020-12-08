@@ -2,6 +2,7 @@
 
 if [ "$#" -ne 1 ]; then
     echo "Usage: ./compile_mfile main.m"
+    exit
 fi
 
 module load MATLAB/2018a
