@@ -9,11 +9,11 @@ function [ ] = experiment(varargin)
         addpath('~/Projects/ESN/matlab');
     end
     
-    exp_name   = 'fulldimNr10000-12000';  % experiment name
+    exp_name   = 'hybrid_Nr_2000-32000'; % experiment name
     storeState = 'final';    % which states to store
 
     % hyperparameter range
-    hyp_range  = [10000, 12000];
+    hyp_range  = [2000,4000,8000,16000,32000];
     xlab       = 'Nr';
     ylab       = 'Predicted days';
 
@@ -21,7 +21,7 @@ function [ ] = experiment(varargin)
       case 0
         pid   = 0;
         procs = 1;
-
+        
       case 2
         pid   = arg2value(varargin{1});
         procs = arg2value(varargin{2});
@@ -100,7 +100,7 @@ function [ ] = experiment(varargin)
     shifts     = 25;      % shifts in training_range
     maxShift   = 4000;    % largest shift in training_range
     reps       = 4;       % repetitions
-    maxPreds   = 365;
+    maxPreds   = 3*365;   % predict max 3 years
     tr_shifts  = round(linspace(0, maxShift, shifts)); % shifts in the training_range
 
     num_trials = numel(hyp_range);
@@ -162,7 +162,8 @@ function [ ] = experiment(varargin)
 
             errs{i, j} = err;
             store_results(my_inds, hyp_range, xlab, ylab, ...
-                          num_predicted, errs, predictions, truths);
+                          num_predicted, errs, predictions, truths, ...
+                          run_pars, esn_pars);
         end
     end
     fprintf('done (%fs)\n', toc(time));
