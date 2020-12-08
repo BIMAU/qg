@@ -2,16 +2,16 @@ function [] = main(varargin)
 % wrapper for experiment using the parpool
     switch nargin
       case 0
-        node     = 0;
-        nodes    = 1;
+        pid      = 0;
+        procs    = 1;
 
       case 2
-        node    = arg2value(varargin{1});
-        nodes   = arg2value(varargin{2});
+        pid     = arg2value(varargin{1});
+        procs   = arg2value(varargin{2});
 
       case 3
-        node    = arg2value(varargin{1});
-        nodes   = arg2value(varargin{2});
+        pid     = arg2value(varargin{1});
+        procs   = arg2value(varargin{2});
         threads = arg2value(varargin{3});
 
       otherwise
@@ -39,10 +39,10 @@ function [] = main(varargin)
     end
 
     fprintf('--------------------------------------------\n')
-    fprintf('-----         main  \n', nodes);
-    fprintf('-----  number of nodes: %d\n', nodes);
-    fprintf('-----  this node: %d\n', node);
-    fprintf('-----  number of threads: %d\n', threads);    
+    fprintf('-----     main  \n');
+    fprintf('-----    procs: %d\n', procs);
+    fprintf('-----      pid: %d\n', pid);
+    fprintf('-----  threads: %d\n', threads);    
 
     if threads > 1
         parfor t = 0:threads-1
@@ -50,11 +50,11 @@ function [] = main(varargin)
             clst = getCurrentCluster();
             fprintf(['| parfor      ID     GID  GPROCS \n', ...
                      '|    %3d     %3d     %3d     %3d \n'], ...
-                    t, task.ID-1, node*threads+t, nodes*threads);
-            experiment(node*threads+t, nodes*threads, trdata);
+                    t, task.ID-1, pid*threads+t, procs*threads);
+            experiment(pid*threads+t, procs*threads, trdata);
         end
         delete(poolobj);
     else
-        experiment(node*threads, nodes*threads, trdata);
+        experiment(pid, procs, trdata);
     end
 end

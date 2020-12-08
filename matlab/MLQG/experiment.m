@@ -16,7 +16,7 @@ function [ ] = experiment(varargin)
     hyp_range  = [2000,4000,8000,16000,32000];
     xlab       = 'Nr';
     ylab       = 'Predicted days';
-
+ 
     switch nargin
       case 0
         pid   = 0;
@@ -124,7 +124,6 @@ function [ ] = experiment(varargin)
         
         for i = my_inds;
             run_pars.train_range = (1:samples)+tr_shifts(svec(i));
-            fprintf(' train range: %d - %d\n', min(run_pars.train_range), max(run_pars.train_range));
             run_pars.test_range  = run_pars.train_range(end) + (1:maxPreds);
             fprintf(' train range: %d - %d\n', min(run_pars.train_range), max(run_pars.train_range));
             fprintf('  test range: %d - %d\n', min(run_pars.test_range), max(run_pars.test_range));
