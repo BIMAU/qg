@@ -13,7 +13,7 @@ function [P,Q] = blockpermutation(n,m,nun,bs,nested)
 %   P:      (cell array of) permutation operator(s)
 %   Q:      combined permutation operator
 
-    if nargin < 5
+    if (nargin < 5) || ((bs / 2) < 2)
         nested = false;
     end
 
