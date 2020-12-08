@@ -1,69 +1,13 @@
-function [errs, nums] = plot_experiment(varargin)
-% plot results of a parallel experiment
+[errs1,nums1,pids1,labels1] = gather_plotdata('fulldimNrscan', ...
+                                              'parallel', 32);
 
-    switch nargin
-      case 0
-        exp_name = 'test';
-        exp_type = 'parallel';
-        procs    = 96;
+tr_range = 1;
+[errs2,nums2,pids2,labels2] = gather_plotdata('fulldimNr10000-12000', ...
+                                              'parallel', 8, tr_range);
 
-      case 2
-        exp_name = varargin{1};
-        exp_type = varargin{2};
-        procs    = 96;
 
-      case 3
-        exp_name = varargin{1};
-        exp_type = varargin{2};
-        procs    = varargin{3};
-
-      otherwise
-        error('Unexpected input');
-    end
-
-    dir = ['data/experiments/', exp_name, '/', exp_type, '/'];
-
-    fileNames = cell(procs,1);
-    for i = 1:procs
-        fileNames{i} = sprintf([dir, 'results_%d.mat'],i-1);
-    end
-
-    data = load(fileNames{1});
-    trials = size(data.num_predicted, 2);
-    n = size(data.num_predicted, 1); % ensemble size
-    errs = cell(procs, trials);
-    nums  = nan(n, trials);
-    ind_vis = zeros(procs, ceil(n / procs));
-
-    for d = 1:procs
-        data = load(fileNames{d});
-        for i = data.my_inds
-            for j = 1:trials
-                errs{i, j} = data.errs{i, j};
-                num = data.num_predicted(i, j);
-                if num > 0
-                    nums(i, j) = num;
-                end
-            end
-        end
-    end
-
-    assert(i == size(data.num_predicted, 1), ...
-           'failed assertion, probably wrong procs');
-
-    my_boxplot(nums);
-
-    % % alternative error bound:
-    % nums  = nan(n, trials);
-    % subplot(2,1,2)
-    % run = 1;
-    % for j = 1:trials
-    %     for i = 1:n
-    %         num = find(errs{i,j}>4.0,1);
-    %         if ~isempty(num)
-    %             nums(i,j) = num
-    %         end
-    %     end
-    % end
-    % my_boxplot(nums);
-end
+my_boxplot([nums1, nums2]);
+xticklabels({'2000','4000','6000','8000', ...
+             num2str(labels2.hyp_range(1))})
+xlabel(labels2.xlab)
+ylabel(labels2.ylab)

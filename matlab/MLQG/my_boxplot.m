@@ -6,7 +6,7 @@ function [] = my_boxplot(varargin)
         x_index  = 1:size(array,2);
 
       case 2
-        x_index  = varargin{1}; % assuming input is a string
+        x_index  = varargin{1};
         array    = varargin{2};
 
       otherwise
@@ -31,6 +31,7 @@ function [] = my_boxplot(varargin)
         ylimMax = max(ylimMax, 2*quantile(array(:,idx),0.75));
     end    
     xlim([min(x_index)-0.5, max(x_index)+0.5]);
+    xticks([x_index]);
     ylim([0,ylimMax]);
     hold off    
 end
