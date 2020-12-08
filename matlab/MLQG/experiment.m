@@ -10,8 +10,8 @@ function [ ] = experiment(varargin)
         addpath('~/Projects/ESN/matlab');
     end
 
-    exp_name   = 'full8000';  % experiment name
-    storeState = 'final'; % which states to store
+    exp_name   = 'fulldim';  % experiment name
+    storeState = 'final';    % which states to store
 
     switch nargin
       case 0
@@ -122,7 +122,6 @@ function [ ] = experiment(varargin)
         
         for i = my_inds;
             run_pars.train_range = (1:samples)+tr_shifts(svec(i));
-            fprintf(' train range: %d - %d\n', min(run_pars.train_range), max(run_pars.train_range));
             run_pars.test_range  = run_pars.train_range(end) + (1:maxPreds);
             fprintf(' train range: %d - %d\n', min(run_pars.train_range), max(run_pars.train_range));
             fprintf('  test range: %d - %d\n', min(run_pars.test_range), max(run_pars.test_range));
