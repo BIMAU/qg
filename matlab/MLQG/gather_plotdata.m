@@ -1,29 +1,26 @@
 function [errs, nums, pids, labels] = gather_plotdata(varargin)
 
     switch nargin
+      case 2
+        dir   = varargin{1};
+        procs = varargin{2};
+
       case 3
-        exp_name = varargin{1};
-        exp_type = varargin{2};
-        procs    = varargin{3};
-      case 4
-        exp_name = varargin{1};
-        exp_type = varargin{2};
-        procs    = varargin{3};
-        tr_range = varargin{4};
+        dir      = varargin{1};
+        procs    = varargin{2};
+        tr_range = varargin{3};
+
       otherwise
         error('Unexpected input');
     end
 
-    dir = ['data/experiments/', exp_name, '/', exp_type, '/'];
-
     fileNames = cell(procs,1);
     for i = 1:procs
-        fileNames{i} = sprintf([dir, 'results_%d.mat'],i-1);
+        fileNames{i} = sprintf([dir, 'results_%d.mat'], i-1);
     end
 
     data    = load(fileNames{1});
     trials  = size(data.num_predicted, 2);
-
 
     if exist('tr_range', 'var')
         trials = numel(tr_range);
