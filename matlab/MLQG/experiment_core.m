@@ -25,7 +25,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
 
     % create input/output data for hybrid or standalone ESN
     if hybrid
-        fprintf('Create input/output data for hybrid ESN\n');
+        print0('Create input/output data for hybrid ESN\n');
         exp_type = 'hybrid';
         if isfield(tr_data, 'HaRX') && isfield(tr_data, 'HaPRX')
             U = [tr_data.HaRX(:,1:end-1); tr_data.HaPRX(:,1:end-1)];
@@ -35,7 +35,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
             Y = [Ha' * tr_data.RX(:,2:end )];
         end
     elseif esn_only
-        fprintf('Create input/output data for standalone ESN\n');
+        print0('Create input/output data for standalone ESN\n');
         exp_type = 'esn_only';
         if isfield(tr_data, 'HaRX') && isfield(tr_data, 'HaPRX')
             U = [tr_data.HaRX(:,1:end-1)];
@@ -116,7 +116,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
         % check stopping criterion
         [stop, err(i)] = run_pars.stopping_criterion(model, predY(i,:), testY(i,:));
         if stop
-            fprintf('Last prediction step %4d/%4d, error %1.2e, %s\n', ...
+            print0(' ~~~ last prediction step %4d/%4d, error %1.2e, %s\n', ...
                     i, Npred, err(i), exp_type);
             break;
         end
