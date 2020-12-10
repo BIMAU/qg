@@ -8,29 +8,112 @@ function [ ] = experiment(varargin)
         addpath('~/local/matlab/');
         addpath('~/Projects/ESN/matlab');
     end
-    
-    exp_name   = 'hybrid_Nr_2000-32000'; % experiment name
-    storeState = 'final';    % which states to store
 
-    % hyperparameter range
-    hyp_range  = [2000,4000,8000,16000,32000];
-    xlab       = 'Nr';
-    ylab       = 'Predicted days';
- 
+    storeState = 'final'; % which states to store
+    hyp = struct();
+    range2str = @ (range) ['_', num2str(range(1)), '-', num2str(range(end)), '_'];
+
+    %---------------------------------------------------------
+    % settings that define the experiment
+    run_pars.esn_on   = true;  % enable/disable ESN
+    run_pars.model_on = true;  % enable/disable equations
+    exp_id = {'Alpha', 'RhoMax'};
+
+    name = 'ReservoirSize';
+    hyp.(name).range   = [2000,4000,6000,8000,10000,12000,14000,16000];
+    hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
+    hyp.(name).default = 6000;
+
+    name = 'BlockSize';
+    hyp.(name).range   = [1,2,4,8,16,32,64];
+    hyp.(name).descr   = ['BS', range2str(hyp.(name).range)];
+    hyp.(name).default = 16;
+
+    name = 'TrainingSamples';
+    hyp.(name).range   = [1000,2000,3000,4000,5000,6000,7000];
+    hyp.(name).descr   = ['SP', range2str(hyp.(name).range)];
+    hyp.(name).default = 3000;
+
+    name = 'ReductionFactor';
+    hyp.(name).range   = [1,2,4,8,16];
+    hyp.(name).descr   = ['RF', range2str(hyp.(name).range)];
+    hyp.(name).default = 1;
+
+    name = 'Alpha';
+    hyp.(name).range   = [0.7:0.1:1.0];
+    hyp.(name).descr   = ['AP', range2str(hyp.(name).range)];
+    hyp.(name).default = 1;
+
+    name = 'RhoMax';
+    hyp.(name).range   = [0.05:0.05:0.3];
+    hyp.(name).descr   = ['RH', range2str(hyp.(name).range)];
+    hyp.(name).default = 0.3;
+
+    xlab   =  exp_id;
+    ylab   = 'Predicted days';
+
+    % ensemble setup
+    shifts   = 24;      % shifts in training_range
+    reps     = 1;       % repetitions per shift
+    maxPreds = 3*365;   % prediction barrier: 3 years
+    %---------------------------------------------------------
+
+    % identifier -> numeric index
+    hypids = fieldnames(hyp);
+    id2ind = @ (str) find(strcmp(hypids, str));
+
+    exp_ind = []; file_descr = [];
+    for i = 1:numel(exp_id)
+        exp_ind{i}    = id2ind(exp_id{i});
+        file_descr{i} = hyp.(exp_id{i}).descr;
+    end
+
+    assert(~isempty(exp_ind));
+
+    exp_name = [[file_descr{:}], ...
+                'ESN', num2str(run_pars.esn_on), '_', ...
+                'MDL', num2str(run_pars.model_on)];
+
+    evalstr = '';
+    for i = 1:numel(hypids)
+        if ~sum(strcmp(hypids{i}, exp_id))
+            hyp.(hypids{i}).range = hyp.(hypids{i}).default;
+        end
+
+        evalstr = [evalstr, 'hyp.(hypids{', num2str(i), '}).range'];
+        if i < numel(hypids)
+            evalstr = [evalstr, ', '];
+        end
+    end
+    eval(['hyp_range = combvec(', evalstr, ');']);
+
+    % The core experiment is repeated with <reps>*<shifts> realisations of
+    % the network. The range of the training data changes with <shifts>.
+    cvec = combvec((1:reps),(1:shifts))';
+    rvec = cvec(:,1);
+    svec = cvec(:,2);
+    Ni = numel(svec); % number of indices
+
+    num_exp       = size(hyp_range,2);
+    predictions   = cell(Ni, num_exp);
+    truths        = cell(Ni, num_exp);
+    errs          = cell(Ni, num_exp);
+    num_predicted = zeros(shifts*reps, num_exp); % valid predicted time steps
+
     switch nargin
       case 0
         pid   = 0;
         procs = 1;
-        
+
       case 2
         pid   = arg2value(varargin{1});
         procs = arg2value(varargin{2});
-        
-      case 3 
+
+      case 3
         pid    = arg2value(varargin{1});
         procs  = arg2value(varargin{2});
         trdata = varargin{3};
-        
+
       otherwise
         error('Unexpected input');
     end
@@ -39,17 +122,18 @@ function [ ] = experiment(varargin)
     tm = clock;
     rng(round(100*pid*sqrt(tm(end))));
 
-    fprintf('--------------------------------------------\n')
-    fprintf(' ----   MLQG experiment - procs  = %d \n', procs)
-    fprintf('  ---                   - pid    = %d \n', pid)
-    fprintf('   --   %s \n', exp_name);
+    print0('--------------------------------------------\n')
+    print0(' ----   MLQG experiment - procs  = %d \n', procs)
+    print0('  ---                   - pid    = %d \n', pid)
+    print0('   --   %s \n', exp_name);
 
     if ~exist('trdata','var')
-        fprintf('load training data...\n'); tic;
+        print0('load training data...\n'); tic;
         fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
         trdata = load(['data/training/', fname_base, '.mat']);
-        fprintf('load training data... done (%fs)\n', toc);
+        print0('load training data... done (%fs)\n', toc);
     end
+
 
     nxc  = trdata.nxc;
     nyc  = trdata.nyc;
@@ -58,9 +142,6 @@ function [ ] = experiment(varargin)
     ampl = trdata.ampl;
     stir = trdata.stir;
     Re_c = trdata.Re_c;
-
-    % dimension reduction Na
-    Na = dim;
 
     Ldim    = 1e6;
     Udim    = 3.171e-2;
@@ -73,63 +154,66 @@ function [ ] = experiment(varargin)
     qgc.set_par(11, ampl);  % stirring amplitude
     qgc.set_par(18, stir);  % stirring type: 0 = cos(5x), 1 = sin(16x)
 
-    % naming change
+    % naming change and getting stuff out of memory
     trdata.PRX = trdata.ERX;
-    rmfield(trdata, 'ERX'); % we do not need this field, save some memory
+    trdata.ERX = [];
+    trdata.R   = [];
+    rmfield(trdata, 'ERX');
+    rmfield(trdata, 'R');
 
-    % create wavelet basis
-    bs = 32; % block size
-    H  = create_wavelet_basis(nxc, nyc, nun, bs, true);
-    run_pars.Ha = H(1:Na,:)';
-    run_pars.Hd = H(Na+1:dim,:)';
-    run_pars.Na = Na;
+    for j = 1:num_exp
+        % print experiment info
+        str = [];
+        for id = 1:numel(hypids)
+            str{id} = ['\n    ', hypids{id}, ': ', ...
+                       num2str(hyp_range(id2ind(hypids{id}), j)),...
+                       ''];
+        end
+        str = [str, '\n'];
+        print0([str{:}]);
 
-    fprintf('transform input/output data with wavelet modes\n');
-    trdata.HaRX  = run_pars.Ha' * trdata.RX;
-    trdata.HaPRX = run_pars.Ha' * trdata.PRX;
-    rmfield(trdata, 'PRX');  % we do not need this field, save some memory
+        % set experiment parameters.
+        esn_pars.Nr     = hyp_range(id2ind('ReservoirSize'), j);
+        bs              = hyp_range(id2ind('BlockSize'), j);
+        samples         = hyp_range(id2ind('TrainingSamples'), j);
+        RF              = hyp_range(id2ind('ReductionFactor'), j);
+        esn_pars.alpha  = hyp_range(id2ind('Alpha'), j);
+        esn_pars.rhoMax = hyp_range(id2ind('RhoMax'), j);
 
-    run_pars.esn_on   = true; % enable/disable ESN
-    run_pars.model_on = true; % enable/disable equations
+        % wavelet basis
+        H  = create_wavelet_basis(nxc, nyc, nun, bs, true);
+        Na = dim / RF;
+        run_pars.Ha = H(1:Na,:)';
+        run_pars.Hd = H(Na+1:dim,:)';
+        run_pars.Na = Na;
 
-    % stopping criterion returns a stopping flag based on whatever is
-    % relevant for the experiment
-    run_pars.stopping_criterion = @qg_stopping_criterion;
+        print0('transform input/output data with wavelet modes\n');
+        trdata.HaRX  = run_pars.Ha' * trdata.RX;
+        trdata.HaPRX = run_pars.Ha' * trdata.PRX;
 
-    samples    = 3000;    % samples in the training_range
-    shifts     = 25;      % shifts in training_range
-    maxShift   = 4000;    % largest shift in training_range
-    reps       = 4;       % repetitions
-    maxPreds   = 3*365;   % predict max 3 years
-    tr_shifts  = round(linspace(0, maxShift, shifts)); % shifts in the training_range
+        % stopping criterion returns a stopping flag based on whatever is
+        % relevant for the experiment
+        run_pars.stopping_criterion = @qg_stopping_criterion;
 
-    num_trials = numel(hyp_range);
+        % shifts in the training_range
+        % total number of timesteps in timeseries
+        Nt = size(trdata.RX, 2);
+        maxShift = Nt - maxPreds - samples - 1; % largest shift in training_range
+        assert(maxShift > 1);
+        tr_shifts = round(linspace(0, maxShift, shifts));
 
-    % The core experiment is repeated with <reps>*<shifts> realisations of
-    % the network. The range of the training data changes with <shifts>.
-    cvec = combvec((1:reps),(1:shifts))';
-    rvec = cvec(:,1);
-    svec = cvec(:,2);
+        % domain decomposition
+        my_inds = my_indices(pid, procs, Ni);
 
-    Ni = numel(svec);
-    my_inds = my_indices(pid, procs, Ni);
-
-    predictions   = cell(Ni, num_trials);
-    truths        = cell(Ni, num_trials);
-    errs          = cell(Ni, num_trials);
-    num_predicted = zeros(shifts*reps, num_trials); % valid predicted time steps
-
-    for j = 1:num_trials
-        esn_pars.Nr = hyp_range(j);
-        
         for i = my_inds;
             run_pars.train_range = (1:samples)+tr_shifts(svec(i));
             run_pars.test_range  = run_pars.train_range(end) + (1:maxPreds);
-            fprintf(' train range: %d - %d\n', min(run_pars.train_range), max(run_pars.train_range));
-            fprintf('  test range: %d - %d\n', min(run_pars.test_range), max(run_pars.test_range));
-            
+            print0(' train range: %d - %d\n', ...
+                    min(run_pars.train_range), max(run_pars.train_range));
+            print0('  test range: %d - %d\n', ...
+                    min(run_pars.test_range), max(run_pars.test_range));
+
             % Run the experiment in a try/catch block, at most max_tries times.
-            % Sometimes it runs out of memory.
             try_count = 0;
             exc_count = 0;
             max_tries = 5;
@@ -139,17 +223,17 @@ function [ ] = experiment(varargin)
                     [predY, testY, err] = ...
                         experiment_core(qgc, trdata, esn_pars, run_pars);
                 catch ME
-                    fprintf('ERROR: pid %d, i %d, %s\n', pid, i, ME.message);
+                    print0('ERROR: pid %d, i %d, %s\n', pid, i, ME.message);
                     exc_count = exc_count + 1;
-                end                
+                end
             end
             if try_count >= max_tries
                 ME = MException('experiment:fatalError', 'Too many fails in experiment_core...');
                 throw(ME);
             end
-                
+
             num_predicted(i, j) = size(predY, 1);
-            
+
             if strcmp(storeState, 'all')
                 predictions{i, j} = predY(:,:);
                 truths{i, j} = testY(:,:);
@@ -160,12 +244,12 @@ function [ ] = experiment(varargin)
             end
 
             errs{i, j} = err;
-            store_results(my_inds, hyp_range, xlab, ylab, ...
+            store_results(my_inds, hyp_range, hyp, exp_id, exp_ind, xlab, ylab, ...
                           num_predicted, errs, predictions, truths, ...
                           run_pars, esn_pars);
         end
     end
-    fprintf('done (%fs)\n', toc(time));
+    print0('done (%fs)\n', toc(time));
 end
 
 function [] = store_results(varargin)
@@ -187,18 +271,18 @@ function [] = store_results(varargin)
         fname = sprintf('%s/results.mat', path);
     end
 
-    fprintf('saving results to %s\n', fname);    
+    fprintf('saving results to %s\n', fname);
     for i = 1:nargin
         var = inputname(i);
-        eval([var, '= varargin{i};']); 
+        eval([var, '= varargin{i};']);
         fprintf(' %s', var);
         if (i == 1)
             save(fname, var);
         else
             save(fname, var, '-append');
-        end            
+        end
     end
-    fprintf('\n');
+    fprintf('\n\n');
 end
 
 function [inds] = my_indices(pid, procs, Ni)
