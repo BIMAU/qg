@@ -99,9 +99,12 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
             % create an input vector for the ESN
             if hybrid
                 u_in  = [Ha' * yk(:); Ha' * Pyk(:)]';
-            else esn_only
+            elseif esn_only
                 u_in  = [Ha' * yk(:)]';
+            else
+                error('incorrect model config');
             end
+
             u_in      = esn.scaleInput(u_in);
             esn_state = esn.update(esn_state, u_in)';
             u_out     = esn.apply(esn_state, u_in);
@@ -115,17 +118,19 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
 
         % check stopping criterion
         [stop, err(i)] = run_pars.stopping_criterion(model, predY(i,:), testY(i,:));
+
         if stop
-            print0(' ~~~ last prediction step %4d/%4d, error %1.2e, %s\n', ...
-                    i, Npred, err(i), exp_type);
             break;
         end
     end
-
+    print0(' ~~~ last prediction step %4d/%4d, error %1.2e, %s\n', ...
+           i, Npred, err(i), exp_type);
+    
     % truncate output arrays
     predY = predY(1:i,:);
     testY = testY(1:i,:);
     err   = err(1:i);
+    
 end
 
 function [pars_out] = default_esn_parameters(pars_in)
