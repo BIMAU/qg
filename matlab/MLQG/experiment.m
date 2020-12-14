@@ -15,17 +15,19 @@ function [ ] = experiment(varargin)
 
     %---------------------------------------------------------
     % settings that define the experiment
-    run_pars.esn_on   = true;  % enable/disable ESN
-    run_pars.model_on = true;  % enable/disable equations
-    exp_id = {'Alpha', 'RhoMax'};
-
+    run_pars.esn_on   = true;   % enable/disable ESN
+    run_pars.model_on = true;   % enable/disable equations
+    exp_id = {'BlockSize', 'ReservoirSize'};
+    
     name = 'ReservoirSize';
-    hyp.(name).range   = [2000,4000,6000,8000,10000,12000,14000,16000];
+    % hyp.(name).range   = [2000,4000,6000,8000,10000,12000,14000,16000];
+    hyp.(name).range   = [4000,8000,16000,32000,64000];
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
-    hyp.(name).default = 6000;
+    hyp.(name).default = 8000;
 
     name = 'BlockSize';
-    hyp.(name).range   = [1,2,4,8,16,32,64];
+    % hyp.(name).range   = [1,2,4,8,16,32,64];
+    hyp.(name).range   = [1,16];
     hyp.(name).descr   = ['BS', range2str(hyp.(name).range)];
     hyp.(name).default = 16;
 
@@ -53,9 +55,9 @@ function [ ] = experiment(varargin)
     ylab   = 'Predicted days';
 
     % ensemble setup
-    shifts   = 24;      % shifts in training_range
+    shifts   = 10;      % shifts in training_range
     reps     = 1;       % repetitions per shift
-    maxPreds = 3*365;   % prediction barrier: 3 years
+    maxPreds = 1*365;   % prediction barrier: 3 years
     %---------------------------------------------------------
 
     % identifier -> numeric index
