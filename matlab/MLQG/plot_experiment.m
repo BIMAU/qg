@@ -50,8 +50,13 @@ subplot(1,2,2)
 plotQG(nx,ny,1,scaling*dat62.truths{62},false)
 title('true vorticity (days^{-1})')
 
-% figure(4)
-% f1 = plotQGspectrum(qgc, nxc, nyc, scaling*dat62.truths{62}, 5, cols(1,:));
-% hold on;
-% f2 = plotQGspectrum(qgc, nxc, nyc, scaling*dat62.predictions{62}, 5, cols(2,:));
-% hold off;
+figure(4)
+qg = QG(nx, ny, 1 );  % coarse QG with periodic bdc
+qg.set_par(18, 0  );  % stirring type: 0 = cos(5x), 1 = sin(16x)
+qg.set_par(11, 0.5);  % stirring amplitude
+qg.set_par(5,  100);  % Reynolds number for coarse model
+cols = lines(10);
+f1 = plotQGspectrum(qg, scaling*dat62.truths{62}, 5, cols(1,:));
+hold on;
+f2 = plotQGspectrum(qg, scaling*dat62.predictions{62}, 5, cols(2,:));
+hold off;
