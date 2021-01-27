@@ -9,19 +9,20 @@ function [ ] = experiment(varargin)
         addpath('~/Projects/ESN/matlab');
     end
 
-    storeState = 'final'; % which states to store
+    storeState = 'all'; % which states to store
     hyp = struct();
     range2str = @ (range) ['_', num2str(range(1)), '-', num2str(range(end)), '_'];
 
     %---------------------------------------------------------
     % settings that define the experiment
-    run_pars.esn_on   = true;   % enable/disable ESN
+    run_pars.esn_on   = false;   % enable/disable ESN
     run_pars.model_on = true;   % enable/disable equations
-    exp_id = {'BlockSize', 'ReservoirSize'};
-    
+    exp_id = {'ReservoirSize'};
+
     name = 'ReservoirSize';
     % hyp.(name).range   = [2000,4000,6000,8000,10000,12000,14000,16000];
-    hyp.(name).range   = [4000,8000,16000,32000,64000];
+    % hyp.(name).range   = [4000,8000,16000,32000,64000];
+    hyp.(name).range   = 8000;
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
     hyp.(name).default = 8000;
 
@@ -55,7 +56,7 @@ function [ ] = experiment(varargin)
     ylab   = 'Predicted days';
 
     % ensemble setup
-    shifts   = 10;      % shifts in training_range
+    shifts   = 4;       % shifts in training_range
     reps     = 1;       % repetitions per shift
     maxPreds = 1*365;   % prediction barrier: 3 years
     %---------------------------------------------------------
