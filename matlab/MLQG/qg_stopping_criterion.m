@@ -1,7 +1,8 @@
 function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, testY)
     use_fields   = false;
     use_spectrum = true;
-    err_tol = 4.0;
+    %err_tol = 4.0;
+    err_tol = Inf;
     
     Ldim    = 1e6;
     Udim    = 3.171e-2;

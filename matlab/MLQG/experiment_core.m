@@ -48,10 +48,15 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
         exp_type = 'model_only';
     end
 
-    % set training and testing data
-    assert(run_pars.train_range(end)+1 == run_pars.test_range(1));
-    trainU = U(:, run_pars.train_range)'; % input training
-    trainY = Y(:, run_pars.train_range)'; % output training
+    if run_pars.esn_on
+        % set training and testing data
+        assert(run_pars.train_range(end)+1 == run_pars.test_range(1));
+        trainU = U(:, run_pars.train_range)'; % input training
+        trainY = Y(:, run_pars.train_range)'; % output training
+        
+        % clean up
+        clear U Y
+    end
 
     % full dimensional output testing
     testY = tr_data.RX(:, 2:end);
@@ -65,7 +70,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
     yk = tr_data.RX(:, run_pars.test_range(1));
 
     % clean up
-    clear U Y tr_data
+    clear tr_data
 
     if run_pars.esn_on
         % set ESN parameters
