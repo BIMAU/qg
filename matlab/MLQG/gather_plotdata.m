@@ -2,7 +2,7 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
 
     switch nargin
       case 1
-        dir    = varargin{1}; 
+        dir    = varargin{1};
         procs  = 1;
 
       case 2
@@ -17,13 +17,13 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
       otherwise
         error('Unexpected input');
     end
-    
+
     if procs > 2
-        serial = false
+        serial = false;
     else
         serial = true;
     end
-    
+
     fileNames = cell(procs,1);
 
     if serial
@@ -36,9 +36,9 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
             end
         end
     end
-    
+
     initialize = true;
-    for d = 1:procs        
+    for d = 1:procs
         if strcmp(fileNames{d}, 'failedproc')
             continue;
         end
@@ -56,15 +56,15 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
             n       = size(data.num_predicted, 1); % ensemble size
             errs    = cell(procs, trials);
             pids    = cell(procs, trials);
-            
+
             predictions = cell(procs, trials);
             truths      = cell(procs, trials);
-            
+
             nums    = nan(n, trials);
-            ind_vis = zeros(procs, ceil(n / procs));    
+            ind_vis = zeros(procs, ceil(n / procs));
             initialize = false;
         end
-        
+
         for i = data.my_inds
             for j = 1:trials
                 errs{i, j} = data.errs{i, tr_range(j)};
@@ -72,7 +72,7 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
 
                 predictions{i, j} = data.predictions{i, j};
                 truths{i, j}      = data.truths{i, j};
-                
+
                 num = data.num_predicted(i, tr_range(j));
                 if num > 0
                     nums(i, j) = num;
@@ -92,9 +92,10 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
                   'hyp',...
                   'exp_id',...
                   'exp_ind',...
+                  'run_pars',...
+                  'esn_pars',...
                  };
-    
-    
+
     for l = 1:numel(importlabs)
         lab = importlabs{l};
         if isfield(data, lab)

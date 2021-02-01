@@ -1,4 +1,4 @@
-function [] = my_boxplot(varargin)
+function [f] = my_boxplot(varargin)
 
     switch nargin
       case 1
@@ -46,9 +46,9 @@ function [] = my_boxplot(varargin)
         hold on
 
         % plot quantiles
-        plot(repmat(idx,1,2), ...
-             [q1, q3], ...
-             '.-','markersize', 12,'linewidth',1, 'color', colors{1});
+        f = plot(repmat(idx,1,2), ...
+                 [q1, q3], ...
+                 '.-','markersize', 12,'linewidth',1, 'color', colors{1});
 
         if plot_mean
             mn = mean(arr(~isnan(arr)));
@@ -64,7 +64,9 @@ function [] = my_boxplot(varargin)
 
     xlim([min(x_index)-0.5, max(x_index)+0.5]);
     xticks([x_index]);
-    ylim([0,ylimMax]);
+    if ylimMax > 0
+        ylim([0,ylimMax]);
+    end
 
     hold off
 end
