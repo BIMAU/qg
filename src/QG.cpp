@@ -408,6 +408,33 @@ namespace QG
         }
     }
 
+    void QG::gradient(double const *u, double *gradx, double *grady)
+    {
+        Vector2D field(n_, m_);
+        int row;
+        for (int j = 0; j < m_; j++)
+        {
+            for (int i = 0; i < n_; i++)
+            {
+                row = n_ * j + i;
+                field(i, j) = u[row];
+            }
+        }
+
+        double r2dx = 1.0/(2*dx_);
+        double r2dy = 1.0/(2*dy_);
+
+        for (int j = jmin_; j < jmax_; j++)
+        {
+            for (int i = imin_; i < imax_; i++)
+            {
+                row = n_ * j + i;
+                gradx[row] = r2dx * ( field(i+1, j) - field(i-1, j) );
+                grady[row] = r2dy * ( field(i, j+1) - field(i, j-1) );
+            }
+        }
+    }
+
     void QG::bilin(double const *un,double const *vn, double *b)
     {
         Vector2D om(n_, m_);

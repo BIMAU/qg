@@ -94,8 +94,10 @@ public:
 
     int compute_precon();
     int solve(double *x);
-
+    
     void compute_uv(double const *un, double *u, double *v);
+
+    void gradient(double const *u, double *gradx, double *grady);
 
     double get_par(int par);
     void set_par(int par, double val);
