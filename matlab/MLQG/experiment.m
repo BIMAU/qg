@@ -1,28 +1,29 @@
 function [ ] = experiment(varargin)
 % The core experiment is repeated with <reps>*<shifts> realisations of
 % the network. The training data changes with <shifts>.
+    
     time = tic;
-    global pid procs exp_name storeState
+    global pid procs exp_name storeState memory
 
     if ~isdeployed
         addpath('~/local/matlab/');
         addpath('~/Projects/ESN/matlab');
     end
-
-    storeState = 'all'; % which states to store
+    
+    storeState = 'final'; % which states to store
     hyp = struct();
     range2str = @ (range) ['_', num2str(range(1)), '-', num2str(range(end)), '_'];
 
     %---------------------------------------------------------
     % settings that define the experiment
-    run_pars.esn_on   = false;   % enable/disable ESN
+    run_pars.esn_on   = true;   % enable/disable ESN
     run_pars.model_on = true;   % enable/disable equations
     exp_id = {'ReservoirSize'};
 
     name = 'ReservoirSize';
     % hyp.(name).range   = [2000,4000,6000,8000,10000,12000,14000,16000];
-    % hyp.(name).range   = [4000,8000,16000,32000,64000];
-    hyp.(name).range   = 8000;
+    % hyp.(name).range   = 8000;
+    hyp.(name).range   = [500, 1000, 2000, 4000, 8000];
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
     hyp.(name).default = 8000;
 
@@ -56,11 +57,11 @@ function [ ] = experiment(varargin)
     ylab   = 'Predicted days';
 
     % ensemble setup
-    shifts   = 4;       % shifts in training_range
+    shifts   = 50;      % shifts in training_range
     reps     = 1;       % repetitions per shift
-    maxPreds = 1*365;   % prediction barrier: 3 years
+    maxPreds = floor(1*365/2);   % prediction barrier (in days)
     %---------------------------------------------------------
-
+    
     % identifier -> numeric index
     hypids = fieldnames(hyp);
     id2ind = @ (str) find(strcmp(hypids, str));
@@ -102,7 +103,7 @@ function [ ] = experiment(varargin)
     truths        = cell(Ni, num_exp);
     errs          = cell(Ni, num_exp);
     num_predicted = zeros(shifts*reps, num_exp); % valid predicted time steps
-
+    
     switch nargin
       case 0
         pid   = 0;
@@ -209,6 +210,9 @@ function [ ] = experiment(varargin)
         my_inds = my_indices(pid, procs, Ni);
 
         for i = my_inds;
+            % (re)set global memory for the computation of Ke, Km, etc
+            memory = struct();
+
             run_pars.train_range = (1:samples)+tr_shifts(svec(i));
             run_pars.test_range  = run_pars.train_range(end) + (1:maxPreds);
             print0(' train range: %d - %d\n', ...

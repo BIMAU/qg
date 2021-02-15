@@ -93,7 +93,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
     clear trainU trainY
 
     for i = 1:Npred
-
+        
         % model prediction of next time step
         Pyk = model.step(yk, dt);
 
