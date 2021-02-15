@@ -18,7 +18,7 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
         error('Unexpected input');
     end
 
-    if procs > 2
+    if procs > 1
         serial = false;
     else
         serial = true;
@@ -95,7 +95,7 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
                   'run_pars',...
                   'esn_pars',...
                  };
-
+    data
     for l = 1:numel(importlabs)
         lab = importlabs{l};
         if isfield(data, lab)

@@ -22,16 +22,16 @@ function [] = main(varargin)
     fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
     trdata = load(['data/training/', fname_base, '.mat']);
     fprintf('load training data... done (%fs)\n', toc);
-    
+
     poolobj = gcp('nocreate');
     if ~isempty(poolobj)
         fprintf('deleting existing parallel pool\n');
         delete(gcp('nocreate'))
     end
-
+    
     if exist('threads','var')
         if threads > 1
-            poolobj = parpool(threads);        
+            poolobj = parpool(threads);
         end
     else
         poolobj = parpool();
@@ -42,7 +42,7 @@ function [] = main(varargin)
     fprintf('-----     main  \n');
     fprintf('-----    procs: %d\n', procs);
     fprintf('-----      pid: %d\n', pid);
-    fprintf('-----  threads: %d\n', threads);    
+    fprintf('-----  threads: %d\n', threads);
 
     if threads > 1
         parfor t = 0:threads-1
