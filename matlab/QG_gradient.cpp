@@ -22,6 +22,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
     int n = mxGetN(prhs[1]);
 
     plhs[0] = mxCreateDoubleMatrix((mwSize)m, (mwSize)n, mxREAL);
+    plhs[1] = mxCreateDoubleMatrix((mwSize)m, (mwSize)n, mxREAL);
+    
     double *gradx = mxGetPr(plhs[0]);
     double *grady = mxGetPr(plhs[1]);
 

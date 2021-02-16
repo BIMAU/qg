@@ -51,6 +51,13 @@ classdef QG < handle
             end
             [u,v] = QG_compute_uv(h.instance, x(:));
         end
+        
+        function [gradx, grady] = gradient(h, x)
+            if nargin ~= 2
+                error('One input argument required');
+            end
+            [gradx, grady] = QG_gradient(h.instance, x(:));
+        end
 
         function Z = bilin(h, V,W)
             if nargin ~= 3
