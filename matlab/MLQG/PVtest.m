@@ -46,7 +46,7 @@ qg.set_par(5,  Re);  % Reynolds number for coarse model
 qg.set_par(11, am);  % stirring amplitude
 qg.set_par(18, st);  % stirring type: 0 = cos(5x), 1 = sin(16x)
 
-slice = 5000;
+slice = 3000;
 x  = data.RX(:,slice);
 x0 = data.RX(:,slice-1);
 
@@ -73,3 +73,4 @@ ddtPV = ddtom + u.*omx+v.*omy+beta*v;
 subplot(2,2,4)
 imagesc(reshape(ddtPV, nx, ny)'); colorbar
 
+sum(ddtPV)
