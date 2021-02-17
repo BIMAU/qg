@@ -46,7 +46,7 @@ qg.set_par(5,  Re);  % Reynolds number for coarse model
 qg.set_par(11, am);  % stirring amplitude
 qg.set_par(18, st);  % stirring type: 0 = cos(5x), 1 = sin(16x)
 
-slice = 3000;
+slice = 6184;
 x  = data.RX(:,slice);
 x0 = data.RX(:,slice-1);
 
@@ -62,7 +62,7 @@ subplot(2,2,1)
 imagesc(reshape(om, nx, ny)'); colorbar
 
 subplot(2,2,2)
-imagesc(reshape(omx, nx, ny)'); colorbar
+imagesc(reshape(ps, nx, ny)'); colorbar
 
 subplot(2,2,3)
 ddtom = (om(:)-om0(:))/dt;
@@ -73,4 +73,23 @@ ddtPV = ddtom + u.*omx+v.*omy+beta*v;
 subplot(2,2,4)
 imagesc(reshape(ddtPV, nx, ny)'); colorbar
 
-sum(ddtPV)
+mass  = [];
+ddtPV = [];
+for i = 2:10000
+    x   = data.RX(:,i);
+    x0  = data.RX(:,i);
+    om  = x(1:2:end);
+    om0 = x0(1:2:end);
+    ps  = x(2:2:end);
+    ps0 = x0(2:2:end);
+    
+    mass(i) = sum(ps(:));
+    
+    [u, v]     = qg.compute_uv(x(:));
+    [omx, omy] = qg.gradient(om(:));
+    ddtom = (om(:)-om0(:))/dt;
+    ddtPV(i) = sum(ddtom + u.*omx+v.*omy+beta*v);
+end
+
+subplot(2,2,1)
+plot(ddtPV);
