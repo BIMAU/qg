@@ -23,6 +23,7 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
     else
         serial = true;
     end
+    
 
     fileNames = cell(procs,1);
 
@@ -32,12 +33,14 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
         for i = 1:procs
             fileNames{i} = sprintf([dir, 'results_%d.mat'], i-1);
             if ~exist(fileNames{i}, 'file')
+                fprintf('%s does not exist\n', fileNames{i});
                 fileNames{i} = 'failedproc';
             end
         end
     end
 
     initialize = true;
+
     for d = 1:procs
         if strcmp(fileNames{d}, 'failedproc')
             continue;
