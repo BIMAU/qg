@@ -129,8 +129,8 @@ namespace QG
 
     double &Vector2D::operator()(int i, int j)
     {
-        i = (n_ + i) % n_;
-        j = (m_ + j) % m_;
+        i = (n_ + i) % n_; // zonal periodicity
+        j = (m_ + j) % m_; // FIXME no flow in meridional direction
         return data_[i + j*m_];
     }
 
