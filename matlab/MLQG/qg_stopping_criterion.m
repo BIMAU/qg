@@ -5,9 +5,11 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
     use_fields   = false;
     use_spectrum = false;
     use_Ke       = true;
+
     % err_tol = 4.0;
     % err_tol = Inf;
-    err_tol = 1.0e-4; % ~ 4*sigma
+    % err_tol = 1.0e-4; % ~ 4*sigma
+    err_tol = 0.5;
 
     Ldim    = 1e6;
     Udim    = 3.171e-2;
@@ -48,11 +50,22 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
         um2_test = mean(memory.u_test, 2).^2;
         v2m_test = mean(memory.v_test.^2, 2);
         vm2_test = mean(memory.v_test, 2).^2;
-        
+
         Ke_pred = sum(u2m_pred - um2_pred + v2m_pred - vm2_pred);
         Ke_test = sum(u2m_test - um2_test + v2m_test - vm2_test);
-        err = abs(Ke_pred - Ke_test);
+        err = abs(Ke_pred - Ke_test) / abs(Ke_test)        
+
+    elseif use_mass
+
+        ps_pred = predY(2:2:end)';
+        ps_true = testY(2:2:end)';
+        M_pred  = sum(ps_pred);
+        M_true  = sum(ps_true);
+
+        err = abs(M_pred - M_true) / abs(M_true);
+        err = 0;
     end
+
 
     if err > err_tol
         stopFlag = true;

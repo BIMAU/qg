@@ -16,34 +16,35 @@ function [ ] = experiment(varargin)
 
     %---------------------------------------------------------
     % settings that define the experiment
-    run_pars.esn_on   = true;   % enable/disable ESN
-    run_pars.model_on = true;   % enable/disable equations
-    exp_id = {'ReservoirSize'};
+    run_pars.esn_on   = true;    % enable/disable ESN
+    run_pars.model_on = true;     % enable/disable equations
+    exp_id = {'ReservoirSize', 'BlockSize'};
 
     name = 'ReservoirSize';
-    % hyp.(name).range   = [2000,4000,6000,8000,10000,12000,14000,16000];
-    % hyp.(name).range   = 8000;
-    hyp.(name).range   = [500, 1000, 2000, 4000, 8000];
+    % hyp.(name).range = [2000,4000,6000,8000,10000,12000,14000,16000];
+    % hyp.(name).range = 8000;
+    hyp.(name).range   = [1000,2000,4000,8000];
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
     hyp.(name).default = 8000;
 
     name = 'BlockSize';
     % hyp.(name).range   = [1,2,4,8,16,32,64];
-    hyp.(name).range   = [1,16];
+    hyp.(name).range   = [1,2,4];
     hyp.(name).descr   = ['BS', range2str(hyp.(name).range)];
     hyp.(name).default = 16;
 
     name = 'TrainingSamples';
-    hyp.(name).range   = [1000,2000,3000,4000,5000,6000,7000];
+    % hyp.(name).range   = 1000;
+    hyp.(name).range   = [1000,2000,3000,4000,5000,6000,7000;]
     hyp.(name).descr   = ['SP', range2str(hyp.(name).range)];
     hyp.(name).default = 3000;
 
     name = 'ReductionFactor';
-    hyp.(name).range   = [1,2,4,8,16];
+    hyp.(name).range   = [8,16];
     hyp.(name).descr   = ['RF', range2str(hyp.(name).range)];
     hyp.(name).default = 1;
 
-    name = 'Alpha';
+    name = 'Alpha';    
     hyp.(name).range   = [0.7:0.1:1.0];
     hyp.(name).descr   = ['AP', range2str(hyp.(name).range)];
     hyp.(name).default = 1;
@@ -52,12 +53,18 @@ function [ ] = experiment(varargin)
     hyp.(name).range   = [0.05:0.05:0.3];
     hyp.(name).descr   = ['RH', range2str(hyp.(name).range)];
     hyp.(name).default = 0.3;
+    
+    name = 'FeedthroughAmp';
+    % hyp.(name).range   = [0.9, 1.0];
+    hyp.(name).range   = [0.1,0.7,1.0];
+    hyp.(name).descr   = ['FA', range2str(hyp.(name).range)];
+    hyp.(name).default = 1.0;
 
     xlab   =  exp_id;
     ylab   = 'Predicted days';
 
     % ensemble setup
-    shifts   = 50;      % shifts in training_range
+    shifts   = 10;      % shifts in training_range
     reps     = 1;       % repetitions per shift
     maxPreds = floor(1*365/2);   % prediction barrier (in days)
     %---------------------------------------------------------
@@ -173,6 +180,7 @@ function [ ] = experiment(varargin)
                        num2str(hyp_range(id2ind(hypids{id}), j)),...
                        ''];
         end
+        
         str = [str, '\n'];
         print0([str{:}]);
 
@@ -183,6 +191,7 @@ function [ ] = experiment(varargin)
         RF              = hyp_range(id2ind('ReductionFactor'), j);
         esn_pars.alpha  = hyp_range(id2ind('Alpha'), j);
         esn_pars.rhoMax = hyp_range(id2ind('RhoMax'), j);
+        esn_pars.ftAmp  = hyp_range(id2ind('FeedthroughAmp'), j);
 
         % wavelet basis
         H  = create_wavelet_basis(nxc, nyc, nun, bs, true);
@@ -235,7 +244,8 @@ function [ ] = experiment(varargin)
                 end
             end
             if try_count >= max_tries
-                ME = MException('experiment:fatalError', 'Too many fails in experiment_core...');
+                ME = MException('experiment:fatalError', ...
+                                'Too many fails in experiment_core...');
                 throw(ME);
             end
 
@@ -248,6 +258,8 @@ function [ ] = experiment(varargin)
             elseif strcmp(storeState, 'final');
                 predictions{i, j} = predY(end,:);
                 truths{i, j} = testY(end,:);
+            else
+                error('Unexpected input');
             end
 
             errs{i, j} = err;
