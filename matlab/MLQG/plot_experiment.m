@@ -1,7 +1,9 @@
 dir = ['data/experiments/', 'NR_4000-16000_ESN1_MDL0', '/', 'parallel', '/'];
 dir = ['data/experiments/', 'NR_500-16000_ESN1_MDL0', '/', 'parallel', '/'];
-dir = ['data/experiments/', 'NR_500-8000_ESN1_MDL1', '/', 'parallel', '/'];
+dir = ['data/experiments/', 'NR_1000-4000_RF_8-16_ESN1_MDL1', '/', 'parallel', '/'];
+dir = ['data/experiments/', 'NR_1000-8000_FA_0.1-1_ESN1_MDL1', '/', 'parallel', '/'];
 dir = ['data/experiments/', 'NR_4000-8000_RF_1-16_ESN1_MDL1', '/', 'parallel', '/'];
+dir = ['data/experiments/', 'NR_500-8000_ESN1_MDL1', '/', 'parallel', '/'];
 
 [errs,nums,pids,mdat] = gather_plotdata(dir, 2);
 
@@ -23,21 +25,38 @@ end
 
 [~, I] = sort(Nvalues, 'descend');
 xlab_index = I(1); % x label corresponds to parameter with largest number of values
-maxValues = Nvalues(xlab_index);
-Ntotal    = size(nums,2);
-Nboxplots = Ntotal/maxValues;
+maxValues  = Nvalues(xlab_index);
+Ntotal     = size(nums,2);
+Nboxplots  = Ntotal/maxValues;
 
 % plot results
 f = [];
 clrs = lines(Nboxplots);
-for i = 1:Nboxplots
-    range = (i:Nboxplots:Ntotal)
-    f{i} = my_boxplot(nums(:,range), {clrs(i,:), clrs(i,:)}); 
-    hold on
-end
-hold off
 
-xticklabels(mdat.hyp_range(exp_ind{xlab_index}, range));
+H = mdat.hyp_range(exp_ind{xlab_index}, :);
+range1 = 1:numel(H);
+if Nexp == 2
+    M = reshape(1:numel(H), Nvalues(1), Nvalues(2));
+    if H(2) ~= H(1)
+        range1 = M(:);
+        M = M';
+        range2 = M(:);
+    else
+        range2 = M(:);
+        M = M';
+        range1 = M(:);
+    end
+end
+
+for i = 1:Nboxplots    
+    subrange = range1((i-1)*maxValues+1:i*maxValues);
+    f{i} = my_boxplot(nums(:, subrange), {clrs(i,:), clrs(i,:)}); 
+    hold on;
+end
+
+hold off;
+
+xticklabels(mdat.hyp_range(exp_ind{xlab_index}, subrange));
 xtickangle(45);
 xlabel(mdat.xlab{xlab_index});
 ylabel(mdat.ylab);
@@ -47,14 +66,19 @@ grid on;
 if Nexp == 2
     str = cell(Nboxplots,1);
     for i = 1:Nboxplots
-        value = mdat.hyp_range(exp_ind{I(2)}, i);
-        str{i} = sprintf('%2d', value);
+        value = mdat.hyp_range(exp_ind{I(2)}, range2(i));
+        str{i} = sprintf('%s: %1.1e', mdat.xlab{I(2)}, value);
     end
-    legend([f{:}], str, 'location', 'northwest')    
-end    
+    legend([f{:}], str, 'location', 'north')    
+end
+
 
 % create description
-descr = create_description(mdat)
-text(0.6*max(xlim), max(ylim), descr, ...
+descr = create_description(mdat);
+ylim([min(ylim), 1.1*max(ylim)])
+text(min(xlim), max(ylim), descr, ...
      'color', [0,0,0] , 'VerticalAlignment', 'top', ...
      'FontName', 'Monospaced', 'FontSize', 9);
+
+title(sprintf('Experiment: %d training sets, %d par combinations', ...
+              size(nums,1), size(nums,2)));

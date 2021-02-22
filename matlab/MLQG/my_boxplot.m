@@ -17,7 +17,7 @@ function [f] = my_boxplot(varargin)
 
     x_index   = 1:size(array,2);
     alpha     = 0.2;
-    ylimMax   = 0.0;
+    % ylimMax   = 0.0;
     plot_mean    = true;
     plot_scatter = true;
     Q = zeros(numel(x_index), 3);
@@ -57,16 +57,16 @@ function [f] = my_boxplot(varargin)
                  '*', 'markersize', 8, 'color', colors{2});
         end
 
-        ylimMax = max(ylimMax, 1.25*quantile(arr, 0.75));
+        % ylimMax = max(ylimMax, 1.25*quantile(arr, 0.75));
     end
     ht = plot(x_index, Q, 'color', colors{2});
     uistack(ht, 'bottom');
 
     xlim([min(x_index)-0.5, max(x_index)+0.5]);
     xticks([x_index]);
-    if ylimMax > 0
-        ylim([0,ylimMax]);
-    end
+    % if ylimMax > 0
+    %     ylim([0,ylimMax]);
+    % end
 
     hold off
 end

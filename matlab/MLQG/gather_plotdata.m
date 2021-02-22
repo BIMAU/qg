@@ -98,7 +98,7 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
                   'run_pars',...
                   'esn_pars',...
                  };
-    data
+
     for l = 1:numel(importlabs)
         lab = importlabs{l};
         if isfield(data, lab)
