@@ -7,6 +7,7 @@ set(QG_MEX_FILES
   QG_free
   QG_rhs
   QG_compute_uv
+  QG_grid
   QG_gradient
   QG_bilin
   QG_jacob

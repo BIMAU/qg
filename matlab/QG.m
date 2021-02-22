@@ -59,6 +59,13 @@ classdef QG < handle
             [gradx, grady] = QG_gradient(h.instance, x(:));
         end
 
+        function [x, y] = grid(h)
+            if nargin ~= 1
+                error('No input argument required');
+            end
+            [x, y] = QG_grid(h.instance);
+        end
+
         function Z = bilin(h, V,W)
             if nargin ~= 3
                 error('Two input arguments required');

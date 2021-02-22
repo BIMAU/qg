@@ -99,8 +99,13 @@ public:
 
     void gradient(double const *u, double *gradx, double *grady);
 
+    void grid(double *x, double *y);
+
     double get_par(int par);
     void set_par(int par, double val);
+
+    int n() { return n_; };
+    int m() { return m_; };
 
     void writeA(char const *name, double const *un, double sig);
     void writeM(char const *name);

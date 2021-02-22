@@ -428,9 +428,22 @@ namespace QG
         {
             for (int i = imin_; i < imax_; i++)
             {
-                row = n_ * j + i;                
+                row = n_ * j + i;
                 gradx[row] = r2dx * ( field(i+1, j) - field(i-1, j) );
                 grady[row] = r2dy * ( field(i, j+1) - field(i, j-1) );
+            }
+        }
+    }
+
+    void QG::grid(double *x, double *y)
+    {
+        for (int j = 0; j < m_; j++)
+        {
+            for (int i = 0; i < n_; i++)
+            {
+                int row = n_ * j + i;
+                x[row] = x_[i];
+                y[row] = y_[j];
             }
         }
     }
