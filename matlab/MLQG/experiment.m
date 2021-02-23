@@ -10,7 +10,7 @@ function [ ] = experiment(varargin)
         addpath('~/Projects/ESN/matlab');
     end
     
-    storeState = 'final'; % which states to store
+    storeState = 'all'; % which states to store
     hyp = struct();
     range2str = @ (range) ['_', num2str(range(1)), '-', num2str(range(end)), '_'];
 
@@ -18,26 +18,26 @@ function [ ] = experiment(varargin)
     % settings that define the experiment
     run_pars.esn_on   = true;    % enable/disable ESN
     run_pars.model_on = true;     % enable/disable equations
-    exp_id = {'ReservoirSize', 'BlockSize'};
+    exp_id = {'ReservoirSize'};
 
     name = 'ReservoirSize';
     % hyp.(name).range = [2000,4000,6000,8000,10000,12000,14000,16000];
     % hyp.(name).range = 8000;
-    hyp.(name).range   = [1000,2000,4000,8000];
+    % hyp.(name).range   = [1000, 32000];
+    hyp.(name).range   = [1000, 2000, 4000, 8000, 16000, 32000];
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
     hyp.(name).default = 8000;
 
     name = 'BlockSize';
-    % hyp.(name).range   = [1,2,4,8,16,32,64];
-    hyp.(name).range   = [1,2,4];
+    hyp.(name).range   = [1,2,4,8,16,32,64];
     hyp.(name).descr   = ['BS', range2str(hyp.(name).range)];
     hyp.(name).default = 16;
 
     name = 'TrainingSamples';
-    % hyp.(name).range   = 1000;
-    hyp.(name).range   = [1000,2000,3000,4000,5000,6000,7000;]
+    % hyp.(name).range   = [1000,2000,3000,4000,5000,6000,7000;]
+    hyp.(name).range   = [1000, 5000];
     hyp.(name).descr   = ['SP', range2str(hyp.(name).range)];
-    hyp.(name).default = 3000;
+    hyp.(name).default = 5000;
 
     name = 'ReductionFactor';
     hyp.(name).range   = [8,16];
@@ -64,9 +64,9 @@ function [ ] = experiment(varargin)
     ylab   = 'Predicted days';
 
     % ensemble setup
-    shifts   = 10;      % shifts in training_range
-    reps     = 1;       % repetitions per shift
-    maxPreds = floor(1*365/2);   % prediction barrier (in days)
+    shifts   = 20;   % shifts in training_range
+    reps     = 1;    % repetitions per shift
+    maxPreds = floor(1*365); % prediction barrier (in days)
     %---------------------------------------------------------
     
     % identifier -> numeric index
@@ -222,6 +222,8 @@ function [ ] = experiment(varargin)
             % (re)set global memory for the computation of Ke, Km, etc
             memory = struct();
 
+            memory.Ha = run_pars.Ha;
+
             run_pars.train_range = (1:samples)+tr_shifts(svec(i));
             run_pars.test_range  = run_pars.train_range(end) + (1:maxPreds);
             print0(' train range: %d - %d\n', ...
@@ -229,25 +231,28 @@ function [ ] = experiment(varargin)
             print0('  test range: %d - %d\n', ...
                     min(run_pars.test_range), max(run_pars.test_range));
 
+            [predY, testY, err] = ...
+                experiment_core(qgc, trdata, esn_pars, run_pars);
+
             % Run the experiment in a try/catch block, at most max_tries times.
-            try_count = 0;
-            exc_count = 0;
-            max_tries = 5;
-            while (exc_count == try_count) && (try_count < max_tries)
-                try
-                    try_count = try_count + 1;
-                    [predY, testY, err] = ...
-                        experiment_core(qgc, trdata, esn_pars, run_pars);
-                catch ME
-                    print0('ERROR: pid %d, i %d, %s\n', pid, i, ME.message);
-                    exc_count = exc_count + 1;
-                end
-            end
-            if try_count >= max_tries
-                ME = MException('experiment:fatalError', ...
-                                'Too many fails in experiment_core...');
-                throw(ME);
-            end
+            % try_count = 0;
+            % exc_count = 0;
+            % max_tries = 5;
+            % while (exc_count == try_count) && (try_count < max_tries)
+            %     try
+            %         try_count = try_count + 1;
+            %         [predY, testY, err] = ...
+            %             experiment_core(qgc, trdata, esn_pars, run_pars);
+            %     catch ME
+            %         print0('ERROR: pid %d, i %d, %s\n', pid, i, ME.message);
+            %         exc_count = exc_count + 1;
+            %     end
+            % end
+            % if try_count >= max_tries
+            %     ME = MException('experiment:fatalError', ...
+            %                     'Too many fails in experiment_core...');
+            %     throw(ME);
+            % end
 
             num_predicted(i, j) = size(predY, 1);
 
