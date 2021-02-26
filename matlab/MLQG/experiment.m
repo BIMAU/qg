@@ -10,7 +10,7 @@ function [ ] = experiment(varargin)
         addpath('~/Projects/ESN/matlab');
     end
     
-    storeState = 'all'; % which states to store
+    storeState = 'final'; % which states to store
     hyp = struct();
     range2str = @ (range) ['_', num2str(range(1)), '-', num2str(range(end)), '_'];
 
@@ -24,7 +24,7 @@ function [ ] = experiment(varargin)
     % hyp.(name).range = [2000,4000,6000,8000,10000,12000,14000,16000];
     % hyp.(name).range = 8000;
     % hyp.(name).range   = [1000, 32000];
-    hyp.(name).range   = [1000, 2000, 4000, 8000, 16000, 32000];
+    hyp.(name).range   = [500];
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
     hyp.(name).default = 8000;
 
@@ -37,7 +37,7 @@ function [ ] = experiment(varargin)
     % hyp.(name).range   = [1000,2000,3000,4000,5000,6000,7000;]
     hyp.(name).range   = [1000, 5000];
     hyp.(name).descr   = ['SP', range2str(hyp.(name).range)];
-    hyp.(name).default = 5000;
+    hyp.(name).default = 1000;
 
     name = 'ReductionFactor';
     hyp.(name).range   = [8,16];
@@ -64,7 +64,7 @@ function [ ] = experiment(varargin)
     ylab   = 'Predicted days';
 
     % ensemble setup
-    shifts   = 20;   % shifts in training_range
+    shifts   = 10;   % shifts in training_range
     reps     = 1;    % repetitions per shift
     maxPreds = floor(1*365); % prediction barrier (in days)
     %---------------------------------------------------------
@@ -203,7 +203,9 @@ function [ ] = experiment(varargin)
         print0('transform input/output data with wavelet modes\n');
         trdata.HaRX  = run_pars.Ha' * trdata.RX;
         trdata.HaPRX = run_pars.Ha' * trdata.PRX;
-
+        print0('compute svd\n');
+        [Uwav,~,~] = svds(trdata.HaRX(:,:), 16);
+        
         % stopping criterion returns a stopping flag based on whatever is
         % relevant for the experiment
         run_pars.stopping_criterion = @qg_stopping_criterion;
@@ -222,7 +224,8 @@ function [ ] = experiment(varargin)
             % (re)set global memory for the computation of Ke, Km, etc
             memory = struct();
 
-            memory.Ha = run_pars.Ha;
+            memory.Ha   = run_pars.Ha;
+            memory.Uwav = Uwav;
 
             run_pars.train_range = (1:samples)+tr_shifts(svec(i));
             run_pars.test_range  = run_pars.train_range(end) + (1:maxPreds);
