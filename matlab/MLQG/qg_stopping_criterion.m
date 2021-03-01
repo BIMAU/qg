@@ -1,12 +1,12 @@
 function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, testY)
 
     global memory windowsize
-    
-    use_fields   = false;
+
+    use_fields   = true;
     use_spectrum = false;
     use_wavelet  = false;
     use_svd      = false;
-    use_svdwav   = true;
+    use_svdwav   = false;
     use_Ke       = false;
     use_Km       = false;
     use_Z        = false;
@@ -20,6 +20,9 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
     tdim    = Ldim / Udim; % in seconds
     scaling = 3600*24/tdim;
 
+    beta = 504.5727;
+    dt   = 0.0027;
+
     nx = qg.nx;
     ny = qg.ny;
 
@@ -29,170 +32,48 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
     end
 
     if use_fields
-        % err_tol = 0.2;
-        % diff = (testY-predY);
-        % err  = norm(diff(:),2) / norm(testY(:), 2);
-        
-        err_tol  = 1;
-                
-        pred_coef = predY(:);
-        test_coef = testY(:);
-
-        memory = add_field(memory, 'pred_coef', pred_coef, windowsize);
-        memory = add_field(memory, 'test_coef', test_coef, windowsize);
-
-        T = size(memory.pred_coef,2);       
-        
-        if T > 1
-            MSE   = mean(sum((memory.pred_coef - memory.test_coef).^2));
-            NRM   = mean(sum((memory.test_coef - mean(memory.test_coef,2)).^2));
-            NRMSE = sqrt(MSE / NRM);
-            err   = NRMSE;
-        else
-            err = 0;
-        end
-
+        err_tol  = 0.5;
+        err = NRMSE(predY(:), testY(:));
 
     elseif use_spectrum
-        err_tol  = 1.5;
+        err_tol  = 1.0;
         testSpec = computeQGspectrum(qg, testY);
         predSpec = computeQGspectrum(qg, predY);
-
-        sd = 2:40;
-        % pred_coef = log(predSpec(sd));
-        % test_coef = log(testSpec(sd));
-
+        
+        % numel(testSpec)
+        sd = 2:numel(testSpec)-5;
+        %pred_coef = log(predSpec(sd));
+        %test_coef = log(testSpec(sd));
         pred_coef = (predSpec(sd));
         test_coef = (testSpec(sd));
 
-        memory = add_field(memory, 'pred_coef', pred_coef, windowsize);
-        memory = add_field(memory, 'test_coef', test_coef, windowsize);
-
-        T = size(memory.pred_coef,2);
-
-        if T > 1
-
-            MSE   = mean(sum((memory.pred_coef - memory.test_coef).^2));
-            NRM   = mean(sum((memory.test_coef - mean(memory.test_coef,2)).^2));
-            NRMSE = sqrt(MSE / NRM);
-            err   = NRMSE;
-        else
-            err = 0;
-        end
+        err = NRMSE(pred_coef, test_coef);
 
     elseif use_wavelet
         err_tol  = 0.5;
 
-        % pred_coef = log(abs(memory.Ha' * predY(:)));
-        % test_coef = log(abs(memory.Ha' * testY(:)));
-        pred_coef = ((memory.Ha' * predY(:)));
-        test_coef = ((memory.Ha' * testY(:)));
+        %pred_coef = log(abs(memory.Ha' * predY(:)));
+        %test_coef = log(abs(memory.Ha' * testY(:)));
+        pred_coef = memory.Ha' * predY(:);
+        test_coef = memory.Ha' * testY(:);
 
-        memory = add_field(memory, 'pred_coef', pred_coef, windowsize);
-        memory = add_field(memory, 'test_coef', test_coef, windowsize);
-
-        % diff = abs(sum(abs(pred_coef))-sum(abs(test_coef))) / abs(test_coef(1));
-        % diff = sum(abs(pred_coef - test_coef)) / sum(abs(test_coef(:)));
-        % diff = norm(pred_coef - test_coef) ./ abs(test_coef(1));
-        % diff = abs(test_coef).*(pred_coef-test_coef).^2 / abs(test_coef(1));
-        % diff = abs(sum( (test_coef).^2 ) - sum( (pred_coef).^2)) ./ sum( (test_coef).^2);
-        
-        T = size(memory.pred_coef,2);
-
-        if T > 1
-            MSE   = mean(sum((memory.pred_coef - memory.test_coef).^2));
-            NRM   = mean(sum((memory.test_coef - mean(memory.test_coef,2)).^2));
-            NRMSE = sqrt(MSE / NRM);
-            err   = NRMSE;
-        else
-            err = 0;
-        end
-
-        % if T > 0
-        %     ERR   = (pred_coef - test_coef).^2;
-        %     VAR   = memory.VAR_wav;
-        %     err   = sqrt(mean(ERR ./ VAR));
-        % else
-        %     err = 0;
-        % end
+        err = NRMSE(pred_coef, test_coef);
 
     elseif use_svd
-        err_tol  = 0.5;
+        err_tol  = 1.0;
 
         pred_coef = memory.U' * predY(:);
         test_coef = memory.U' * testY(:);
 
-        memory = add_field(memory, 'pred_coef', pred_coef, windowsize);
-        memory = add_field(memory, 'test_coef', test_coef, windowsize);
+        err = NRMSE(pred_coef, test_coef);
 
-        % diff = abs(sum(abs(pred_coef))-sum(abs(test_coef))) / abs(test_coef(1));
-        % diff = sum(abs(pred_coef - test_coef)) / sum(abs(test_coef(:)));
-        % diff = norm(pred_coef - test_coef) ./ abs(test_coef(1));
-        % diff = abs(test_coef).*(pred_coef-test_coef).^2 / abs(test_coef(1));
-        % diff = abs(sum( (test_coef).^2 ) - sum( (pred_coef).^2)) ./ sum( (test_coef).^2);
-
-        T = size(memory.pred_coef,2);
-        
-        % if T > 1
-
-        %     pred_varcoef = pred_coef - mean(memory.pred_coef,2);
-        %     test_varcoef = test_coef - mean(memory.test_coef,2);            
-        %     memory = add_field(memory, 'pred_varcoef', pred_varcoef, windowsize);
-        %     memory = add_field(memory, 'test_varcoef', test_varcoef, windowsize);
-        %     MSE =  sum( ( ( mean(memory.pred_varcoef, 2).^2 ) - ...
-        %                   ( mean(memory.test_varcoef, 2).^2 ) ).^2 ) ;
-            
-        %     err = MSE;
-        % else
-            
-        %     err = 0;
-            
-        % end
-
-        if T > 1
-            MSE   = mean(sum((memory.pred_coef - memory.test_coef).^2));
-            NRM   = mean(sum((memory.test_coef - mean(memory.test_coef,2)).^2));
-            NRMSE = sqrt(MSE / NRM);
-            err   = NRMSE;
-        else
-            err = 0;
-        end
-
-        % if T > 0
-        %     ERR   = (pred_coef - test_coef).^2;
-        %     VAR   = memory.VAR_svd;
-        %     err   = sqrt(mean(ERR ./ VAR));
-        % else
-        %     err = 0;
-        % end
     elseif use_svdwav
         err_tol  = 0.5;
 
         pred_coef = memory.Uwav' * memory.Ha' * predY(:);
         test_coef = memory.Uwav' * memory.Ha' * testY(:);
 
-        memory = add_field(memory, 'pred_coef', pred_coef, windowsize);
-        memory = add_field(memory, 'test_coef', test_coef, windowsize);
-
-        T = size(memory.pred_coef,2);
-        
-        % figure(3);
-        % for i = 1:16                                                         
-        %     f = memory.Ha*memory.Uwav(:,i);                                      
-        %     subplot(4,4,i);
-        %     imagesc(reshape(f(1:2:end),64,64)'); set(gca,'ydir','normal')    
-        % end
-        
-        % keyboard
-        
-        if T > 1
-            MSE   = mean(sum((memory.pred_coef - memory.test_coef).^2));
-            NRM   = mean(sum((memory.test_coef - mean(memory.test_coef,2)).^2));
-            NRMSE = sqrt(MSE / NRM);
-            err   = NRMSE;
-        else
-            err = 0;
-        end
+        err = NRMSE(pred_coef, test_coef);
 
     elseif use_Ke || use_Km
 
@@ -215,38 +96,43 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
 
         if use_Ke
             err_tol = 0.5;
+
             Ke_pred = sum(u2m_pred(region) - um2_pred(region) + v2m_pred(region) - vm2_pred(region));
             Ke_test = sum(u2m_test(region) - um2_test(region) + v2m_test(region) - vm2_test(region));
-            err = abs(Ke_pred - Ke_test) / abs(Ke_test);
+
+            err = NRMSE(Ke_pred, Ke_test);
 
         elseif use_Km
-            err_tol = 0.2;
+            err_tol = 0.5;
+
             Km_pred = sum(um2_pred(region) + vm2_pred(region));
             Km_test = sum(um2_test(region) + vm2_test(region));
-            err = abs(Km_pred - Km_test) / abs(Km_test);
-            % err = 0; % never stop
+
+            err = NRMSE(Km_pred, Km_test);
         end
 
     elseif use_Z
-        err_tol = 0.2;
+
+        err_tol = 2.0;
         om_pred = predY(1:2:end)';
         om_true = testY(1:2:end)';
         Z_pred = sum(om_pred.^2);
         Z_true = sum(om_true.^2);
-        err = abs(Z_pred - Z_true) / abs(Z_true);
+
+        err = NRMSE(Z_pred, Z_true);
 
     elseif use_mass
-        err_tol = Inf; % never stop
+        err_tol = 0.5;
 
         ps_pred = predY(2:2:end)';
         ps_true = testY(2:2:end)';
         M_pred  = sum(ps_pred);
         M_true  = sum(ps_true);
 
-        err = abs(M_pred - M_true) / abs(M_true);
+        err = NRMSE(M_pred, M_true);
 
     elseif use_ddtmass
-        err_tol = 2;
+        err_tol = 0.5;
 
         ps_pred = predY(2:2:end)';
         ps_true = testY(2:2:end)';
@@ -258,17 +144,15 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
 
         err = 0;
         if numel(memory.M_pred) == 2
-            ddtM_pred = memory.M_pred(2) - memory.M_pred(1);
-            ddtM_true = memory.M_true(2) - memory.M_true(1);
-            err = abs(ddtM_true - ddtM_pred);
+            ddtM_pred = (memory.M_pred(2) - memory.M_pred(1))/dt;
+            ddtM_true = (memory.M_true(2) - memory.M_true(1))/dt;
+
+            err = NRMSE(ddtM_true, ddtM_pred);
         end
 
     elseif use_ddtPV
-
-        err_tol = 10;
-
-        beta = 504.5727;
-        dt = 0.0027;
+        
+        err_tol = 0.5;
 
         om_true = testY(1:2:end);
         om_pred = predY(1:2:end);
@@ -295,18 +179,19 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
 
             bv_true = beta*v_true;
             bv_pred = beta*v_pred;
-
+            
             ddtPV_true_full = ddtom_true + advom_true + bv_true;
             ddtPV_pred_full = ddtom_pred + advom_pred + bv_pred;
-
+            
             ddtPV_true = sum(ddtPV_true_full(region));
             ddtPV_pred = sum(ddtPV_pred_full(region));
 
-            err = abs(ddtPV_true-ddtPV_pred) / abs(ddtPV_true);
+            err = NRMSE(ddtPV_true, ddtPV_pred);
         end
 
     end
-
+    
+    %     err_tol = Inf;
     if err > err_tol
         stopFlag = true;
     else
@@ -327,4 +212,35 @@ function [mem] = add_field(mem, name, field, wsize)
         % create field
         mem.(name) = field;
     end
+end
+
+function [err, NRM] = NRMSE(pred, test)
+
+    global memory windowsize
+
+    memory = add_field(memory, 'pred', pred, windowsize);
+    memory = add_field(memory, 'test', test, windowsize);
+
+    diff =  memory.pred - memory.test;
+    
+    tvar =  memory.test - mean(memory.test, 2);
+
+    T   = size(diff,2);
+    N   = size(diff,1);
+    NRM = 1;
+    
+    if T < windowsize        
+        % padding diff with zeros
+        diff = [zeros(N, windowsize-T), diff];
+    end
+    
+    if T > 5
+        MSE   = mean(sum( diff.^2 , 1));
+        NRM   = mean(sum( tvar.^2 , 1));
+        NRMSE = sqrt(MSE / NRM);
+        err   = NRMSE;
+    else
+        err = 0;
+    end
+
 end
