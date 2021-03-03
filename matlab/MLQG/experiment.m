@@ -3,7 +3,7 @@ function [ ] = experiment(varargin)
 % the network. The training data changes with <shifts>.
     
     time = tic;
-    global pid procs exp_name storeState memory
+    global pid procs exp_name storeState memory windowsize
 
     if ~isdeployed
         addpath('~/local/matlab/');
@@ -18,29 +18,25 @@ function [ ] = experiment(varargin)
     % settings that define the experiment
     run_pars.esn_on   = true;    % enable/disable ESN
     run_pars.model_on = true;     % enable/disable equations
-    exp_id = {'ReservoirSize'};
+    exp_id = {'ReservoirSize', 'ReductionFactor'};
 
     name = 'ReservoirSize';
-    % hyp.(name).range = [2000,4000,6000,8000,10000,12000,14000,16000];
-    % hyp.(name).range = 8000;
-    % hyp.(name).range   = [1000, 32000];
-    hyp.(name).range   = [500];
+    hyp.(name).range   = [2000, 4000, 8000, 16000];
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
-    hyp.(name).default = 8000;
-
+    hyp.(name).default = 4000;
+    
     name = 'BlockSize';
-    hyp.(name).range   = [1,2,4,8,16,32,64];
+    hyp.(name).range   = [1,16];
     hyp.(name).descr   = ['BS', range2str(hyp.(name).range)];
-    hyp.(name).default = 16;
+    hyp.(name).default = 8;
 
     name = 'TrainingSamples';
-    % hyp.(name).range   = [1000,2000,3000,4000,5000,6000,7000;]
-    hyp.(name).range   = [1000, 5000];
+    hyp.(name).range   = [1000,2000,3000,4000,5000,6000,7000];
     hyp.(name).descr   = ['SP', range2str(hyp.(name).range)];
-    hyp.(name).default = 1000;
+    hyp.(name).default = 3000;
 
     name = 'ReductionFactor';
-    hyp.(name).range   = [8,16];
+    hyp.(name).range   = [16, 32];
     hyp.(name).descr   = ['RF', range2str(hyp.(name).range)];
     hyp.(name).default = 1;
 
@@ -50,21 +46,35 @@ function [ ] = experiment(varargin)
     hyp.(name).default = 1;
 
     name = 'RhoMax';
-    hyp.(name).range   = [0.05:0.05:0.3];
+    hyp.(name).range   = [0.1, 0.3, 0.5, 0.75, 1.5, 3];
     hyp.(name).descr   = ['RH', range2str(hyp.(name).range)];
     hyp.(name).default = 0.3;
     
     name = 'FeedthroughAmp';
-    % hyp.(name).range   = [0.9, 1.0];
     hyp.(name).range   = [0.1,0.7,1.0];
     hyp.(name).descr   = ['FA', range2str(hyp.(name).range)];
     hyp.(name).default = 1.0;
 
-    xlab   =  exp_id;
-    ylab   = 'Predicted days';
+    name = 'InAmplitude';
+    hyp.(name).range   = [1.0,0.5,0.1];
+    hyp.(name).descr   = ['IA', range2str(hyp.(name).range)];
+    hyp.(name).default = 1.0;
+
+    name = 'AverageDegree';
+    hyp.(name).range   = [5,10,20,30];
+    hyp.(name).descr   = ['AD', range2str(hyp.(name).range)];
+    hyp.(name).default = 10;
+
+    name = 'Lambda';
+    hyp.(name).range   = [1e-8, 1e-6, 1e-4, 1e-1];
+    hyp.(name).descr   = ['LB', range2str(hyp.(name).range)];
+    hyp.(name).default = 1e-1;
+
+    xlab =  exp_id;
+    ylab = 'Predicted days';
 
     % ensemble setup
-    shifts   = 10;   % shifts in training_range
+    shifts   = 20;   % shifts in training_range
     reps     = 1;    % repetitions per shift
     maxPreds = floor(1*365); % prediction barrier (in days)
     %---------------------------------------------------------
@@ -185,13 +195,16 @@ function [ ] = experiment(varargin)
         print0([str{:}]);
 
         % set experiment parameters.
-        esn_pars.Nr     = hyp_range(id2ind('ReservoirSize'), j);
-        bs              = hyp_range(id2ind('BlockSize'), j);
-        samples         = hyp_range(id2ind('TrainingSamples'), j);
-        RF              = hyp_range(id2ind('ReductionFactor'), j);
-        esn_pars.alpha  = hyp_range(id2ind('Alpha'), j);
-        esn_pars.rhoMax = hyp_range(id2ind('RhoMax'), j);
-        esn_pars.ftAmp  = hyp_range(id2ind('FeedthroughAmp'), j);
+        esn_pars.Nr          = hyp_range(id2ind('ReservoirSize'), j);
+        bs                   = hyp_range(id2ind('BlockSize'), j);
+        samples              = hyp_range(id2ind('TrainingSamples'), j);
+        RF                   = hyp_range(id2ind('ReductionFactor'), j);
+        esn_pars.alpha       = hyp_range(id2ind('Alpha'), j);
+        esn_pars.rhoMax      = hyp_range(id2ind('RhoMax'), j);
+        esn_pars.ftAmp       = hyp_range(id2ind('FeedthroughAmp'), j);
+        esn_pars.inAmplitude = hyp_range(id2ind('InAmplitude'), j);
+        esn_pars.avgDegree   = hyp_range(id2ind('AverageDegree'), j);
+        esn_pars.lambda      = hyp_range(id2ind('Lambda'), j);
 
         % wavelet basis
         H  = create_wavelet_basis(nxc, nyc, nun, bs, true);
@@ -223,6 +236,7 @@ function [ ] = experiment(varargin)
         for i = my_inds;
             % (re)set global memory for the computation of Ke, Km, etc
             memory = struct();
+            windowsize = 100;
 
             memory.Ha   = run_pars.Ha;
             memory.Uwav = Uwav;
