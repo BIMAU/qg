@@ -14,6 +14,7 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
     use_ddtmass  = false;
     use_ddtPV    = false;
 
+    err     = 0;
     err_tol = Inf;
     Ldim    = 1e6;
     Udim    = 3.171e-2;
@@ -32,9 +33,9 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
     end
 
     if use_fields
-        err_tol  = 0.5;
+        err_tol  = 1.0;
         err = NRMSE(predY(:), testY(:));
-
+        
     elseif use_spectrum
         err_tol  = 1.0;
         testSpec = computeQGspectrum(qg, testY);
@@ -42,15 +43,15 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
         
         % numel(testSpec)
         sd = 2:numel(testSpec)-5;
-        %pred_coef = log(predSpec(sd));
-        %test_coef = log(testSpec(sd));
-        pred_coef = (predSpec(sd));
-        test_coef = (testSpec(sd));
+         pred_coef = log(predSpec(sd));
+         test_coef = log(testSpec(sd));
+         % pred_coef = (predSpec(sd));
+         % test_coef = (testSpec(sd));
 
         err = NRMSE(pred_coef, test_coef);
 
     elseif use_wavelet
-        err_tol  = 0.5;
+        err_tol  = 1.0;
 
         %pred_coef = log(abs(memory.Ha' * predY(:)));
         %test_coef = log(abs(memory.Ha' * testY(:)));
@@ -68,7 +69,7 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
         err = NRMSE(pred_coef, test_coef);
 
     elseif use_svdwav
-        err_tol  = 0.5;
+        err_tol  = 1.0;
 
         pred_coef = memory.Uwav' * memory.Ha' * predY(:);
         test_coef = memory.Uwav' * memory.Ha' * testY(:);
@@ -191,7 +192,6 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
 
     end
     
-    %     err_tol = Inf;
     if err > err_tol
         stopFlag = true;
     else
@@ -234,7 +234,7 @@ function [err, NRM] = NRMSE(pred, test)
         diff = [zeros(N, windowsize-T), diff];
     end
     
-    if T > 5
+    if T > 1
         MSE   = mean(sum( diff.^2 , 1));
         NRM   = mean(sum( tvar.^2 , 1));
         NRMSE = sqrt(MSE / NRM);

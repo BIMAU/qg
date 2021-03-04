@@ -1,4 +1,4 @@
-function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_pars)
+function [predY, testY, err, esnX] = experiment_core(model, tr_data, esn_pars, run_pars)
     % Core routine for running an experiment
     % model:         qg or ks
     % tr_data:       consists of a set of restricted 'ground truth' data
@@ -31,8 +31,8 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
             U = [tr_data.HaRX(:,1:end-1); tr_data.HaPRX(:,1:end-1)];
             Y = [tr_data.HaRX(:,2:end )];
         else
-            U = [Ha' * tr_data.RX(:,1:end-1); Ha' * tr_data.PRX(:,1:end-1)];
-            Y = [Ha' * tr_data.RX(:,2:end )];
+            U = [Ha' * tr_data.RX(:, 1:end-1); Ha' * tr_data.PRX(:, 1:end-1)];
+            Y = [Ha' * tr_data.RX(:, 2:end )];
         end
     elseif esn_only
         print0('Create input/output data for standalone ESN\n');
@@ -65,6 +65,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
     Npred = numel(run_pars.test_range); % number of prediction steps
     predY = zeros(Npred, dim); % full dimensional predictions
     err   = zeros(Npred, 1);   % error array
+    esnX  = [];
 
     % initialization for the predictions
     yk = tr_data.RX(:, run_pars.test_range(1));
@@ -88,6 +89,7 @@ function [predY, testY, err] = experiment_core(model, tr_data, esn_pars, run_par
         esn.initialize;
         esn.train(trainU, trainY);
         esn_state = esn.X(end,:);
+        esnX = esn.X;
     end
 
     clear trainU trainY

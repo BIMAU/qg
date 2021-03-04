@@ -1,7 +1,7 @@
 function [ ] = experiment(varargin)
 % The core experiment is repeated with <reps>*<shifts> realisations of
 % the network. The training data changes with <shifts>.
-    
+
     time = tic;
     global pid procs exp_name storeState memory windowsize
 
@@ -9,22 +9,23 @@ function [ ] = experiment(varargin)
         addpath('~/local/matlab/');
         addpath('~/Projects/ESN/matlab');
     end
-    
-    storeState = 'final'; % which states to store
+
+    storeState = 'all'; % which states to store
     hyp = struct();
     range2str = @ (range) ['_', num2str(range(1)), '-', num2str(range(end)), '_'];
 
     %---------------------------------------------------------
     % settings that define the experiment
     run_pars.esn_on   = true;    % enable/disable ESN
-    run_pars.model_on = true;     % enable/disable equations
-    exp_id = {'ReservoirSize', 'ReductionFactor'};
+    run_pars.model_on = true;    % enable/disable equations
+    exp_id = {'ReservoirStateInit'};
 
+    % numeric options
     name = 'ReservoirSize';
     hyp.(name).range   = [2000, 4000, 8000, 16000];
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
-    hyp.(name).default = 4000;
-    
+    hyp.(name).default = 8000;
+
     name = 'BlockSize';
     hyp.(name).range   = [1,16];
     hyp.(name).descr   = ['BS', range2str(hyp.(name).range)];
@@ -40,23 +41,23 @@ function [ ] = experiment(varargin)
     hyp.(name).descr   = ['RF', range2str(hyp.(name).range)];
     hyp.(name).default = 1;
 
-    name = 'Alpha';    
-    hyp.(name).range   = [0.7:0.1:1.0];
+    name = 'Alpha';
+    hyp.(name).range   = [0.27,1.0];
     hyp.(name).descr   = ['AP', range2str(hyp.(name).range)];
     hyp.(name).default = 1;
 
     name = 'RhoMax';
-    hyp.(name).range   = [0.1, 0.3, 0.5, 0.75, 1.5, 3];
+    hyp.(name).range   = [0.3];
     hyp.(name).descr   = ['RH', range2str(hyp.(name).range)];
     hyp.(name).default = 0.3;
-    
+
     name = 'FeedthroughAmp';
     hyp.(name).range   = [0.1,0.7,1.0];
     hyp.(name).descr   = ['FA', range2str(hyp.(name).range)];
     hyp.(name).default = 1.0;
 
     name = 'InAmplitude';
-    hyp.(name).range   = [1.0,0.5,0.1];
+    hyp.(name).range   = [1.0,10.0];
     hyp.(name).descr   = ['IA', range2str(hyp.(name).range)];
     hyp.(name).default = 1.0;
 
@@ -70,6 +71,19 @@ function [ ] = experiment(varargin)
     hyp.(name).descr   = ['LB', range2str(hyp.(name).range)];
     hyp.(name).default = 1e-1;
 
+    % string based options
+    name = 'SquaredStates';
+    hyp.(name).opts    = {'disabled', 'append', 'even'};
+    hyp.(name).range   = [1, 2, 3];
+    hyp.(name).descr   = ['SS', range2str(hyp.(name).range)];
+    hyp.(name).default = 3;
+
+    name = 'ReservoirStateInit';
+    hyp.(name).opts    = {'zero', 'random'};
+    hyp.(name).range   = [1, 2];
+    hyp.(name).descr   = ['RI', range2str(hyp.(name).range)];
+    hyp.(name).default = 2;
+
     xlab =  exp_id;
     ylab = 'Predicted days';
 
@@ -78,7 +92,7 @@ function [ ] = experiment(varargin)
     reps     = 1;    % repetitions per shift
     maxPreds = floor(1*365); % prediction barrier (in days)
     %---------------------------------------------------------
-    
+
     % identifier -> numeric index
     hypids = fieldnames(hyp);
     id2ind = @ (str) find(strcmp(hypids, str));
@@ -96,6 +110,7 @@ function [ ] = experiment(varargin)
                 'MDL', num2str(run_pars.model_on)];
 
     evalstr = '';
+
     for i = 1:numel(hypids)
         if ~sum(strcmp(hypids{i}, exp_id))
             hyp.(hypids{i}).range = hyp.(hypids{i}).default;
@@ -106,6 +121,7 @@ function [ ] = experiment(varargin)
             evalstr = [evalstr, ', '];
         end
     end
+
     eval(['hyp_range = combvec(', evalstr, ');']);
 
     % The core experiment is repeated with <reps>*<shifts> realisations of
@@ -119,8 +135,9 @@ function [ ] = experiment(varargin)
     predictions   = cell(Ni, num_exp);
     truths        = cell(Ni, num_exp);
     errs          = cell(Ni, num_exp);
+    esnXsnaps     = cell(Ni, num_exp);
     num_predicted = zeros(shifts*reps, num_exp); % valid predicted time steps
-    
+
     switch nargin
       case 0
         pid   = 0;
@@ -190,7 +207,7 @@ function [ ] = experiment(varargin)
                        num2str(hyp_range(id2ind(hypids{id}), j)),...
                        ''];
         end
-        
+
         str = [str, '\n'];
         print0([str{:}]);
 
@@ -206,6 +223,11 @@ function [ ] = experiment(varargin)
         esn_pars.avgDegree   = hyp_range(id2ind('AverageDegree'), j);
         esn_pars.lambda      = hyp_range(id2ind('Lambda'), j);
 
+        esn_pars.squaredStates = ...
+            hyp.SquaredStates.opts{hyp_range(id2ind('SquaredStates'), j)};
+        esn_pars.reservoirStateInit = ...
+            hyp.ReservoirStateInit.opts{hyp_range(id2ind('ReservoirStateInit'), j)};
+
         % wavelet basis
         H  = create_wavelet_basis(nxc, nyc, nun, bs, true);
         Na = dim / RF;
@@ -218,7 +240,7 @@ function [ ] = experiment(varargin)
         trdata.HaPRX = run_pars.Ha' * trdata.PRX;
         print0('compute svd\n');
         [Uwav,~,~] = svds(trdata.HaRX(:,:), 16);
-        
+
         % stopping criterion returns a stopping flag based on whatever is
         % relevant for the experiment
         run_pars.stopping_criterion = @qg_stopping_criterion;
@@ -248,7 +270,7 @@ function [ ] = experiment(varargin)
             print0('  test range: %d - %d\n', ...
                     min(run_pars.test_range), max(run_pars.test_range));
 
-            [predY, testY, err] = ...
+            [predY, testY, err, esnX] = ...
                 experiment_core(qgc, trdata, esn_pars, run_pars);
 
             % Run the experiment in a try/catch block, at most max_tries times.
@@ -275,11 +297,13 @@ function [ ] = experiment(varargin)
 
             if strcmp(storeState, 'all')
                 predictions{i, j} = predY(:,:);
-                truths{i, j} = testY(:,:);
+                truths{i, j}      = testY(:,:);
+                esnXsnaps{i,j}    = esnX(round(linspace(1,size(esnX,1),20)),:);
 
             elseif strcmp(storeState, 'final');
                 predictions{i, j} = predY(end,:);
-                truths{i, j} = testY(end,:);
+                truths{i, j}      = testY(end,:);
+                esnXsnaps{i,j}    = esnX(end,:);
             else
                 error('Unexpected input');
             end
@@ -287,7 +311,7 @@ function [ ] = experiment(varargin)
             errs{i, j} = err;
             store_results(my_inds, hyp_range, hyp, exp_id, exp_ind, xlab, ylab, ...
                           num_predicted, errs, predictions, truths, ...
-                          run_pars, esn_pars);
+                          run_pars, esn_pars, esnXsnaps);
         end
     end
     print0('done (%fs)\n', toc(time));
