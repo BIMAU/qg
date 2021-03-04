@@ -33,11 +33,11 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
     end
 
     if use_fields
-        err_tol  = 1.0;
+        err_tol  = 0.5;
         err = NRMSE(predY(:), testY(:));
         
     elseif use_spectrum
-        err_tol  = 1.0;
+        err_tol  = 0.5;
         testSpec = computeQGspectrum(qg, testY);
         predSpec = computeQGspectrum(qg, predY);
         
@@ -51,7 +51,7 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
         err = NRMSE(pred_coef, test_coef);
 
     elseif use_wavelet
-        err_tol  = 1.0;
+        err_tol  = 0.5;
 
         %pred_coef = log(abs(memory.Ha' * predY(:)));
         %test_coef = log(abs(memory.Ha' * testY(:)));
@@ -61,7 +61,7 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
         err = NRMSE(pred_coef, test_coef);
 
     elseif use_svd
-        err_tol  = 1.0;
+        err_tol  = 0.5;
 
         pred_coef = memory.U' * predY(:);
         test_coef = memory.U' * testY(:);
@@ -69,7 +69,7 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
         err = NRMSE(pred_coef, test_coef);
 
     elseif use_svdwav
-        err_tol  = 1.0;
+        err_tol  = 0.5;
 
         pred_coef = memory.Uwav' * memory.Ha' * predY(:);
         test_coef = memory.Uwav' * memory.Ha' * testY(:);
@@ -114,7 +114,7 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
 
     elseif use_Z
 
-        err_tol = 2.0;
+        err_tol = 0.5;
         om_pred = predY(1:2:end)';
         om_true = testY(1:2:end)';
         Z_pred = sum(om_pred.^2);

@@ -20,7 +20,7 @@ function [] = main(varargin)
 
     fprintf('load training data...\n'); tic;
     fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
-    trdata = load(['data/training/', fname_base, '.mat']);
+    trdata = load(['~/Projects/qg/matlab/MLQG/data/training/', fname_base, '.mat']);
     fprintf('load training data... done (%fs)\n', toc);
 
     poolobj = gcp('nocreate');

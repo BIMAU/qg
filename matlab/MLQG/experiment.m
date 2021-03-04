@@ -10,22 +10,23 @@ function [ ] = experiment(varargin)
         addpath('~/Projects/ESN/matlab');
     end
 
-    storeState = 'all'; % which states to store
+    storeState = 'final'; % which states to store
     hyp = struct();
     range2str = @ (range) ['_', num2str(range(1)), '-', num2str(range(end)), '_'];
 
     %---------------------------------------------------------
     % settings that define the experiment
-    run_pars.esn_on   = true;    % enable/disable ESN
+    run_pars.esn_on   = true;     % enable/disable ESN
     run_pars.model_on = true;    % enable/disable equations
-    exp_id = {'ReservoirStateInit'};
+
+    exp_id = {'ReservoirAmp'};
 
     % numeric options
     name = 'ReservoirSize';
-    hyp.(name).range   = [2000, 4000, 8000, 16000];
+    hyp.(name).range   = [4000, 8000];
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
-    hyp.(name).default = 8000;
-
+    hyp.(name).default = 4000;
+    
     name = 'BlockSize';
     hyp.(name).range   = [1,16];
     hyp.(name).descr   = ['BS', range2str(hyp.(name).range)];
@@ -42,18 +43,23 @@ function [ ] = experiment(varargin)
     hyp.(name).default = 1;
 
     name = 'Alpha';
-    hyp.(name).range   = [0.27,1.0];
+    hyp.(name).range   = [0.2,1.0];
     hyp.(name).descr   = ['AP', range2str(hyp.(name).range)];
-    hyp.(name).default = 1;
-
+    hyp.(name).default = 0.2;
+    
     name = 'RhoMax';
     hyp.(name).range   = [0.3];
     hyp.(name).descr   = ['RH', range2str(hyp.(name).range)];
     hyp.(name).default = 0.3;
-
+    
     name = 'FeedthroughAmp';
     hyp.(name).range   = [0.1,0.7,1.0];
     hyp.(name).descr   = ['FA', range2str(hyp.(name).range)];
+    hyp.(name).default = 1.0;
+    
+    name = 'ReservoirAmp';
+    hyp.(name).range   = [0.1,1.0,10];
+    hyp.(name).descr   = ['RA', range2str(hyp.(name).range)];
     hyp.(name).default = 1.0;
 
     name = 'InAmplitude';
@@ -74,7 +80,7 @@ function [ ] = experiment(varargin)
     % string based options
     name = 'SquaredStates';
     hyp.(name).opts    = {'disabled', 'append', 'even'};
-    hyp.(name).range   = [1, 2, 3];
+    hyp.(name).range   = [1, 3];
     hyp.(name).descr   = ['SS', range2str(hyp.(name).range)];
     hyp.(name).default = 3;
 
@@ -88,7 +94,7 @@ function [ ] = experiment(varargin)
     ylab = 'Predicted days';
 
     % ensemble setup
-    shifts   = 20;   % shifts in training_range
+    shifts   = 20;    % shifts in training_range
     reps     = 1;    % repetitions per shift
     maxPreds = floor(1*365); % prediction barrier (in days)
     %---------------------------------------------------------
@@ -168,7 +174,7 @@ function [ ] = experiment(varargin)
     if ~exist('trdata','var')
         print0('load training data...\n'); tic;
         fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
-        trdata = load(['data/training/', fname_base, '.mat']);
+        trdata = load(['~/Projects/qg/matlab/MLQG/data/training/', fname_base, '.mat']);
         print0('load training data... done (%fs)\n', toc);
     end
 
@@ -219,6 +225,7 @@ function [ ] = experiment(varargin)
         esn_pars.alpha       = hyp_range(id2ind('Alpha'), j);
         esn_pars.rhoMax      = hyp_range(id2ind('RhoMax'), j);
         esn_pars.ftAmp       = hyp_range(id2ind('FeedthroughAmp'), j);
+        esn_pars.resAmp      = hyp_range(id2ind('ReservoirAmp'), j);
         esn_pars.inAmplitude = hyp_range(id2ind('InAmplitude'), j);
         esn_pars.avgDegree   = hyp_range(id2ind('AverageDegree'), j);
         esn_pars.lambda      = hyp_range(id2ind('Lambda'), j);
@@ -326,7 +333,7 @@ function [] = store_results(varargin)
         run_type = 'serial';
     end
 
-    path = sprintf('data/experiments/%s/%s', exp_name, run_type);
+    path = sprintf('~/Projects/qg/matlab/MLQG/data/experiments/%s/%s', exp_name, run_type);
     syscall = sprintf('mkdir -p %s', path);
     system(syscall);
 

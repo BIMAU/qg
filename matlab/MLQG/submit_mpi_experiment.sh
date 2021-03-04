@@ -1,17 +1,12 @@
 #!/bin/bash
 
-#SBATCH --time=02:00:00
-#SBATCH --nodes=2
-#SBATCH --tasks=10
+#SBATCH --time=01:00:00
+#SBATCH --nodes=4
+#SBATCH --tasks=20
 #SBATCH --tasks-per-node=5
-#SBATCH -p normal
+#SBATCH -p short
 
 module load MCR/R2018a
 export MCR_CACHE_ROOT=`mktemp -d /scratch-local/mcr.XXXXXX`
 
-cd /home/emulder/Projects/qg/matlab/MLQG
-
-# mkdir -p data/experiments/logdir
-# rm data/experiments/logdir/*
-
-srun -n 10 ./mpi_experiment
+srun -n 20 ./mpi_experiment
