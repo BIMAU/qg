@@ -1,4 +1,4 @@
-function [] = plot_experiment(varargin) 
+function [nums, mdat] = plot_experiment(varargin) 
     
     switch nargin
       case 2
@@ -17,8 +17,20 @@ function [] = plot_experiment(varargin)
         dir = ['data/experiments/',  'NR_1000-8000_SP_1000-5000_ESN1_MDL1', '/', 'parallel', '/'];
         dir = ['data/experiments/',  'NR_1000-32000_ESN1_MDL1', '/', 'parallel', '/'];
         dir = ['data/experiments/',  'NR_500-500_ESN1_MDL1', '/', 'serial', '/'];
+        dir = ['data/experiments/',  'NR_2500-20000_BS_1-16_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'NR_2000-8000_IA_1-0.1_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'NR_1000-8000_AD_5-30_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'NR_10000-40000_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'NR_1000-8000_LB_0.001-100_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'NR_1000-8000_LB_1e-07-0.001_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'RH_0.1-3_LB_1e-08-0.1_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'NR_2000-16000_RF_16-32_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'IA_1-10_RH_0.3-3_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'NR_1000-10000_AP_0.0027397-1_ESN1_MDL0', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'FA_0-1_AP_0.0027397-1_ESN1_MDL1', '/', 'parallel', '/'];
+        dir = ['data/experiments/',  'FA_1-100_AP_0.2-1_ESN1_MDL1', '/', 'parallel', '/'];
 
-        [errs,nums,pids,mdat] = gather_plotdata(dir, 1);
+        [errs,nums,pids,mdat] = gather_plotdata(dir, 20);
       otherwise
         error('Unexpected input')
     end
@@ -57,7 +69,7 @@ function [] = plot_experiment(varargin)
     H = mdat.hyp_range(exp_ind{xlab_index}, :);
     range1 = 1:numel(H);
     if Nexp == 2
-        M = reshape(1:numel(H), Nvalues(1), Nvalues(2));
+        M = reshape(1:numel(H), Nvalues(2), Nvalues(1));
         if H(2) ~= H(1)
             range1 = M(:);
             M = M';
@@ -70,7 +82,7 @@ function [] = plot_experiment(varargin)
     end
 
     for i = 1:Nboxplots
-        subrange = range1((i-1)*maxValues+1:i*maxValues);
+        subrange = range1((i-1)*maxValues+1:i*maxValues)
         f{i} = my_boxplot(nums(:, subrange), {clrs(i,:), clrs(i,:)});
         grid on;
         xticklabels([]);
@@ -82,6 +94,7 @@ function [] = plot_experiment(varargin)
     xtickangle(45);
     xlabel(mdat.xlab{xlab_index});
     ylabel(mdat.ylab);
+    keyboard
 
     % for combined experiments and multiple boxplots we need a legend
     if Nexp == 2
