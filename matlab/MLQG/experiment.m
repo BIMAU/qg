@@ -3,7 +3,7 @@ function [ ] = experiment(varargin)
 % the network. The training data changes with <shifts>.
 
     time = tic;
-    global pid procs exp_name storeState memory windowsize
+    global pid procs exp_name storeState memory windowsize storeState
 
     if ~isdeployed
         addpath('~/local/matlab/');
