@@ -54,7 +54,7 @@ function [nums, mdat] = plot_experiment(varargin)
     % nums = nums(plotIds,:);
 
     % number of experiments
-    exp_ind = sort( [mdat.exp_ind{:}]);
+    [exp_ind, I] = sort( [mdat.exp_ind{:}]);
     Nexp    = numel(exp_ind);
 
     labels  = [];
@@ -63,6 +63,7 @@ function [nums, mdat] = plot_experiment(varargin)
     for i = 1:Nexp
         labels{i}  = mdat.hyp_range(exp_ind(i), :);
         Nvalues(i) = numel(unique(labels{i}));
+        xlab{i}    = mdat.xlab{I(i)};
     end
 
     [~, I] = sort(Nvalues, 'descend');
@@ -102,7 +103,7 @@ function [nums, mdat] = plot_experiment(varargin)
 
     xticklabels(mdat.hyp_range(exp_ind(xlab_index), subrange));
     xtickangle(45);
-    xlabel(mdat.xlab{xlab_index});
+    xlabel(xlab{xlab_index});
     ylabel(mdat.ylab);
 
     % for combined experiments and multiple boxplots we need a legend
@@ -110,7 +111,7 @@ function [nums, mdat] = plot_experiment(varargin)
         str = cell(Nboxplots,1);
         for i = 1:Nboxplots
             value = mdat.hyp_range(exp_ind(I(2)), range2(i));
-            str{i} = sprintf('%s: %1.1e', mdat.xlab{I(2)}, value);
+            str{i} = sprintf('%s: %1.1e', xlab{I(2)}, value);
         end
         legend([f{:}], str, 'location', 'north')
     end
