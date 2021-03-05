@@ -2,7 +2,7 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
 
     global memory windowsize storeState
 
-    use_fields   = false;
+    use_fields   = true;
     use_spectrum = false;
     use_wavelet  = false;
     use_svd      = false;
@@ -193,7 +193,7 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
     end
     
     stopFlag = false;
-    if (err > err_tol) && strcmp(storeState, 'all')
+    if (err > err_tol) && ~strcmp(storeState, 'all')
         stopFlag = true;
     end
 end
