@@ -2,8 +2,11 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
 
     switch nargin
       case 1
-        dir    = varargin{1};
-        procs  = 1;
+        dir     = varargin{1};
+        
+        % number of procs = number of files in dir:
+        [~, fc] = system(['ls ', dir, ' -1 | wc -l']);
+        procs   = str2num(fc);
 
       case 2
         dir   = varargin{1};
@@ -24,6 +27,7 @@ function [errs, nums, pids, metadata, predictions, truths] = gather_plotdata(var
         serial = true;
     end
     
+        
 
     fileNames = cell(procs,1);
 
