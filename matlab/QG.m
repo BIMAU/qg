@@ -10,6 +10,11 @@ classdef QG < handle
 
         % number of unknowns
         nun = 2
+        
+        % nondimensionalization parameters 
+        Lxdim
+        Lydim
+        Udim
 
         % mass matrix
         B
@@ -25,16 +30,22 @@ classdef QG < handle
     end
     methods
         function h = QG(nx, ny, perio)
+
             if ((nargin < 2) || (nargin > 3))
                 error('Wrong number of input arguments');
             end
+            
             if (nargin ~= 3)
                 perio = 0;
             end
+            
             h.instance = QG_init(nx, ny, perio);
             h.nx       = nx;
             h.ny       = ny;
             h.B        = h.mass(h.nx * h.ny * h.nun);
+
+            [h.Lxdim, h.Lydim, h.Udim] = h.get_nondim();
+            
             fprintf('QG successfully initialized\n');
         end
 
@@ -131,6 +142,9 @@ classdef QG < handle
                 error('Two input arguments required');
             end
             QG_set_par(h.instance, par, val);
+            
+            % possibly new mass matrix
+            h.B = h.mass(h.nx * h.ny * h.nun);
         end
 
         function val = get_par(h, par)
@@ -138,6 +152,13 @@ classdef QG < handle
                 error('One input argument required');
             end
             val = QG_get_par(h.instance, par);
+        end
+
+        function [Lxdim,Lydim,Udim] = get_nondim(h)
+            if nargin ~= 1
+                error('No input arguments required');
+            end
+            [Lxdim,Lydim,Udim] = QG_get_nondim(h.instance);
         end
 
         function [x, k] = step(h, x, dt)

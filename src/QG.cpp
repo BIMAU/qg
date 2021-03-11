@@ -89,8 +89,8 @@ namespace QG
          *     7:   No (free) slip parameter NS  - 1.0 (0.0)
          *     10:  F
          ******************************************************************************/
-        //par_(1) = taudim_*Lxdim_/(rhodim_*hdim_*std::pow(udim_,2));
-        par_(1) = 1.0e+03;
+        par_(1) = taudim_*Lxdim_/(rhodim_*hdim_*std::pow(udim_,2));
+        //par_(1) = 1.0e+03;
         par_(2) = beta0dim_*Lxdim_*Lxdim_/udim_;
         //par_(3) = bfdim_*Lxdim_/udim_;
         par_(3) = 0.0; // no bottom friction
@@ -103,7 +103,8 @@ namespace QG
         par_(6) = 1.0;
         par_(7) = 0.0;
 
-        par_(18) = 0.0; // forcing for a periodic problem
+        par_(17) = 5.0; // stirring frequency for periodic problem
+        par_(18) = 0.0; // forcing type for a periodic problem: 0 = cos(f*x)cos(f*y), 1 = sin(f*x)*sin(f*y)
         par_(19) = 0.0;
 
         compute_linear();
@@ -342,7 +343,7 @@ namespace QG
             for (int i = imin_; i < imax_; i++)
             {
                 int row = 2 * (n_ * j + i);
-                Frc(row) = alpha_tau * tx_(i,j);
+                Frc(row)   = alpha_tau * tx_(i,j);
                 Frc(row+1) = 0.0;
             }
         }
@@ -533,13 +534,14 @@ namespace QG
         double y2   = (y-ymin_) / (ymax_-ymin_);
         double x2   = (x-xmin_) / (xmax_-xmin_);
 
-        // forcing type, putting this in par(18)
-        int Ftype  = (int) par_(18);
+        // forcing specs from par(17) and (18)
+        int stirFreq  = (double) par_(17);
+        int Ftype     = (int)    par_(18);
 
         if (Ftype == 0)
-            return cos(5*2*M_PI*x2)*cos(5*2*M_PI*y2);
+            return -cos(stirFreq*2*M_PI*x2)*cos(stirFreq*2*M_PI*y2);
         else if (Ftype == 1)
-            return sin(16*2*M_PI*x2)*sin(16*2*M_PI*y2);
+            return -sin(stirFreq*2*M_PI*x2)*sin(stirFreq*2*M_PI*y2);
         else
             return 0.0;
     }
@@ -554,15 +556,19 @@ namespace QG
         Vector3D dyy(n_,m_,10);
         Vector3D cor(n_,m_,10);
 
-        double Re   = par_(5);
-        double Beta = par_(2);
-        double rbf  = par_(3);
-        int Ftype   = (int) par_(18);
+        double Re    = par_(5);
+        double Beta  = par_(2);
+        double rbf   = par_(3);
+        double sFreq = (double) par_(17);
+        int Ftype    = (int) par_(18);
 
-        std::cout << " compute lin, pars: " << "Re:     " << Re << std::endl;
-        std::cout << "                    " << "Beta:   " << Beta << std::endl;
-        std::cout << "                    " << "rbf:    " << rbf << std::endl;
-        std::cout << "                    " << "Ftype:  " << Ftype << std::endl;
+        std::cout << " compute lin, pars: " << "Reynolds:           " << Re       << std::endl;
+        std::cout << "                    " << "alpha_tau:          " << par_(1)  << std::endl;
+        std::cout << "                    " << "Beta:               " << Beta     << std::endl;
+        std::cout << "                    " << "rbf (bottom frict): " << rbf      << std::endl;
+        std::cout << "                    " << "Forcing type:       " << Ftype    << std::endl;
+        std::cout << "                    " << "Stirring frequency: " << sFreq    << std::endl;
+        std::cout << "                    " << "Forcing amplitude:  " << par_(11) << std::endl;
 
         deriv(1, z);   // ALLEEN BIJ GEBRUIK BODEMFRICTIE NIET NUL
         deriv(2, dxx); // ALLEEN GETALLEN: VOOR BEIDE VGL TE GEBRUIKEN

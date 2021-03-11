@@ -17,7 +17,8 @@ set(QG_MEX_FILES
   QG_compute_precon
   QG_solve
   QG_set_par
-  QG_get_par)
+  QG_get_par
+  QG_get_nondim)
 
 foreach(i ${QG_MEX_FILES})
   matlab_add_mex(NAME "${i}" SRC "${i}.cpp")

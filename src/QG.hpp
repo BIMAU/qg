@@ -107,6 +107,10 @@ public:
     int n() { return n_; };
     int m() { return m_; };
 
+    double Lxdim() { return Lxdim_ ; };
+    double Lydim() { return Lydim_ ; };
+    double Udim()  { return udim_  ; };
+
     void writeA(char const *name, double const *un, double sig);
     void writeM(char const *name);
 
