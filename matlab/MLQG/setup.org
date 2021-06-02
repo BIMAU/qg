@@ -1,0 +1,35 @@
+
+* old call structure
+  main -> experiment -> experiment_core
+
+Setup for a new repo with code that takes care of data generation,
+experiments and visualization. This repo may also include the KS
+model, as it's tiny anyway.
+
+* training data generation class 
+  - Generates training data. Training data consists of a transient of
+    the perfect model (truth) and imperfect model predictions. When
+    the two models live on different grids, appropriate restriction
+    and prolongation operators should be supplied. Then we also assume
+    that the training data lives on the coarse grid.
+** data members
+** member functions
+
+* experiment class
+  - Performs training and prediction for many training data sets and
+    many realizations of the random ESN operators W and Win.
+  - parallel and serial option
+
+** TODO remove matlab threading  
+
+** data members
+   exp_id;      % experiment id
+   store_state; % which state to store
+   hyp;         % hyper parameter struct
+
+** member functions
+   range2str()  % converts numeric range to a string
+   
+* visualization class
+** data members
+** member functions
