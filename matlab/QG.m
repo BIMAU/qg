@@ -1,7 +1,7 @@
 classdef QG < handle
     properties
         instance
-        
+
         % str identifier for class
         name = 'QGmodel';
 
@@ -13,8 +13,11 @@ classdef QG < handle
 
         % number of unknowns
         nun = 2
-        
-        % nondimensionalization parameters 
+
+        % length of a state vector
+        N
+
+        % nondimensionalization parameters
         Lxdim
         Lydim
         Udim
@@ -37,18 +40,19 @@ classdef QG < handle
             if ((nargin < 2) || (nargin > 3))
                 error('Wrong number of input arguments');
             end
-            
+
             if (nargin ~= 3)
                 perio = 0;
             end
-            
+
             h.instance = QG_init(nx, ny, perio);
-            h.nx       = nx;
-            h.ny       = ny;
-            h.B        = h.mass(h.nx * h.ny * h.nun);
+            h.nx = nx;
+            h.ny = ny;
+            h.N = h.nx * h.ny * h.nun;
+            h.B = h.mass(h.N);
 
             [h.Lxdim, h.Lydim, h.Udim] = h.get_nondim();
-            
+
             fprintf('QG successfully initialized\n');
         end
 
@@ -65,7 +69,7 @@ classdef QG < handle
             end
             [u,v] = QG_compute_uv(h.instance, x(:));
         end
-        
+
         function [gradx, grady] = gradient(h, x)
             if nargin ~= 2
                 error('One input argument required');
@@ -145,9 +149,9 @@ classdef QG < handle
                 error('Two input arguments required');
             end
             QG_set_par(h.instance, par, val);
-            
+
             % possibly new mass matrix
-            h.B = h.mass(h.nx * h.ny * h.nun);
+            h.B = h.mass(h.N);
         end
 
         function val = get_par(h, par)
@@ -193,13 +197,13 @@ classdef QG < handle
                 throw(ME);
             end
         end
-        
+
         function[x] = step_FE(h, x, dt)
-            
+
             xm = x;
-            
-            
-            
+
+
+
         end
 
         function delete(h)
