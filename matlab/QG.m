@@ -33,6 +33,9 @@ classdef QG < handle
 
         % Newton tolerance
         Ntol = 1e-3
+        
+        % Initial state
+        x_init
     end
     methods
         function h = QG(nx, ny, perio)
@@ -50,6 +53,8 @@ classdef QG < handle
             h.ny = ny;
             h.N = h.nx * h.ny * h.nun;
             h.B = h.mass(h.N);
+            
+            x_init = zeros(h.N,1);
 
             [h.Lxdim, h.Lydim, h.Udim] = h.get_nondim();
 
@@ -197,13 +202,10 @@ classdef QG < handle
                 throw(ME);
             end
         end
-
-        function[x] = step_FE(h, x, dt)
-
-            xm = x;
-
-
-
+        
+        function [par] = control_param(h)
+        % return Reynolds number
+            par = h.get_par(5);
         end
 
         function delete(h)
