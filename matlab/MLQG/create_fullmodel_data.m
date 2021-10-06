@@ -30,14 +30,14 @@ day  = 3600 * 24 / tdim;
 year = 365*day;
 
 % Job parameters
-restartFlag      = true;  % restart from existing states array
+restartFlag      = true;   % restart from existing states array
 adaptiveTimeStep = false;
 storeTimeIncr = 100*day;   % save to mat and eps
-rotation = true;          % enable or disable rotation (beta)
+rotation = true;           % enable or disable rotation (beta)
 
 Re   = 1e4;       % Reynolds number
 ampl = 0.5;       % Forcing amplitude
-stir = 0;         % stirring type: 0 = cos(5x), 1 = sin(16x)
+stir = 0;         % stirring type: 0 = cos(F x), 1 = sin(F x)
 Tend = 10000*day; % End time, nondim. timescale is in years
 dt   = 1.0*day;   % Time step
 th   = 1.0;       % Theta

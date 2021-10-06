@@ -1,6 +1,9 @@
 classdef QG < handle
     properties
         instance
+        
+        % str identifier for class
+        name = 'QGmodel';
 
         % grid points in x-direction
         nx
@@ -167,6 +170,7 @@ classdef QG < handle
             xm   = x;
             rhsm = h.rhs(xm);
             s    = 1.0/(dt*h.theta);
+            nrms = zeros(h.Nkmx,1);
 
             % Newton
             for k = 1:h.Nkmx
@@ -176,7 +180,8 @@ classdef QG < handle
                 dx  = jac \ rhs;
                 x   = x + dx;
 
-                if norm(dx,2) < h.Ntol
+                nrms(k) = (norm(dx,2) / norm(x,2));
+                if nrms(k) < h.Ntol
                     break;
                 end
             end
@@ -184,8 +189,17 @@ classdef QG < handle
             if k == h.Nkmx
                 ME = MException('QG:convergenceError', ...
                                 'no convergence in Newton iteration');
+                fprintf('norms: %d\n', nrms)
                 throw(ME);
             end
+        end
+        
+        function[x] = step_FE(h, x, dt)
+            
+            xm = x;
+            
+            
+            
         end
 
         function delete(h)

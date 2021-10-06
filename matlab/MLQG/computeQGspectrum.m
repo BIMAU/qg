@@ -7,8 +7,9 @@ function [rPrf, C, maxr, sumCoefs] = computeQGspectrum(qg, x)
     
     % get velocity field    
     [u,v] = qg.compute_uv(x(:));
-    u     = reshape(u,nx,ny);
-    v     = reshape(v,nx,ny);
+    Udim  = qg.Udim;
+    u     = Udim*reshape(u,nx,ny);
+    v     = Udim*reshape(v,nx,ny);
     
     H = abs(fft2(u)).^2+abs(fft2(v)).^2;
     

@@ -27,10 +27,12 @@ function [stopFlag, err, testSpec, predSpec] = qg_stopping_criterion(qg, predY, 
     nx = qg.nx;
     ny = qg.ny;
 
-    region = [];
-    for i = 0:6
-        region = [region, i+(floor(nx/5)*nx:nx:1*nx/2*nx) - nx/2];
-    end
+    % region = [];
+    % for i = 0:6
+    %     region = [region, i+(floor(nx/5)*nx:nx:1*nx/2*nx) - nx/2];
+    % end
+    
+    region = 1:nx*ny;
 
     if use_fields
         err_tol  = 0.5;

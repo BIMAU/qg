@@ -11,12 +11,6 @@ function [] = plotQG(n,m,XX,state,contours)
     nun = 2;
     plotfield = reshape(state(XX:nun:end),n,m);
     
-    % constants 
-    udim = 1.6e-02; 
-    ldim = 1.0e+06; 
-    hdim = 6.0e+02; 
-    fact = udim*hdim*ldim/1.0e+06; 
-
     % grid
     for i=1:n
         x(i) = (i-1)/(n-1);
@@ -29,19 +23,15 @@ function [] = plotQG(n,m,XX,state,contours)
     % scaling
     maxp = max(max(abs(plotfield))); 
     % plot
-    %colorbar
+
     imagesc(x,y,plotfield');
     if contours
         hold on
         contour(x,y,plotfield',10,'k'); hold off
     end
-    map = my_colmap();
-    colormap(map);
-    colorbar
+
+    % colorbar
     set(gca,'ydir','normal')
-    xlabel('x/L')
-    ylabel('y/L')
-    title('')
     
     if (XX == 1)
         caxis([-maxp, maxp]);

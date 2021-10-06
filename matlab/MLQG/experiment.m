@@ -3,29 +3,30 @@ function [ ] = experiment(varargin)
 % the network. The training data changes with <shifts>.
 
     time = tic;
-    global pid procs exp_name storeState memory windowsize storeState
+    global pid procs exp_name storeState memory windowsize
 
     if ~isdeployed
         addpath('~/local/matlab/');
         addpath('~/Projects/ESN/matlab');
     end
 
-    storeState = 'final'; % which states to store
+    storeState = 'all';   % which states to store
+
     hyp = struct();
     range2str = @ (range) ['_', num2str(range(1)), '-', num2str(range(end)), '_'];
 
     %---------------------------------------------------------
     % settings that define the experiment
-    run_pars.esn_on   = true;     % enable/disable ESN
-    run_pars.model_on = true;    % enable/disable equations
-
-    exp_id = {'ReservoirAmp'};
+    run_pars.esn_on     = true; % enable/disable ESN
+    run_pars.model_on   = true; % enable/disable equations
+    run_pars.no_testing = true; % if true we ignore the test data and just run the model
+    exp_id = {'ReservoirSize'};
 
     % numeric options
     name = 'ReservoirSize';
-    hyp.(name).range   = [4000, 8000];
+    hyp.(name).range   = [3000];
     hyp.(name).descr   = ['NR', range2str(hyp.(name).range)];
-    hyp.(name).default = 4000;
+    hyp.(name).default = 8000;
     
     name = 'BlockSize';
     hyp.(name).range   = [1,16];
@@ -35,7 +36,7 @@ function [ ] = experiment(varargin)
     name = 'TrainingSamples';
     hyp.(name).range   = [1000,2000,3000,4000,5000,6000,7000];
     hyp.(name).descr   = ['SP', range2str(hyp.(name).range)];
-    hyp.(name).default = 3000;
+    hyp.(name).default = 4000;
 
     name = 'ReductionFactor';
     hyp.(name).range   = [16, 32];
@@ -94,9 +95,9 @@ function [ ] = experiment(varargin)
     ylab = 'Predicted days';
 
     % ensemble setup
-    shifts   = 20;    % shifts in training_range
-    reps     = 1;    % repetitions per shift
-    maxPreds = floor(1*365); % prediction barrier (in days)
+    shifts   = 1;              % shifts in training_range
+    reps     = 1;              % repetitions per shift
+    maxPreds = floor(50*365);  % prediction barrier (in samples)
     %---------------------------------------------------------
 
     % identifier -> numeric index
@@ -173,19 +174,20 @@ function [ ] = experiment(varargin)
 
     if ~exist('trdata','var')
         print0('load training data...\n'); tic;
-        fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
+        fname_base = 'N64-N32_ff2_Re1.0e+03-Re5.0e+02_Tstart50_Tend100';
+        % fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
         trdata = load(['~/Projects/qg/matlab/MLQG/data/training/', fname_base, '.mat']);
         print0('load training data... done (%fs)\n', toc);
     end
 
 
-    nxc  = trdata.nxc;
-    nyc  = trdata.nyc;
+    nxc  = trdata.nxc
+    nyc  = trdata.nyc
     nun  = 2;
     dim  = nxc*nyc*nun;
-    ampl = trdata.ampl;
-    stir = trdata.stir;
-    Re_c = trdata.Re_c;
+    ampl = trdata.ampl
+    stir = trdata.stir
+    Re_c = trdata.Re_c
 
     Ldim    = 1e6;
     Udim    = 3.171e-2;
@@ -245,8 +247,8 @@ function [ ] = experiment(varargin)
         print0('transform input/output data with wavelet modes\n');
         trdata.HaRX  = run_pars.Ha' * trdata.RX;
         trdata.HaPRX = run_pars.Ha' * trdata.PRX;
-        print0('compute svd\n');
-        [Uwav,~,~] = svds(trdata.HaRX(:,:), 16);
+        % print0('compute svd\n');
+        % [Uwav,~,~] = svds(trdata.HaRX(:,:), 16);
 
         % stopping criterion returns a stopping flag based on whatever is
         % relevant for the experiment
@@ -255,7 +257,14 @@ function [ ] = experiment(varargin)
         % shifts in the training_range
         % total number of timesteps in timeseries
         Nt = size(trdata.RX, 2);
-        maxShift = Nt - maxPreds - samples - 1; % largest shift in training_range
+        
+        % largest shift in training_range
+        if run_pars.no_testing
+            maxShift = Nt - samples - 1; 
+        else
+            maxShift = Nt - maxPreds - samples - 1; 
+        end
+        
         assert(maxShift > 1);
         tr_shifts = round(linspace(0, maxShift, shifts));
 
@@ -265,10 +274,10 @@ function [ ] = experiment(varargin)
         for i = my_inds;
             % (re)set global memory for the computation of Ke, Km, etc
             memory = struct();
-            windowsize = 100;
+            windowsize = 10;
 
             memory.Ha   = run_pars.Ha;
-            memory.Uwav = Uwav;
+            % memory.Uwav = Uwav;
 
             run_pars.train_range = (1:samples)+tr_shifts(svec(i));
             run_pars.test_range  = run_pars.train_range(end) + (1:maxPreds);
@@ -276,9 +285,10 @@ function [ ] = experiment(varargin)
                     min(run_pars.train_range), max(run_pars.train_range));
             print0('  test range: %d - %d\n', ...
                     min(run_pars.test_range), max(run_pars.test_range));
-
+            
             [predY, testY, err, esnX] = ...
                 experiment_core(qgc, trdata, esn_pars, run_pars);
+            
 
             % Run the experiment in a try/catch block, at most max_tries times.
             % try_count = 0;

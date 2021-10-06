@@ -172,7 +172,7 @@ if compute
     hold on
     plot(err_hyb(1:i)); hold on
     plot(err_std(1:i)); 
-    plot(xlim, [5, 5]);  % ARBITRARY #FIXME
+    plot(xlim, [5, 5]);
     hold off
 
     subplot(2,3,6)

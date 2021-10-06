@@ -1,8 +1,9 @@
 %%% QG TRAINING DATA CREATION
 fprintf('load full model data...\n'); tic;
 %orig_base = 'N256_Re4.0e+04_Tstart151_Tend179_F0.5_Stir0_Rot1';
-orig_base = 'N128_Re1.0e+04_Tstart159_Tend187_F0.5_Stir0_Rot1'
-%fmdata = load(['data/fullmodel/', orig_base, '.mat']);
+%orig_base = 'N128_Re1.0e+04_Tstart159_Tend187_F0.5_Stir0_Rot1'
+orig_base = 'N64_Re1.0e+03_Tstart0_Tend100_F2_Stir0_Rot1';
+fmdata = load(['data/fullmodel/', orig_base, '.mat']);
 fprintf('load full model data... done (%fs)\n', toc);
 
 nun = 2; % number of unknowns
@@ -15,8 +16,8 @@ ampl = fmdata.ampl;  % Forcing amplitude
 stir = 0;
 
 %% coarse model setup
-ff   = 2;            % coarsing factor #TODO: ff > 2
-Re_c = Re_f / 100;   % Reynolds number for coarse model
+ff   = 2;          % coarsing factor
+Re_c = Re_f / 2;   % Reynolds number for coarse model
 nxc  = nx / ff;
 nyc  = ny / ff;
 
@@ -32,9 +33,12 @@ qgc.set_par(5,  Re_c);  % Reynolds number for coarse model
 R = kron(R, [1,0;0,1]);
 
 %% restrict states to coarse grid
-X     = fmdata.states;
-Nt    = size(X,2);
+Ns    = size(fmdata.states,2);
+Nt    = min(Ns, 50*365); % how many days do we want?
+trnge = Ns-Nt+1:Ns; 
+X     = fmdata.states(:,trnge);
 RX    = R*X; % restriction
+fmdata.times = trnge / 365;
 
 %% generate predictions
 tpars     = {};

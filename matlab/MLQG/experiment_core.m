@@ -57,10 +57,14 @@ function [predY, testY, err, esnX] = experiment_core(model, tr_data, esn_pars, r
         % clean up
         clear U Y
     end
-
+    
     % full dimensional output testing
-    testY = tr_data.RX(:, 2:end);
-    testY = testY(:, run_pars.test_range)';
+    if run_pars.no_testing
+        testY = [];
+    else
+        testY = tr_data.RX(:, 2:end);
+        testY = testY(:, run_pars.test_range)';
+    end
 
     Npred = numel(run_pars.test_range); % number of prediction steps
     predY = zeros(Npred, dim); % full dimensional predictions
@@ -68,8 +72,11 @@ function [predY, testY, err, esnX] = experiment_core(model, tr_data, esn_pars, r
     esnX  = [];
 
     % initialization for the predictions
-    yk = tr_data.RX(:, run_pars.test_range(1));
-
+    init_idx = run_pars.train_range(end)+1;
+    yk = tr_data.RX(:, init_idx);
+    
+    print0('initialization index: %d\n', init_idx);
+    
     % clean up
     clear tr_data
 
@@ -94,6 +101,7 @@ function [predY, testY, err, esnX] = experiment_core(model, tr_data, esn_pars, r
 
     clear trainU trainY
 
+    verbosity = 100;
     for i = 1:Npred
         
         % model prediction of next time step
@@ -124,10 +132,18 @@ function [predY, testY, err, esnX] = experiment_core(model, tr_data, esn_pars, r
         predY(i,:) = yk;
 
         % check stopping criterion
-        [stop, err(i)] = run_pars.stopping_criterion(model, predY(i,:), testY(i,:));
+        stop = false;
+        if ~run_pars.no_testing
+            [stop, err(i)] = run_pars.stopping_criterion(model, predY(i,:), testY(i,:));
+        end
 
         if stop
             break;
+        end
+        
+        if mod(i,verbosity) == 0
+            print0('     prediction step %4d/%4d, error %1.2e, %s\n', ...
+                   i, Npred, err(i), exp_type);
         end
     end
     print0(' ~~~ last prediction step %4d/%4d, error %1.2e, %s\n', ...
@@ -135,9 +151,10 @@ function [predY, testY, err, esnX] = experiment_core(model, tr_data, esn_pars, r
     
     % truncate output arrays
     predY = predY(1:i,:);
-    testY = testY(1:i,:);
-    err   = err(1:i);
-    
+    if ~run_pars.no_testing
+        testY = testY(1:i,:);
+    end
+    err = err(1:i);    
 end
 
 function [pars_out] = default_esn_parameters(pars_in)

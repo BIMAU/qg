@@ -3,9 +3,13 @@ function [H] = haarmat(p)
         H = 1;
         return
     end
+    
+    % p should be a power of 2
+    assert( round(log2(p)) == log2(p) );
+    
     H   = 1/sqrt(2)*[1 1; 1 -1];
     dim = 2;
-    while dim ~= p    
+    while dim < p    
         H = 1/sqrt(2)*[kron(H,[1 1]); kron(eye(dim),[1 -1])];
         dim = size(H,1);
     end

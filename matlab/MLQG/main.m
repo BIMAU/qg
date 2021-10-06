@@ -19,7 +19,8 @@ function [] = main(varargin)
     end
 
     fprintf('load training data...\n'); tic;
-    fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
+    fname_base = 'N64-N32_ff2_Re1.0e+03-Re5.0e+02_Tstart50_Tend100';
+    % fname_base = 'N128-N64_ff2_Re1.0e+04-Re1.0e+02_Tstart159_Tend187';
     trdata = load(['~/Projects/qg/matlab/MLQG/data/training/', fname_base, '.mat']);
     fprintf('load training data... done (%fs)\n', toc);
 

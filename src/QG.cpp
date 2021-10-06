@@ -98,7 +98,7 @@ namespace QG
         par_(5) = udim_*Lxdim_/Ahdim_;
         // par_(10) = std::pow((f0dim_*Lxdim_),2)/(gdim_*hdim_);
         par_(10) = 0.0;
-        par_(11) = 0.0;
+        par_(11) = 1.0;
 
         par_(6) = 1.0;
         par_(7) = 0.0;
@@ -542,6 +542,10 @@ namespace QG
             return -cos(stirFreq*2*M_PI*x2)*cos(stirFreq*2*M_PI*y2);
         else if (Ftype == 1)
             return -sin(stirFreq*2*M_PI*x2)*sin(stirFreq*2*M_PI*y2);
+        else if (Ftype == 2)
+            return -cos(stirFreq*2*M_PI*x2)*
+                cos(stirFreq*2*M_PI*y2)*
+                sin(M_PI*x2)*sin(M_PI*y2);
         else
             return 0.0;
     }

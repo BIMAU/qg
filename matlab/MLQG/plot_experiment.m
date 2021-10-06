@@ -6,41 +6,15 @@ function [nums, mdat] = plot_experiment(varargin)
         mdat = varargin{2};
       case 0
         
-        dir = ['data/experiments/'  'NR_4000-16000_ESN1_MDL0', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_500-16000_ESN1_MDL0', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-4000_RF_8-16_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-8000_FA_0.1-1_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_4000-8000_RF_1-16_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_500-8000_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-8000_BS_1-4_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-8000_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-8000_SP_1000-5000_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-32000_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_500-500_ESN1_MDL1', '/', 'serial', '/'];
-        dir = ['data/experiments/'  'NR_2500-20000_BS_1-16_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_2000-8000_IA_1-0.1_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-8000_AD_5-30_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_10000-40000_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-8000_LB_0.001-100_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-8000_LB_1e-07-0.001_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'RH_0.1-3_LB_1e-08-0.1_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_2000-16000_RF_16-32_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'IA_1-10_RH_0.3-3_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_1000-10000_AP_0.0027397-1_ESN1_MDL0', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'FA_0-1_AP_0.0027397-1_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'FA_1-100_AP_0.2-1_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'RA_0-1_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_20000-160000_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'SS_1-3_NR_4000-8000_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'RA_0-1_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'RA_0.1-10_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_2000-16000_ESN1_MDL0', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'AP_0.1-0.3_ESN1_MDL0', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'RA_0-1_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'RA_0-1_SP_2000-9000_ESN1_MDL1', '/', 'parallel', '/'];
-        dir = ['data/experiments/'  'NR_2000-16000_SP_2000-9000_ESN1_MDL1', '/', 'parallel', '/'];
+        folder = 'NR_2000-16000_SP_2000-9000_ESN1_MDL1';
+        folder = 'RA_0-1_SP_2000-9000_ESN1_MDL1';
+        folder = 'AP_0.1-0.3_ESN1_MDL0';
+        folder = 'RA_0-1_ESN1_MDL1';
+        folder = 'AP_0.1-0.24_ESN1_MDL0';
+        folder = 'NR_500-500_ESN1_MDL0';
 
-        [errs,nums,pids,mdat] = gather_plotdata(dir);
+        dir = ['data/experiments/', folder , '/', 'serial', '/'];
+        [errs,nums,pids,mdat] = gather_data(dir);
       otherwise
         error('Unexpected input')
     end
