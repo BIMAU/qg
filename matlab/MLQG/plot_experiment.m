@@ -93,10 +93,12 @@ function [nums, mdat] = plot_experiment(varargin)
     % create description
     descr = create_description(mdat);
     ylim([min(ylim), 1.1*max(ylim)])
-    text(min(xlim), max(ylim), descr, ...
-         'color', [0,0,0] , 'VerticalAlignment', 'top', ...
-         'FontName', 'Monospaced', 'FontSize', 9);
-
+    
+    tx = text(min(xlim), max(ylim), descr, ...
+              'color', [0.7,0.7,0.7] , 'VerticalAlignment', 'top', ...
+              'FontName', 'Monospaced', 'FontSize', 9,'Interpreter', 'none');
+    uistack(tx, 'bottom')
+    
     title(sprintf('Experiment: %d training sets, %d par combinations', ...
                   size(nums,1), size(nums,2)));
 
